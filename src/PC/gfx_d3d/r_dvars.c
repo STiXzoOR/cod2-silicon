@@ -452,6 +452,9 @@ void R_RegisterDvars(void)
      * million pixels of effects a frame has time for at 250 frames a second. */
     ri.Dvar_RegisterInt("r_fxLayer", 1, 0, 4, 0x1);
     ri.Dvar_RegisterInt("r_fxLayerBudget", 50, 1, 1000, 0x1);
+    /* Draw the layer straight after the depth prepass, ahead of the scene, so that the
+     * scene's buffer is not interrupted for it. 0 draws it in its place in the emissive pass. */
+    ri.Dvar_RegisterInt("r_fxLayerEarly", 1, 0, 1, 0x1);
     /* With anti-aliasing on, draw the scene into a multisampled target of its own and
      * everything after it onto the resolved picture (rb_scenetarget.c). 0 draws all of
      * it into a multisampled back buffer, as Direct3D 9 does. Takes a vid_restart. */

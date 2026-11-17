@@ -557,6 +557,9 @@ static int rb_postSunFromDepth; /* this frame's glow has no such copy: see RB_Sc
 extern int RB_FxLayer_Wanted(void);
 extern void RB_FxLayer_DepthOnly(void *device, int on);
 static int rb_fxAlphaOnly; /* draw only the surfaces that blend into the frame buffer's alpha */
+static GfxDrawSurf *rb_fxEarlyList; /* the run of effects drawn into the layer ahead of the scene: */
+static int rb_fxEarlyFirst, rb_fxEarlyEnd; /* its list and where it stands in it */
+static int rb_fxFramed;    /* the layer has chosen how to draw this frame's effects */
 static int rb_fxModelsOnly; /* the surface loop draws models only */
 #endif
 static void RB_DrawSurfsCmd(GfxRenderCommandExecState *execState);
@@ -2394,6 +2397,80 @@ static int RB_SurfInFxLayer(const GfxDrawSurf *drawSurf)
            RB_FxLayer_Holds((unsigned)material->stateBits[0], (unsigned)material->stateBits[1]);
 }
 
+/* Draw one run of effects into the layer, which is bound; twice if any of it also
+ * blends into the frame buffer's alpha (the second time into the target for that). */
+static void RB_DrawFxLayerRun(GfxDrawSurf *drawSurfs, int count, MaterialTechniqueType techType, GfxDrawSurfOrder order)
+{
+    extern void RB_FxLayer_AlphaBegin(void);
+    int i, blendsAlpha = 0;
+
+    RB_RenderDrawSurfList(drawSurfs, count, techType, order);
+    for (i = 0; i < count && !blendsAlpha; i++) {
+        const Material *material;
+        int entityIndex, lightmap;
+        R_DecomposeSort(drawSurfs[i].sort, &entityIndex, &material, &lightmap);
+        blendsAlpha = material && (material->stateBits[0] & 0x10000000) != 0;
+    }
+    if (blendsAlpha) {
+        RB_FxLayer_AlphaBegin();
+        rb_fxAlphaOnly = 1;
+        RB_RenderDrawSurfList(drawSurfs, count, techType, order);
+        rb_fxAlphaOnly = 0;
+    }
+}
+
+/* Called when the float-Z prepass is done: draw the frame's effects into the layer now
+ * if that can be done ahead of the scene (rb_fxlayer.c: RB_FxLayer_BeginEarly). It can
+ * when they make one run in the list, and none of them reads the scene itself (the
+ * copies that distortion draws with), which is not there yet. */
+static void RB_FxLayerEarly(GfxDrawSurf *drawSurfs, int drawSurfCount)
+{
+    extern void RB_FxLayer_Frame(void *device, int skyOnlyAlpha);
+    extern int RB_FxLayer_BeginEarly(void *device, int samples);
+    extern void RB_FxLayer_EndEarly(void);
+    extern void RB_FxLayer_ApplyEarly(void *device, int apply, int skyOnlyAlpha);
+    extern int Dvar_GetInt(const char *name);
+    int first = 0, runs = 0, runFirst = 0, runEnd = 0, i;
+
+    RB_FxLayer_ApplyEarly(dx.device, 0, 0); /* one left over from a frame that never drew it */
+    RB_FxLayer_Frame(dx.device, 0);
+    rb_fxFramed = 1;
+    rb_fxEarlyList = NULL;
+    if (!Dvar_GetInt("r_fxLayerEarly"))
+        return;
+    while (first < drawSurfCount) {
+        int inLayer = RB_SurfInFxLayer(&drawSurfs[first]);
+        int end = first + 1;
+        while (end < drawSurfCount && RB_SurfInFxLayer(&drawSurfs[end]) == inLayer)
+            end++;
+        if (inLayer) {
+            runs++;
+            runFirst = first;
+            runEnd = end;
+        }
+        first = end;
+    }
+    if (runs != 1)
+        return;
+    for (i = runFirst; i < runEnd; i++) {
+        const Material *material;
+        const MaterialTechnique *technique;
+        int entityIndex, lightmap;
+        R_DecomposeSort(drawSurfs[i].sort, &entityIndex, &material, &lightmap);
+        technique = material && material->techniqueSet
+                        ? material->techniqueSet->techniques[TECHNIQUE_EMISSIVE_FEATHERED] : NULL;
+        if (technique && (technique->flags & 3))
+            return;
+    }
+    if (!RB_FxLayer_BeginEarly(dx.device, dx.multiSampleType > 1 ? (int)dx.multiSampleType : 1))
+        return;
+    RB_DrawFxLayerRun(drawSurfs + runFirst, runEnd - runFirst, TECHNIQUE_EMISSIVE_FEATHERED, (GfxDrawSurfOrder)0);
+    RB_FxLayer_EndEarly();
+    rb_fxEarlyList = drawSurfs;
+    rb_fxEarlyFirst = runFirst;
+    rb_fxEarlyEnd = runEnd;
+}
+
 /* The emissive pass with its effects (smoke, dust, fire: sort key 25 and up) handed to
  * the effects layer: each run of surfaces the layer can hold is drawn into it and
  * blended over the frame buffer, or drawn as ever when the layer is not needed. */
@@ -2401,8 +2478,9 @@ static void RB_RenderDrawSurfListFxLayer(GfxDrawSurf *drawSurfs, int drawSurfCou
                                          GfxDrawSurfOrder order)
 {
     extern void RB_FxLayer_Frame(void *device, int skyOnlyAlpha);
-    extern void RB_FxLayer_AlphaBegin(void);
     extern int RB_FxLayer_Begin(void *device, int sceneDepthValid);
+    extern int RB_FxLayer_EarlyPending(void);
+    extern void RB_FxLayer_ApplyEarly(void *device, int apply, int skyOnlyAlpha);
     extern int R_UseZFeather(void);
     extern void RB_FxLayer_End(void);
     int first = 0;
@@ -2417,6 +2495,8 @@ static void RB_RenderDrawSurfListFxLayer(GfxDrawSurf *drawSurfs, int drawSurfCou
         RB_RenderDrawSurfList(drawSurfs, drawSurfCount, techType, order);
         rb_fxModelsOnly = 0;
         RB_FxLayer_DepthOnly(dx.device, 0);
+        if (order == 0)
+            RB_FxLayerEarly(drawSurfs, drawSurfCount);
         return;
     }
     if ((techType != TECHNIQUE_EMISSIVE && techType != TECHNIQUE_EMISSIVE_FEATHERED) || order != 0 ||
@@ -2424,27 +2504,29 @@ static void RB_RenderDrawSurfListFxLayer(GfxDrawSurf *drawSurfs, int drawSurfCou
         RB_RenderDrawSurfList(drawSurfs, drawSurfCount, techType, order);
         return;
     }
-    RB_FxLayer_Frame(dx.device, rb_postSunFromDepth);
+    if (!rb_fxFramed)
+        RB_FxLayer_Frame(dx.device, rb_postSunFromDepth);
+    rb_fxFramed = 0;
+    if (RB_FxLayer_EarlyPending() && rb_fxEarlyList != drawSurfs)
+        RB_FxLayer_ApplyEarly(dx.device, 0, 0); /* drawn for another list: not this one's */
     while (first < drawSurfCount) {
         int inLayer = RB_SurfInFxLayer(&drawSurfs[first]);
         int end = first + 1;
         while (end < drawSurfCount && RB_SurfInFxLayer(&drawSurfs[end]) == inLayer)
             end++;
-        if (inLayer) {
-            int held = RB_FxLayer_Begin(dx.device, R_UseZFeather()), i, blendsAlpha = 0;
-            RB_RenderDrawSurfList(drawSurfs + first, end - first, techType, order);
-            for (i = first; held && i < end && !blendsAlpha; i++) {
-                const Material *material;
-                int entityIndex, lightmap;
-                R_DecomposeSort(drawSurfs[i].sort, &entityIndex, &material, &lightmap);
-                blendsAlpha = material && (material->stateBits[0] & 0x10000000) != 0;
-            }
-            if (blendsAlpha) {
-                RB_FxLayer_AlphaBegin();
-                rb_fxAlphaOnly = 1;
+        if (inLayer && RB_FxLayer_EarlyPending() && first == rb_fxEarlyFirst && end == rb_fxEarlyEnd) {
+            if (tess.indexCount || tess.optimizedIndexCount)
+                RB_EndSurface();
+            /* The engine sets a viewport when it next draws; the layer draws now. (A depth
+             * range left over from the view weapon would move the layer's own depths.) */
+            if (backEnd.viewportIsDirty)
+                RB_UpdateViewport();
+            RB_FxLayer_ApplyEarly(dx.device, 1, rb_postSunFromDepth);
+        } else if (inLayer) {
+            if (RB_FxLayer_Begin(dx.device, R_UseZFeather()))
+                RB_DrawFxLayerRun(drawSurfs + first, end - first, techType, order);
+            else
                 RB_RenderDrawSurfList(drawSurfs + first, end - first, techType, order);
-                rb_fxAlphaOnly = 0;
-            }
             RB_FxLayer_End();
         } else {
             RB_RenderDrawSurfList(drawSurfs + first, end - first, techType, order);

@@ -32,18 +32,24 @@
  *   farthest depth of each block. Copying the frame buffer's own depth instead
  *   costs more than the smoke does when it is multisampled.
  *
- * - Where a sample of the frame buffer does not lie at the depth the layer
- *   was tested against (the edge of an object under anti-aliasing; for a
- *   smaller layer, any place its four nearest texels disagree), the layer has
- *   no right answer of its own. Those samples are marked in the stencil
- *   buffer and the layer is blended over the others only. A marked sample
- *   then takes the layer's value from the neighbouring texel that was tested
- *   against its own surface: the nearest one around it if the sample lies in
- *   front, the farthest if it lies behind. Smoke changes little from one
- *   pixel to the next, so an anti-aliased edge keeps its shape and what shows
- *   on each side of it. (Drawing the effects a second time into the marked
- *   samples alone would be exact, and was tried: the graphics chip takes as
- *   long to turn the unmarked samples away as it does to draw them.)
+ * - Under anti-aliasing a pixel on an edge has samples on two surfaces, and the
+ *   layer has one answer per pixel. The samples that do not lie at the prepass's
+ *   depth for their pixel are marked in the stencil buffer, nearer or farther,
+ *   and the layer is blended over the others first. A marked sample then takes
+ *   the layer's value for the surface next door: at the layer's full size, from
+ *   the neighbouring texel nearest or farthest in depth. (Drawing the effects a
+ *   second time into the marked samples alone would be exact, and was tried: the
+ *   graphics chip takes as long to turn the unmarked samples away as it does to
+ *   draw them.)
+ *
+ * - A smaller layer is not stretched over the picture like an image, or smoke
+ *   would leak across every edge. Each pixel takes only the texels that were
+ *   tested against its own surface, and the view weapon takes none
+ *   (BlendShader).
+ *
+ * - The layer is drawn straight after the prepass, ahead of the scene, and put
+ *   over the frame buffer where the effects stand in the emissive pass
+ *   (RB_FxLayer_BeginEarly), so the scene's buffer is not interrupted for it.
  *
  * - Only blends the target can hold go into it: source ZERO, ONE or SRCALPHA
  *   against destination ZERO, ONE or INVSRCALPHA. A material that writes depth
@@ -121,7 +127,7 @@ enum {
     RS_ZFUNC = 23, RS_ALPHAREF = 24, RS_ALPHAFUNC = 25, RS_ALPHABLENDENABLE = 27, RS_FOGENABLE = 28, RS_STENCILENABLE = 52,
     RS_STENCILFAIL = 53, RS_STENCILZFAIL = 54, RS_STENCILPASS = 55, RS_STENCILFUNC = 56, RS_STENCILREF = 57,
     RS_STENCILMASK = 58, RS_STENCILWRITEMASK = 59, RS_LIGHTING = 137, RS_COLORWRITEENABLE = 168, RS_BLENDOP = 171,
-    RS_SCISSORTESTENABLE = 174, RS_TWOSIDEDSTENCILMODE = 185, RS_SEPARATEALPHABLENDENABLE = 206, RS_SRCBLENDALPHA = 207,
+    RS_SCISSORTESTENABLE = 174, RS_TWOSIDEDSTENCILMODE = 185, RS_SLOPESCALEDEPTHBIAS = 175, RS_DEPTHBIAS = 195, RS_SEPARATEALPHABLENDENABLE = 206, RS_SRCBLENDALPHA = 207,
     RS_DESTBLENDALPHA = 208, RS_BLENDOPALPHA = 209,
 };
 enum { BLEND_ZERO = 1, BLEND_ONE = 2, BLEND_SRCALPHA = 5, BLEND_INVSRCALPHA = 6 };
@@ -131,6 +137,9 @@ enum { USAGE_RENDERTARGET = 1, USAGE_DEPTHSTENCIL = 2, QUERY_OCCLUSION = 9, ISSU
 /* Stencil bits of a sample the layer cannot stand for: it lies beyond, or in front of,
  * the depth the layer was tested against. */
 enum { MARK_FAR = 0x40, MARK_NEAR = 0x80, MARK_ANY = 0xc0 };
+/* The engine draws the view weapon into depths 0 to 0.2 (rb_backend.c: RB_SetDepthRange);
+ * the world's nearest surface lies beyond that. */
+#define WEAPON_DEPTH 0.2
 enum { LEVELS = 3, DIRECT = -1 }; /* the picture's size (0), a half (1) and a quarter (2); or no layer */
 
 extern void RB_ClearAllStreamSources(void);
@@ -148,6 +157,7 @@ typedef struct {
     void *markShader[2];               /* samples farther, and nearer, than the layer's depth */
     void *fixShader[2];                /* the layer's value for each of the two */
     unsigned width, height;
+    void *blendShader[3]; /* a smaller layer: BlendShader, by `pick` */
     int failed;
 } Layer;
 
@@ -172,6 +182,8 @@ static DWORD s_destBlend;    /* DESTBLEND as the engine wants it */
 static void *s_query;
 static int s_queryPending, s_queryMode, s_measuring;
 static double s_fill;                   /* frame buffer pixels, as last counted */
+static int s_early;          /* the layer is being drawn ahead of the scene (RB_FxLayer_BeginEarly) */
+static int s_earlyPending;   /* and waits to be put over the frame buffer */
 static int s_mode = DIRECT;             /* how the effects are drawn this frame: DIRECT or a level */
 /* States the layer sets for itself while the engine's own values wait. */
 static const DWORD layerStates[] = { RS_COLORWRITEENABLE, RS_SEPARATEALPHABLENDENABLE, RS_SRCBLENDALPHA,
@@ -230,6 +242,9 @@ static void ReleaseLayers(void)
         Release(&layer->markShader[1]);
         Release(&layer->fixShader[0]);
         Release(&layer->fixShader[1]);
+        Release(&layer->blendShader[0]);
+        Release(&layer->blendShader[1]);
+        Release(&layer->blendShader[2]);
         memset(layer, 0, sizeof(*layer));
     }
 }
@@ -286,10 +301,10 @@ void RB_FxLayer_Prepare(void *device)
         GetLayer(level);
 }
 
-static void *CompileShader(const char *name, const char *source)
+static void *CompileShaderAs(const char *name, const char *source, const char *profile)
 {
     void *blob = NULL, *messages = NULL, *shader = NULL;
-    if (Win_D3D9_CompileShader(source, (int)strlen(source), name, "main", "ps_2_0", &blob, &messages) < 0 || !blob) {
+    if (Win_D3D9_CompileShader(source, (int)strlen(source), name, "main", profile, &blob, &messages) < 0 || !blob) {
         fprintf(stderr, "r_fxLayer: %s did not compile%s%s\n", name, messages ? ": " : "",
                 messages ? (const char *)CALL(BlobPointerFn, messages, BLOB_GetBufferPointer)(messages) : "");
         Release(&messages);
@@ -300,6 +315,11 @@ static void *CompileShader(const char *name, const char *source)
     Release(&blob);
     Release(&messages);
     return shader;
+}
+
+static void *CompileShader(const char *name, const char *source)
+{
+    return CompileShaderAs(name, source, "ps_2_0");
 }
 
 /* Depth of a block of the scene's texels (2 by 2 for a half, 4 by 4 for a quarter):
@@ -409,6 +429,82 @@ static void *FixShader(const Layer *layer, int nearer, int level)
     return CompileShader(nearer ? "fxlayer_fix_near" : "fxlayer_fix_far", source);
 }
 
+/* What a smaller layer gives one pixel of the frame buffer.
+ *
+ * A texel of a smaller layer stands for a block of pixels and was tested against the
+ * farthest depth in it. Blending the four texels around a pixel as a picture is
+ * blended would let smoke leak across every edge: beside the hand that holds the
+ * weapon, a pixel of the street would take part of its smoke from a texel that lies on
+ * the hand and has none. So only texels tested against this pixel's own surface count:
+ * those whose depth is within the tolerance of a reference depth. They are blended by
+ * their usual weights; if there is none, the one nearest in depth is taken alone.
+ *
+ * The reference is the prepass's depth for this pixel (`pick` 0). The samples of an
+ * anti-aliased edge that belong to the surface next door use the nearest (`pick` 1) or
+ * the farthest (`pick` 2) depth among the pixel and the eight around it instead; Mark
+ * tells them apart.
+ *
+ * The view weapon and the hands holding it are drawn into the first fifth of the depth
+ * range, which nothing else reaches, and no effect lies in front of them. A reference
+ * depth there takes nothing from the layer.
+ *
+ * Sampler 0 is the layer's depth, 1 the layer, 2 the prepass's depth. */
+static void *BlendShader(const Layer *layer, int level, int pick)
+{
+    static const char *const names[] = { "fxlayer_blend", "fxlayer_blend_near", "fxlayer_blend_far" };
+    char source[8192];
+    double tolerance = Tolerance(level);
+    int x, y, used;
+
+    used = snprintf(source, sizeof source,
+                    "sampler layerDepth : register(s0);\n"
+                    "sampler layerMap : register(s1);\n"
+                    "sampler sceneDepth : register(s2);\n"
+                    "float4 main(float2 uv : TEXCOORD0) : COLOR0\n"
+                    "{\n"
+                    "    float d = tex2D(sceneDepth, uv).r;\n");
+    for (y = -1; pick && y <= 1; y++)
+        for (x = -1; x <= 1; x++)
+            if (x || y)
+                used += snprintf(source + used, sizeof source - (size_t)used,
+                                 "    d = %s(d, tex2D(sceneDepth, uv + float2(%.9g, %.9g)).r);\n", pick == 1 ? "min" : "max",
+                                 (double)x / s_sceneWidth, (double)y / s_sceneHeight);
+    snprintf(source + used, sizeof source - (size_t)used,
+             "    float2 size = float2(%u.0, %u.0);\n"
+             "    float2 t = uv * float2(%.9g, %.9g) * size - 0.5;\n"
+             "    float2 f = frac(t);\n"
+             "    float2 o = (t - f + 0.5) / size;\n"
+             "    float2 e = 1.0 / size;\n"
+             "    float4 q = 1.0 - float4(tex2D(layerDepth, o).r, tex2D(layerDepth, o + float2(e.x, 0.0)).r,\n"
+             "                            tex2D(layerDepth, o + float2(0.0, e.y)).r, tex2D(layerDepth, o + e).r);\n"
+             "    float4 c0 = tex2D(layerMap, o);\n"
+             "    float4 c1 = tex2D(layerMap, o + float2(e.x, 0.0));\n"
+             "    float4 c2 = tex2D(layerMap, o + float2(0.0, e.y));\n"
+             "    float4 c3 = tex2D(layerMap, o + e);\n"
+             "    float r = 1.0 - d;\n"
+             "    float4 w = float4((1.0 - f.x) * (1.0 - f.y), f.x * (1.0 - f.y), (1.0 - f.x) * f.y, f.x * f.y);\n"
+             "    w *= step(q, r * %.9g) * step(r * %.9g, q);\n"
+             "    float sum = w.x + w.y + w.z + w.w;\n"
+             "    float4 mixed = (c0 * w.x + c1 * w.y + c2 * w.z + c3 * w.w) / max(sum, 0.00001);\n"
+             "    float4 k = abs(q - r);\n"
+             "    float4 one = c0;\n"
+             "    float best = k.x;\n"
+             "    float m = step(k.y, best);\n"
+             "    one = lerp(one, c1, m);\n"
+             "    best = lerp(best, k.y, m);\n"
+             "    m = step(k.z, best);\n"
+             "    one = lerp(one, c2, m);\n"
+             "    best = lerp(best, k.z, m);\n"
+             "    m = step(k.w, best);\n"
+             "    one = lerp(one, c3, m);\n"
+             "    float4 result = lerp(one, mixed, step(0.0001, sum));\n"
+             "    return lerp(result, float4(0.0, 0.0, 0.0, 1.0), step(d, %.9g));\n"
+             "}\n",
+             layer->width, layer->height, (double)s_sceneWidth / (layer->width << level),
+             (double)s_sceneHeight / (layer->height << level), 1.0 + tolerance, 1.0 / (1.0 + tolerance), WEAPON_DEPTH);
+    return CompileShaderAs(names[pick], source, "ps_3_0");
+}
+
 /* The layer of this size, made on first use. Sixteen bits a channel where the device
  * has them: thick smoke is fifty blends deep, and eight bits would round each one. */
 static Layer *GetLayer(int level)
@@ -440,18 +536,15 @@ static Layer *GetLayer(int level)
         CALL(GetSurfaceFn, layer->colorTexture, TEX_GetSurfaceLevel)(layer->colorTexture, 0, &layer->colorSurface) < 0 ||
         (level && (!CreateDepth(device, layer->width, layer->height, &layer->depthTexture, &layer->depthSurface) ||
                    !(layer->reduceShader = ReduceShader(level)))) ||
-        !(layer->markShader[0] = MarkShader(layer, 0, level)) || !(layer->markShader[1] = MarkShader(layer, 1, level)) ||
-        !(layer->fixShader[0] = FixShader(layer, 0, level)) || !(layer->fixShader[1] = FixShader(layer, 1, level))) {
+        !(layer->markShader[0] = MarkShader(layer, 0, 0)) || !(layer->markShader[1] = MarkShader(layer, 1, 0)) ||
+        (!level && (!(layer->fixShader[0] = FixShader(layer, 0, level)) || !(layer->fixShader[1] = FixShader(layer, 1, level)))) ||
+        (level && (!(layer->blendShader[0] = BlendShader(layer, level, 0)) || !(layer->blendShader[1] = BlendShader(layer, level, 1)) ||
+                   !(layer->blendShader[2] = BlendShader(layer, level, 2))))) {
         layer->failed = 1;
         fprintf(stderr, "r_fxLayer: no layer of %ux%u; effects are drawn without it\n", layer->width, layer->height);
         return NULL;
     }
     return layer;
-}
-
-static void *LayerDepthTexture(void)
-{
-    return s_level ? s_layer->depthTexture : s_sceneDepthTexture;
 }
 
 static DWORD AlphaDestFor(DWORD destBlend)
@@ -480,14 +573,15 @@ static void ScaleViewport(const Viewport *full, Viewport *out)
 
 /* A screen-filling pass of this module's own: every state it touches is put back. */
 typedef struct {
-    DWORD states[32], stages[6], samplers[2][5];
-    void *textures[2], *decl, *vs, *ps;
+    DWORD states[32], stages[6], samplers[3][5];
+    void *textures[3], *decl, *vs, *ps;
 } Saved;
 
 static const DWORD passStates[] = { RS_ZENABLE, RS_ZWRITEENABLE, RS_ZFUNC, RS_ALPHATESTENABLE, RS_SRCBLEND, RS_DESTBLEND,
     RS_CULLMODE, RS_ALPHABLENDENABLE, RS_FOGENABLE, RS_LIGHTING, RS_COLORWRITEENABLE, RS_BLENDOP,
     RS_SEPARATEALPHABLENDENABLE, RS_SCISSORTESTENABLE, RS_STENCILENABLE, RS_STENCILFAIL, RS_STENCILZFAIL, RS_STENCILPASS,
-    RS_STENCILFUNC, RS_STENCILREF, RS_STENCILMASK, RS_STENCILWRITEMASK, RS_TWOSIDEDSTENCILMODE };
+    RS_STENCILFUNC, RS_STENCILREF, RS_STENCILMASK, RS_STENCILWRITEMASK, RS_TWOSIDEDSTENCILMODE,
+    RS_SLOPESCALEDEPTHBIAS, RS_DEPTHBIAS };
 static const DWORD passStages[][2] = { { 0, 1 }, { 0, 2 }, { 0, 4 }, { 0, 5 }, { 1, 1 }, { 1, 4 } };
 static const DWORD passSamplers[] = { 1, 2, 5, 6, 7 }; /* address u, v, mag, min, mip */
 
@@ -500,7 +594,7 @@ static void PassBegin(Saved *saved)
         saved->states[i] = GetState(passStates[i]);
     for (i = 0; i < COUNT(passStages); i++)
         CALL(GetStageFn, device, DEV_GetTextureStageState)(device, passStages[i][0], passStages[i][1], &saved->stages[i]);
-    for (unit = 0; unit < 2; unit++) {
+    for (unit = 0; unit < 3; unit++) {
         saved->textures[unit] = NULL;
         CALL(GetTextureFn, device, DEV_GetTexture)(device, unit, &saved->textures[unit]);
         for (i = 0; i < COUNT(passSamplers); i++)
@@ -522,6 +616,9 @@ static void PassBegin(Saved *saved)
     SetState(RS_ZWRITEENABLE, 0);
     SetState(RS_STENCILENABLE, 0);
     SetState(RS_TWOSIDEDSTENCILMODE, 0);
+    /* These passes compare depths they set themselves: a decal's bias must not move them. */
+    SetState(RS_SLOPESCALEDEPTHBIAS, 0);
+    SetState(RS_DEPTHBIAS, 0);
     SetState(RS_STENCILFAIL, OP_KEEP);
     SetState(RS_STENCILZFAIL, OP_KEEP);
     SetState(RS_STENCILPASS, OP_KEEP);
@@ -569,7 +666,7 @@ static void PassEnd(Saved *saved)
     void *device = s_device;
     unsigned i, unit;
 
-    for (unit = 0; unit < 2; unit++) {
+    for (unit = 0; unit < 3; unit++) {
         CALL(SetTextureFn, device, DEV_SetTexture)(device, unit, saved->textures[unit]);
         Release(&saved->textures[unit]);
         for (i = 0; i < COUNT(passSamplers); i++)
@@ -662,7 +759,8 @@ static void ReduceDepth(void)
     SetState(RS_ZWRITEENABLE, 0);
 }
 
-/* Mark the samples of the frame buffer that the layer cannot stand for. */
+/* Mark the samples of the frame buffer that do not lie at the depth the prepass has for
+ * their pixel: nearer, or farther. */
 static void Mark(void)
 {
     void *device = s_device;
@@ -674,7 +772,7 @@ static void Mark(void)
     SetState(RS_STENCILENABLE, 1);
     SetState(RS_STENCILFUNC, CMP_ALWAYS);
     SetState(RS_STENCILPASS, OP_REPLACE);
-    PassTexture(0, LayerDepthTexture(), 1);
+    PassTexture(0, s_sceneDepthTexture, 1);
     for (pass = 0; pass < 2; pass++) {
         SetState(RS_STENCILREF, pass ? MARK_NEAR : MARK_FAR);
         SetState(RS_STENCILWRITEMASK, pass ? MARK_NEAR : MARK_FAR);
@@ -704,21 +802,30 @@ static void Composite(void)
     SetState(RS_STENCILFUNC, CMP_EQUAL);
     SetState(RS_STENCILREF, 0);
     SetState(RS_STENCILMASK, MARK_ANY);
-    CALL(SetObjectFn, device, DEV_SetPixelShader)(device, NULL);
-    for (i = 0; i < COUNT(passStages); i++)
-        CALL(SetStageFn, device, DEV_SetTextureStageState)(device, passStages[i][0], passStages[i][1], values[i]);
-    PassTexture(0, s_layer->colorTexture, s_level ? 2 : 1);
-    PassDrawViewport((float)(s_layer->width << s_level), (float)(s_layer->height << s_level));
+    if (s_level) {
+        PassTexture(0, s_layer->depthTexture, 1);
+        PassTexture(1, s_layer->colorTexture, 1);
+        PassTexture(2, s_sceneDepthTexture, 1);
+        CALL(SetObjectFn, device, DEV_SetPixelShader)(device, s_layer->blendShader[0]);
+        PassDrawViewport((float)s_sceneWidth, (float)s_sceneHeight);
+    } else {
+        CALL(SetObjectFn, device, DEV_SetPixelShader)(device, NULL);
+        for (i = 0; i < COUNT(passStages); i++)
+            CALL(SetStageFn, device, DEV_SetTextureStageState)(device, passStages[i][0], passStages[i][1], values[i]);
+        PassTexture(0, s_layer->colorTexture, 1);
+        PassDrawViewport((float)s_layer->width, (float)s_layer->height);
+        PassTexture(0, s_sceneDepthTexture, 1);
+        PassTexture(1, s_layer->colorTexture, 1);
+    }
 
     /* A sample marked both ways lies between two surfaces; it goes with the nearer. */
     SetState(RS_STENCILWRITEMASK, MARK_ANY);
     SetState(RS_STENCILPASS, OP_ZERO);
-    PassTexture(0, LayerDepthTexture(), 1);
-    PassTexture(1, s_layer->colorTexture, 1);
     for (pass = 1; pass >= 0; pass--) {
         SetState(RS_STENCILREF, pass ? MARK_NEAR : MARK_FAR);
         SetState(RS_STENCILMASK, pass ? MARK_NEAR : MARK_ANY);
-        CALL(SetObjectFn, device, DEV_SetPixelShader)(device, s_layer->fixShader[pass]);
+        CALL(SetObjectFn, device, DEV_SetPixelShader)(device,
+                                                      s_level ? s_layer->blendShader[pass ? 1 : 2] : s_layer->fixShader[pass]);
         PassDrawViewport((float)s_sceneWidth, (float)s_sceneHeight);
     }
     SetState(RS_STENCILPASS, OP_KEEP);
@@ -908,7 +1015,7 @@ int RB_FxLayer_Begin(void *device, int sceneDepthValid)
     memset(&desc, 0, sizeof(desc));
     CALL(GetSurfaceFn, device, DEV_GetRenderTarget)(device, 0, &s_savedColor);
     CALL(GetDepthFn, device, DEV_GetDepthStencilSurface)(device, &s_savedDepth);
-    if (s_savedColor && CALL(GetDescFn, s_savedColor, SURF_GetDesc)(s_savedColor, &desc) >= 0)
+    if (s_savedColor && CALL(GetDescFn, s_savedColor, SURF_GetDesc)(s_savedColor, &desc) >= 0 && !s_early)
         s_samples = desc.MultiSampleType;
     if (s_mode != DIRECT && sceneDepthValid && s_savedColor && s_savedDepth && desc.Width == s_sceneWidth &&
         desc.Height == s_sceneHeight)
@@ -916,7 +1023,8 @@ int RB_FxLayer_Begin(void *device, int sceneDepthValid)
     if (!s_layer) {
         Release(&s_savedColor);
         Release(&s_savedDepth);
-        CountBegin(DIRECT);
+        if (!s_early)
+            CountBegin(DIRECT);
         return 0;
     }
     s_level = s_mode;
@@ -1028,17 +1136,12 @@ void RB_FxLayer_Viewport(const void *requested, void *scaled)
         *(Viewport *)scaled = s_viewport;
 }
 
-/* The run of effects is drawn. If it went into the layer: back to the frame buffer,
- * and the layer over it. */
-void RB_FxLayer_End(void)
+/* The run of effects is drawn into the layer: give the device back what it had. */
+static void Leave(void)
 {
     void *device = s_device;
-    Saved saved;
     unsigned i;
 
-    CountEnd();
-    if (!s_active)
-        return;
     s_active = 0;
     if (s_alphaPass) {
         s_alphaPass = 0;
@@ -1052,6 +1155,12 @@ void RB_FxLayer_End(void)
     CALL(ViewportFn, device, DEV_SetViewport)(device, &s_viewport);
     for (i = 0; i < COUNT(layerStates); i++)
         SetState(layerStates[i], s_layerWanted[i]);
+}
+
+/* The layer over the frame buffer, which is bound. */
+static void Apply(void)
+{
+    Saved saved;
 
     PassBegin(&saved);
     Mark();
@@ -1059,5 +1168,67 @@ void RB_FxLayer_End(void)
     if (s_alphaDrawn)
         CompositeAlpha();
     PassEnd(&saved);
+}
+
+/* The run of effects is drawn. If it went into the layer: back to the frame buffer,
+ * and the layer over it. */
+void RB_FxLayer_End(void)
+{
+    CountEnd();
+    if (!s_active)
+        return;
+    Leave();
+    Apply();
+}
+
+/* The layer needs nothing of the frame buffer until it is put over it: what hides the
+ * effects is the float-Z prepass's depth. So the one run of effects a frame usually
+ * has is drawn into the layer straight after that prepass, before the scene is begun,
+ * and the scene's multisampled buffer is then drawn in one go. Left for its place in
+ * the emissive pass, the layer would interrupt that buffer, and on this kind of
+ * graphics chip every sample of it would be written out to memory and read back in.
+ *
+ * `samples` is what the frame buffer will have. Returns 1 when the effects go into the
+ * layer now; RB_FxLayer_EndEarly follows, and RB_FxLayer_ApplyEarly where the run
+ * stands in the emissive pass. */
+int RB_FxLayer_BeginEarly(void *device, int samples)
+{
+    int held;
+
+    s_earlyPending = 0;
+    s_samples = samples;
+    s_early = 1;
+    held = RB_FxLayer_Begin(device, 1);
+    s_early = 0;
+    return held;
+}
+
+void RB_FxLayer_EndEarly(void)
+{
+    CountEnd();
+    if (!s_active)
+        return;
+    Leave();
+    s_earlyPending = 1;
+}
+
+/* Is a layer drawn early waiting? */
+int RB_FxLayer_EarlyPending(void)
+{
+    return s_earlyPending;
+}
+
+/* Put it over the frame buffer, or (apply 0) let it go. */
+void RB_FxLayer_ApplyEarly(void *device, int apply, int skyOnlyAlpha)
+{
+    if (!s_earlyPending)
+        return;
+    s_earlyPending = 0;
+    if (!apply)
+        return;
+    s_device = device;
+    s_skyOnlyAlpha = skyOnlyAlpha;
+    CALL(ViewportFn, device, DEV_GetViewport)(device, &s_viewport);
+    Apply();
 }
 #endif /* COD2_MAC_D3D9 */
