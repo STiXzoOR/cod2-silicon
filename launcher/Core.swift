@@ -169,16 +169,27 @@ struct ConfigConnectionLaunch: Equatable, Sendable {
     }
 }
 
+/// What an engine draws with. The app carries each engine twice: the executable ending in
+/// `_metal` draws with Metal, the plain name with OpenGL.
+enum GameRenderer: String, Codable, Sendable, CaseIterable { case metal, openGL }
+
 /// Which engine a game starts with. CoD2x is compiled into the engine, so the app carries two:
 /// `cod2_macos` with CoD2x and `cod2_macos_stock`, the original 1.3 from the same sources.
 enum GameEngine: String, Codable, Sendable, CaseIterable {
     case cod2x, original
     var executableName: String { self == .cod2x ? "cod2_macos" : "cod2_macos_stock" }
+    func executableName(_ renderer: GameRenderer) -> String { executableName + (renderer == .metal ? "_metal" : "") }
     /// The engines a game app carries, by their executables.
     static func installed(in gameBundle: URL) -> Set<GameEngine> {
         Set(allCases.filter { FileManager.default.isExecutableFile(atPath: $0.executable(in: gameBundle).path) })
     }
-    func executable(in gameBundle: URL) -> URL { gameBundle.appendingPathComponent("Contents/MacOS/" + executableName) }
+    func executable(in gameBundle: URL, renderer: GameRenderer = .openGL) -> URL {
+        gameBundle.appendingPathComponent("Contents/MacOS/" + executableName(renderer))
+    }
+    /// What a game of this engine draws with: the player's choice when the app carries that build, otherwise OpenGL.
+    func renderer(_ chosen: GameRenderer, in gameBundle: URL) -> GameRenderer {
+        FileManager.default.isExecutableFile(atPath: executable(in: gameBundle, renderer: chosen).path) ? chosen : .openGL
+    }
     /// Whether this engine can play on the server: CoD2x joins both kinds, the original only stock 1.3.
     func canJoin(_ server: GameServer) -> Bool { self == .cod2x || !ServerFacts(server).isCoD2x }
 }
@@ -942,6 +953,8 @@ struct GameSettings: Codable, Sendable, Equatable {
     var matchSummariesEnabled = true
     /// CoD2x unless the player chose the original 1.3 in Settings.
     var engine = GameEngine.cod2x
+    /// Metal unless the player chose OpenGL.
+    var renderer = GameRenderer.metal
     /// Settings › Privacy: crash reports to this project's Sentry, and CoD2x's own to CoD2x. Off until turned on.
     var sendCrashReports = false
     var sendCoD2xReports = false
@@ -980,6 +993,7 @@ struct GameSettings: Codable, Sendable, Equatable {
         matchSummariesEnabled = try c.decodeIfPresent(Bool.self, forKey: .matchSummariesEnabled) ?? d.matchSummariesEnabled
         // An engine this version doesn't know (from a newer launcher) falls back without losing the rest.
         engine = (try? c.decodeIfPresent(GameEngine.self, forKey: .engine)) ?? d.engine
+        renderer = (try? c.decodeIfPresent(GameRenderer.self, forKey: .renderer)) ?? d.renderer
         sendCrashReports = (try? c.decodeIfPresent(Bool.self, forKey: .sendCrashReports)) ?? d.sendCrashReports
         sendCoD2xReports = (try? c.decodeIfPresent(Bool.self, forKey: .sendCoD2xReports)) ?? d.sendCoD2xReports
         // ship-settings: launcher preferences; a value this version doesn't know keeps the default.

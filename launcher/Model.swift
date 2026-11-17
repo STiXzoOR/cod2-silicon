@@ -304,8 +304,10 @@ struct MediaEntry: Identifiable {
 
     // MARK: - Core
     var gameBundle: URL { Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/CoD2 Game.app") }
-    /// Either engine of this app, as running processes report their executables.
-    var gameExecutables: Set<URL> { Set(GameEngine.allCases.map { $0.executable(in: gameBundle).resolvingSymlinksInPath() }) }
+    /// Every engine of this app, as running processes report their executables.
+    var gameExecutables: Set<URL> {
+        Set(GameEngine.allCases.flatMap { engine in GameRenderer.allCases.map { engine.executable(in: gameBundle, renderer: $0).resolvingSymlinksInPath() } })
+    }
     /// The engine the next game starts with: the one chosen in Settings, when this app carries it.
     var chosenEngine: GameEngine { matchEngineOverride ?? (installedEngines.contains(settings.engine) ? settings.engine : .cod2x) }
     var originalAvailable: Bool { installedEngines.contains(.original) }
@@ -322,7 +324,7 @@ struct MediaEntry: Identifiable {
         preferences = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".cod2/preferences")
         let gameApp = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/CoD2 Game.app")
         installedEngines = snapshot ? Set(GameEngine.allCases) : GameEngine.installed(in: gameApp)
-        let expected = Set(GameEngine.allCases.map { $0.executable(in: gameApp).resolvingSymlinksInPath() })
+        let expected = Set(GameEngine.allCases.flatMap { engine in GameRenderer.allCases.map { engine.executable(in: gameApp, renderer: $0).resolvingSymlinksInPath() } })
         let identifier = (Bundle.main.bundleIdentifier ?? "") + ".game"
         var sessionError: String?
         if snapshot { configStudio = nil }
@@ -669,7 +671,7 @@ struct MediaEntry: Identifiable {
         do {
             try rememberData()
             let gameEngine = chosenEngine
-            let executable = gameEngine.executable(in: gameBundle)
+            let executable = gameEngine.executable(in: gameBundle, renderer: gameEngine.renderer(settings.renderer, in: gameBundle))
             guard FileManager.default.isExecutableFile(atPath: executable.path) else { throw LauncherError(message: "The game helper is missing. Rebuild or reinstall this app.") }
             // CoD2x's menus and icons for a CoD2x game, none for the original 1.3. Missing files never stop a game.
             _ = CoD2xFiles.prepare(for: gameEngine, home: home, dataPath: dataPath)

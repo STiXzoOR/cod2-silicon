@@ -111,6 +111,15 @@ import Foundation
         precondition(GameEngine.installed(in: game) == [.cod2x], "a stock engine that can't run doesn't count")
         try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: macos.appendingPathComponent("cod2_macos_stock").path)
         precondition(GameEngine.installed(in: game) == [.cod2x, .original])
+        // Each engine draws with Metal when the app carries that build, and with OpenGL when it doesn't.
+        precondition(GameSettings().renderer == .metal)
+        precondition(GameEngine.cod2x.renderer(.metal, in: game) == .openGL && GameEngine.cod2x.executable(in: game).lastPathComponent == "cod2_macos")
+        FileManager.default.createFile(atPath: macos.appendingPathComponent("cod2_macos_metal").path, contents: Data(), attributes: [.posixPermissions: 0o755])
+        precondition(GameEngine.cod2x.renderer(.metal, in: game) == .metal && GameEngine.cod2x.renderer(.openGL, in: game) == .openGL)
+        precondition(GameEngine.original.renderer(.metal, in: game) == .openGL, "the original 1.3 has no Metal build here")
+        precondition(GameEngine.original.executable(in: game, renderer: .metal).lastPathComponent == "cod2_macos_stock_metal")
+        let olderSettings = try JSONDecoder().decode(GameSettings.self, from: Data(#"{"fps":200,"renderer":"vulkan"}"#.utf8))
+        precondition(olderSettings.renderer == .metal && olderSettings.fps == 200, "a renderer this version doesn't know falls back without losing the rest")
 
         // Original 1.3 joins stock 1.3 servers only; CoD2x joins both.
         var codx = stock; codx.fields["shortversion"] = "1.4.6.8"

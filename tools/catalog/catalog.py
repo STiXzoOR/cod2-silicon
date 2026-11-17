@@ -160,6 +160,14 @@ def native_sources(root, mode):
     for pattern in re.findall(r'list\(FILTER MACOS_C EXCLUDE REGEX "([^"]+)"\)', text):
         pattern = pattern.replace('\\\\', '\\')
         paths = {p for p in paths if not re.search(pattern, '/' + p.relative_to(root).as_posix())}
+    # The Metal engines (COD2_MAC_D3D9) add sources of their own. What those register is either
+    # a setting the OpenGL engines register the same way (r_borderless) or a developer switch
+    # that is never saved, so the catalogue is read from the OpenGL engines' sources alone.
+    metal = re.findall(r'\nif\(COD2_MAC_D3D9\)\n.*?\nendif\(\)\n', text, re.S)
+    if len(metal) > 1:
+        raise CatalogError('unreviewed source selection: COD2_MAC_D3D9 blocks')
+    for block in metal:
+        text = text.replace(block, '\n')
     for body in re.findall(r'(?:list\(APPEND MACOS_C|target_sources\(cod2_macos PRIVATE)\s+([^)]*)\)', text):
         variables = set(re.findall(r'\$\{([^}]+)\}', body))
         if variables - {'MACOS_GEN_C'}:

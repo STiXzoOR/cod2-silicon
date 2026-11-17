@@ -4,6 +4,10 @@
 With --stock-engine, the original 1.3 engine built from the same sources (without
 COD2_CODX) travels beside it as cod2_macos_stock. It shares the game app's frameworks,
 shader generator, entitlements and signature; the launcher's Settings choose which one starts.
+
+With --metal-engine and --stock-metal-engine, the same two engines built with
+COD2_MAC_D3D9 (they draw with Metal through libd3d9metal) travel beside them as
+cod2_macos_metal and cod2_macos_stock_metal, with the library from --d3d9metal.
 """
 import argparse
 import pathlib
@@ -100,6 +104,12 @@ def main():
     parser.add_argument("--engine-only", action="store_true", help="legacy engine-only bundle for native engine fixtures")
     parser.add_argument("--stock-engine", type=pathlib.Path,
                         help="original 1.3 engine (built without COD2_CODX) to bundle beside the CoD2x one")
+    parser.add_argument("--metal-engine", type=pathlib.Path,
+                        help="CoD2x engine built with COD2_MAC_D3D9, which draws with Metal")
+    parser.add_argument("--stock-metal-engine", type=pathlib.Path,
+                        help="original 1.3 engine built with COD2_MAC_D3D9")
+    parser.add_argument("--d3d9metal", type=pathlib.Path,
+                        help="libd3d9metal install prefix from scripts/build-d3d9metal.sh")
     parser.add_argument("--server-engine", type=pathlib.Path,
                         help="CoD2x dedicated server (cod2_macos_ded) for Servers > Hosting")
     parser.add_argument("--stock-server-engine", type=pathlib.Path,
@@ -158,6 +168,27 @@ def main():
             parser.error("--stock-engine is a CoD2x build; build it without COD2_CODX")
         if "_Cod2xNativeApp_Arguments" not in stock_symbols:
             parser.error("--stock-engine lacks bundle argument support; rebuild the native target")
+    if "libd3d9metal" in subprocess.check_output(["otool", "-L", str(args.executable)], text=True) or \
+            (args.stock_engine and "libd3d9metal" in subprocess.check_output(["otool", "-L", str(args.stock_engine)], text=True)):
+        parser.error("the first engine and --stock-engine are the OpenGL builds; Metal builds go in --metal-engine and --stock-metal-engine")
+    # The same two engines drawing with Metal. They load libd3d9metal and compile the game's
+    # shaders with libvkd3d-shader, which the shader generator brings into the bundle.
+    metal_engines = [(args.metal_engine, "cod2_macos_metal", True), (args.stock_metal_engine, "cod2_macos_stock_metal", False)]
+    for source, name, codx in metal_engines:
+        if source is None:
+            continue
+        if args.engine_only or not source.is_file():
+            parser.error(f"{name} needs the launcher bundle and an existing file")
+        if not (args.d3d9metal and args.vkd3d and args.shadergen and args.frameworks):
+            parser.error(f"{name} needs --d3d9metal, --frameworks, --shadergen and --vkd3d")
+        subprocess.run(["lipo", str(source), "-verify_arch", "arm64"], check=True)
+        metal_symbols = subprocess.check_output(["nm", "-g", str(source)], text=True)
+        if ("_Cod2x_Init" in metal_symbols) != codx:
+            parser.error(f"{name}: wrong build; the CoD2x engine needs COD2_CODX=1 and the original one must not have it")
+        if "_Cod2xNativeApp_Arguments" not in metal_symbols:
+            parser.error(f"{name} lacks bundle argument support; rebuild the native target")
+        if "libd3d9metal" not in subprocess.check_output(["otool", "-L", str(source)], text=True):
+            parser.error(f"{name} is not a Metal build; configure it with COD2_MAC_D3D9=ON")
     # The dedicated servers the launcher starts for Servers > Hosting. They have no window, sound or
     # renderer, so anything but a system library among their dependencies is a build mistake.
     servers = [(args.server_engine, "cod2_macos_ded", True), (args.stock_server_engine, "cod2_macos_ded_stock", False)]
@@ -193,6 +224,12 @@ def main():
         shutil.copy2(args.stock_engine, stock)
         stock.chmod(stock.stat().st_mode | 0o111)
         engines.append(stock)
+    for source, name, _ in metal_engines:
+        if source is not None:
+            engine = game_macos / name
+            shutil.copy2(source, engine)
+            engine.chmod(engine.stat().st_mode | 0o111)
+            engines.append(engine)
     hosted = []
     for source, name, _ in servers:
         if source is not None:
@@ -214,6 +251,10 @@ def main():
         if not (frameworks / "libSDL3.dylib").is_file() or not (frameworks / "libSDL2.dylib").is_file():
             parser.error("SDL install prefix must contain SDL3 and sdl2-compat dylibs")
         shutil.copytree(args.frameworks / "licenses", resources / "licenses")
+        if len(engines) > 1 + bool(args.stock_engine):
+            shutil.copy2(args.d3d9metal / "lib/libd3d9metal.dylib", frameworks / "libd3d9metal.dylib")
+            for licence in sorted((args.d3d9metal / "licenses").iterdir()):
+                shutil.copy2(licence, resources / "licenses" / licence.name)
         machos = engines + sorted(p for p in frameworks.glob("*.dylib") if not p.is_symlink())
         make_portable(parser, machos, set(engines), frameworks)
         for dylib in machos[len(engines):]:
@@ -237,6 +278,12 @@ def main():
         make_portable(parser, [tool, library], {tool}, frameworks)
         codesign(library)
         codesign(tool)
+    # Every library an engine asks for by name must be in the bundle.
+    for engine in engines:
+        for line in subprocess.check_output(["otool", "-L", str(engine)], text=True).splitlines()[1:]:
+            dependency = line.strip().rsplit(" (", 1)[0]
+            if dependency.startswith("@rpath/") and not (game_contents / "Frameworks" / dependency[7:]).exists():
+                parser.error(f"{engine.name} needs {dependency[7:]}, which is not in the bundle")
     icon_files, icon_keys = build_icon(root, pathlib.Path(staging.name) / "icon")
     entitlements = pathlib.Path(staging.name) / "entitlements.plist"
     with entitlements.open("wb") as file:
@@ -321,7 +368,7 @@ def main():
         # A second engine is nested code: it carries its own signature and entitlements
         # before the game app's signature seals it.
         for engine in engines[1:]:
-            codesign(engine, entitlements, args.bundle_id + ".game.stock")
+            codesign(engine, entitlements, args.bundle_id + ".game" + engine.name[len("cod2_macos"):].replace("_", "."))
         for server in hosted:
             # No entitlements: a server records nothing and loads only system libraries.
             codesign(server, None, args.bundle_id + ".server" + (".stock" if server.name.endswith("_stock") else ""))

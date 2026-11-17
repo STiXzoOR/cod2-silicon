@@ -15,6 +15,10 @@ check_prerequisites() {
         printf 'Install the Xcode Command Line Tools: xcode-select --install\n' >&2
         return 1
     fi
+    if ! command -v cargo >/dev/null 2>&1; then
+        printf 'Install Rust (the Metal renderer is built with it): brew install rust, or https://rustup.rs\n' >&2
+        return 1
+    fi
     if ! command -v cmake >/dev/null 2>&1; then
         printf 'Install CMake from https://cmake.org/download/ (add its bin directory to PATH), or run: brew install cmake\n' >&2
         return 1
@@ -66,6 +70,7 @@ build_app() {
     "$python" "$root/tools/catalog/catalog.py" check --source-root "$root" --catalog "$root/launcher/Resources/ConfigCatalog.json" --mode cod2x
     "$root/scripts/build-sdl.sh" "$build/deps"
     "$root/scripts/build-vkd3d.sh" "$build/vkd3d"
+    "$root/scripts/build-d3d9metal.sh" "$build/d3d9metal"
     local prefix="$build/deps/install" sdk
     sdk=$(/usr/bin/xcrun --sdk macosx --show-sdk-path)
     # Two engines from the same sources: CoD2x (client) and the original 1.3 (client-stock),
@@ -82,13 +87,23 @@ build_app() {
         "${configure[@]}" "-DCOD2_TYPED_DATA_DIR=$build/typed"
     run_build cmake -S "$root" -B "$build/client-stock" -DCOD2_FEATURE_CFLAGS= \
         "${configure[@]}" "-DCOD2_TYPED_DATA_DIR=$build/typed-stock"
+    # The same two engines once more, drawing with Metal (libd3d9metal) instead of OpenGL.
+    local metal=(-DCOD2_MAC_D3D9=ON "-DCOD2_D3D9METAL_DIR=$build/d3d9metal/install")
+    run_build cmake -S "$root" -B "$build/client-metal" -DCOD2_FEATURE_CFLAGS=-DCOD2_CODX=1 \
+        "${configure[@]}" "${metal[@]}" "-DCOD2_TYPED_DATA_DIR=$build/typed-metal"
+    run_build cmake -S "$root" -B "$build/client-stock-metal" -DCOD2_FEATURE_CFLAGS= \
+        "${configure[@]}" "${metal[@]}" "-DCOD2_TYPED_DATA_DIR=$build/typed-stock-metal"
     # Each engine also builds its dedicated server, which Servers › Hosting starts.
     run_build cmake --build "$build/client" --target cod2_macos cod2_macos_ded cod2_shadergen --parallel "${COD2_BUILD_JOBS:-$(/usr/sbin/sysctl -n hw.ncpu)}"
     run_build cmake --build "$build/client-stock" --target cod2_macos cod2_macos_ded --parallel "${COD2_BUILD_JOBS:-$(/usr/sbin/sysctl -n hw.ncpu)}"
+    run_build cmake --build "$build/client-metal" --target cod2_macos --parallel "${COD2_BUILD_JOBS:-$(/usr/sbin/sysctl -n hw.ncpu)}"
+    run_build cmake --build "$build/client-stock-metal" --target cod2_macos --parallel "${COD2_BUILD_JOBS:-$(/usr/sbin/sysctl -n hw.ncpu)}"
     run_build cmake --build "$build/client" --target cod2_launcher --parallel "${COD2_BUILD_JOBS:-3}"
     run_build "$python" "$root/tools/cod2x/make_macos_app.py" \
         "$build/client/cod2_macos" "$app" --replace --launcher "$build/client/launcher/CoD2Launcher" --frameworks "$prefix" \
         --stock-engine "$build/client-stock/cod2_macos" \
+        --metal-engine "$build/client-metal/cod2_macos" --stock-metal-engine "$build/client-stock-metal/cod2_macos" \
+        --d3d9metal "$build/d3d9metal/install" \
         --server-engine "$build/client/cod2_macos_ded" --stock-server-engine "$build/client-stock/cod2_macos_ded" \
         --shadergen "$build/client/cod2-shadergen" --vkd3d "$build/vkd3d/install" --version "$version" \
         ${COD2_SENTRY_DSN:+--sentry-dsn "$COD2_SENTRY_DSN"}

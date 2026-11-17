@@ -56,11 +56,11 @@ like any other downloaded app.
 ### From source
 
 ```sh
-git clone https://github.com/cod2unbound/cod2-unbound && cd cod2-silicon && ./scripts/install.sh
+git clone https://github.com/cod2unbound/cod2-unbound && cd cod2-unbound && ./scripts/install.sh
 ```
 
-The installer needs Swift 6 (Xcode 26 or later), the Xcode Command Line Tools and CMake and explains how to
-get them. It downloads and builds the pinned SDL release itself (no Homebrew),
+The installer needs Swift 6 (Xcode 26 or later), the Xcode Command Line Tools, CMake and Rust and explains how to
+get them. It downloads and builds the pinned SDL release and the Metal library itself,
 compiles the client and installs `~/Applications/CoD2 Silicon.app`. No original
 game binary is needed to build. A locally built app is not quarantined, so
 Gatekeeper does not block it.
