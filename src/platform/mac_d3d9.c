@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include <vkd3d_shader.h>
 
@@ -80,6 +81,30 @@ void *Win_D3D9_Direct3DCreate9(void)
             snprintf(cache, sizeof cache, "%s", dir);
         else
             snprintf(cache, sizeof cache, "%s/Library/Caches/cod2-d3d9metal", home ? home : "/tmp");
+        {
+            /* The library keeps its compiled shaders and pipelines here and builds them
+             * again before the first frame of the next launch. It does not make the
+             * folder, and without one it keeps nothing: every launch would then compile
+             * each shader the first time something is drawn with it. */
+            char *slash;
+            for (slash = strchr(cache + 1, '/'); slash; slash = strchr(slash + 1, '/')) {
+                *slash = '\0';
+                mkdir(cache, 0755);
+                *slash = '/';
+            }
+            mkdir(cache, 0755);
+        }
+        {
+            /* The library's switches (its mtld3d.conf). It presents in HDR where the
+             * display can; the game's picture is not made for that and is shown as it
+             * is. Entries are read in order and a later one wins, so what a developer
+             * puts in MTLD3D_CONFIG still holds. */
+            static char config[2048];
+            const char *given = getenv("MTLD3D_CONFIG");
+            snprintf(config, sizeof config, "color.hdr.enable=false%s%s", given && *given ? ";" : "",
+                     given ? given : "");
+            setenv("MTLD3D_CONFIG", config, 1);
+        }
         host.size = (uint32_t)sizeof host;
         host.metal_layer = Host_MetalLayer;
         host.alloc_app = Host_Alloc;

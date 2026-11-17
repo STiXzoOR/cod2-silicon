@@ -445,30 +445,32 @@ void R_RegisterDvars(void)
     r_zFeather = ri.Dvar_RegisterBool("r_zFeather", 1, R_PRESET_ARCHIVE_FLAGS);
 #endif
 #if COD2_MAC_D3D9
+    /* The switches of the Metal path. They are for finding a fault, not for players: none is
+     * saved to the config, so a config stays the same whichever engine wrote it. */
     /* Smoke and other effects in a layer of their own (rb_fxlayer.c): 0 never, 1 when
      * they cover too much to draw at the frame rate asked for, 2 always at the picture's
      * size, 3 a half, 4 a quarter. Turning it on from 0 takes a vid_restart: the depth
      * buffer it reads is made with the renderer's targets. r_fxLayerBudget is how many
      * million pixels of effects a frame has time for at 250 frames a second. */
-    ri.Dvar_RegisterInt("r_fxLayer", 1, 0, 4, 0x1);
-    ri.Dvar_RegisterInt("r_fxLayerBudget", 50, 1, 1000, 0x1);
+    ri.Dvar_RegisterInt("r_fxLayer", 1, 0, 4, 0);
+    ri.Dvar_RegisterInt("r_fxLayerBudget", 50, 1, 1000, 0);
     /* Draw the layer straight after the depth prepass, ahead of the scene, so that the
      * scene's buffer is not interrupted for it. 0 draws it in its place in the emissive pass. */
-    ri.Dvar_RegisterInt("r_fxLayerEarly", 1, 0, 1, 0x1);
+    ri.Dvar_RegisterInt("r_fxLayerEarly", 1, 0, 1, 0);
     /* A smaller layer is drawn twice where a block of pixels holds two surfaces, so a
      * bush inside the smoke keeps the smoke that belongs in front of it (rb_fxlayer.c:
      * BlendShader). 0 draws it once. */
-    ri.Dvar_RegisterInt("r_fxLayerTwice", 1, 0, 1, 0x1);
+    ri.Dvar_RegisterInt("r_fxLayerTwice", 1, 0, 1, 0);
     /* With anti-aliasing on, draw the scene into a multisampled target of its own and
      * everything after it onto the resolved picture (rb_scenetarget.c). 0 draws all of
      * it into a multisampled back buffer, as Direct3D 9 does. Takes a vid_restart. */
-    ri.Dvar_RegisterInt("r_sceneTarget", 1, 0, 1, 0x1);
+    ri.Dvar_RegisterInt("r_sceneTarget", 1, 0, 1, 0);
     /* Glow reads which pixels are sky from the depth buffer when the scene is done,
      * instead of from a copy of the scene made in the middle of it (rb_fxlayer.c:
      * RB_ScreenPass_NonSkyAlpha). 0 makes the copy every frame, as the game does. */
-    ri.Dvar_RegisterInt("r_glowSkyFromDepth", 1, 0, 1, 0x1);
+    ri.Dvar_RegisterInt("r_glowSkyFromDepth", 1, 0, 1, 0);
     /* Above 1600 lines, work glow and blur out from the picture at half size (takes a vid_restart). */
-    ri.Dvar_RegisterInt("r_glowHalfRes", 1, 0, 1, 0x1);
+    ri.Dvar_RegisterInt("r_glowHalfRes", 1, 0, 1, 0);
 #endif
 
     r_lockPvs = ri.Dvar_RegisterBool("r_lockPvs", 0, 0x2080);
