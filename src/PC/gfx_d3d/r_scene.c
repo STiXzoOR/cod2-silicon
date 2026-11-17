@@ -1002,7 +1002,13 @@ void R_RenderScene(const refdef_t *refdef)
             if (feather || dynamicShadowType) {
                 if (!R_BeginDrawGroupSection(0)) {
                     R_AddCmdSetRenderTarget(feather ? R_RENDERTARGET_FLOAT_Z : R_RENDERTARGET_DYNAMICSHADOWS);
+#if COD2_MAC_D3D9
+                    /* The quad below fills the float-Z picture; clearing it as well tells
+                     * the graphics chip it need not read last frame's in first. */
+                    R_AddCmdClearScreen(7, (const vec_t *)imp_colorWhite, 1.0f, 0);
+#else
                     R_AddCmdClearScreen(feather ? 6 : 7, (const vec_t *)imp_colorWhite, 1.0f, 0);
+#endif
                     if (feather)
                         R_AddCmdDrawFullScreenColoredQuad(0, 0, 1, 1,
                             (const vec_t *)imp_colorWhite, rgp_p->shadowClearMaterial);

@@ -29,11 +29,13 @@ typedef int32_t HRESULT;
 typedef uint32_t DWORD;
 
 #define VT(obj) (*(void ***)(obj))
-enum { DEV_CreateRenderTarget = 28, DEV_StretchRect = 34, UNK_Release = 2 };
+enum { DEV_CreateTexture = 23, DEV_CreateRenderTarget = 28, DEV_StretchRect = 34, TEX_GetSurfaceLevel = 18, UNK_Release = 2 };
 
 typedef HRESULT (*CreateRenderTargetFn)(void *, unsigned, unsigned, DWORD, DWORD, DWORD, int, void **, void *);
 typedef HRESULT (*StretchRectFn)(void *, void *, const void *, void *, const void *, DWORD);
 typedef uint32_t (*ReleaseFn)(void *);
+typedef HRESULT (*CreateTextureFn)(void *, unsigned, unsigned, unsigned, DWORD, DWORD, DWORD, void **, void *);
+typedef HRESULT (*GetSurfaceFn)(void *, DWORD, void **);
 
 extern int Dvar_GetInt(const char *name);
 
@@ -42,6 +44,20 @@ static void *s_sceneColor;              /* made here: the scene's multisampled c
 static void *s_sceneDepth, *s_backBuffer; /* the engine's: the scene's depth, the device's back buffer */
 static void **s_colorSlot, **s_depthSlot; /* the engine's frame buffer record */
 static int s_inScene;
+typedef struct {
+    void *texture, *surface;
+    unsigned width, height;
+} Scratch;
+static Scratch s_scratch[2];
+
+static void ScratchRelease(Scratch *scratch)
+{
+    if (scratch->surface)
+        ((ReleaseFn)VT(scratch->surface)[UNK_Release])(scratch->surface);
+    if (scratch->texture)
+        ((ReleaseFn)VT(scratch->texture)[UNK_Release])(scratch->texture);
+    scratch->surface = scratch->texture = NULL;
+}
 
 /* Is the scene drawn into a target of its own? Read when the device is made
  * (the back buffer then has one sample) and when the targets are. */
@@ -58,6 +74,8 @@ void RB_SceneTarget_Release(void)
         *s_depthSlot = s_sceneDepth;
         ((ReleaseFn)VT(s_sceneColor)[UNK_Release])(s_sceneColor);
     }
+    ScratchRelease(&s_scratch[0]);
+    ScratchRelease(&s_scratch[1]);
     s_sceneColor = s_sceneDepth = s_backBuffer = NULL;
     s_colorSlot = s_depthSlot = NULL;
     s_inScene = 0;
@@ -108,5 +126,36 @@ void RB_SceneTarget_Resolve(void)
 {
     if (s_sceneColor)
         ((StretchRectFn)VT(s_device)[DEV_StretchRect])(s_device, s_sceneColor, NULL, s_backBuffer, NULL, 2);
+}
+
+/* A render-target texture of this size and format, kept in `slot` and made again when
+ * the size changes. Returns the texture and puts its surface in *surface; NULL if it
+ * cannot be made. rb_backend.c uses slot 0 for the scene at half size (blur) and slot
+ * 1 for glow's set-up picture, where the reduced targets are an eighth of the screen
+ * (r_rendertarget.c: R_ReducedTargetPicmip). */
+void *RB_SceneTarget_Scratch(void *device, int slot, unsigned width, unsigned height, DWORD format, void **surface)
+{
+    Scratch *scratch = &s_scratch[slot];
+
+    if (!scratch->texture || scratch->width != width || scratch->height != height) {
+        ScratchRelease(scratch);
+        if (((CreateTextureFn)VT(device)[DEV_CreateTexture])(device, width, height, 1, 1 /* render target */, format, 0,
+                                                              &scratch->texture, NULL) < 0 ||
+            ((GetSurfaceFn)VT(scratch->texture)[TEX_GetSurfaceLevel])(scratch->texture, 0, &scratch->surface) < 0) {
+            ScratchRelease(scratch);
+            return NULL;
+        }
+        scratch->width = width;
+        scratch->height = height;
+    }
+    *surface = scratch->surface;
+    return scratch->texture;
+}
+
+/* All of one surface into another, filtered: at exactly half the size, each pixel is
+ * the average of four. */
+int RB_SceneTarget_Shrink(void *device, void *from, void *to)
+{
+    return ((StretchRectFn)VT(device)[DEV_StretchRect])(device, from, NULL, to, NULL, 2 /* linear */) >= 0;
 }
 #endif /* COD2_MAC_D3D9 */

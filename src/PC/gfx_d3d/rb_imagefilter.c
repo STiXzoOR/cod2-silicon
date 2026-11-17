@@ -497,6 +497,29 @@ static GfxRenderTargetId RB_ApplyGlowFilter(GfxRenderTargetId srcRenderTarget, G
     return dstRenderTarget;
 }
 
+#if COD2_MAC_D3D9
+/* Glow's set-up pass alone, from the resolved scene into `target`. It counts as a
+ * filter pass, as it does when RB_ApplyGlowFilter runs it ahead of the blur. */
+void RB_GlowSetupPass(GfxRenderTargetId target)
+{
+    GfxImageFilter filter;
+
+    filter.pingPongTargets[0] = R_RENDERTARGET_PINGPONG_0;
+    filter.pingPongTargets[1] = R_RENDERTARGET_PINGPONG_1;
+    filter.sourceImage = DX_RT_IMAGE(R_RENDERTARGET_RESOLVED_SCENE);
+    filter.finalTarget = target;
+    filter.passes[0].srcWidth = 1.0f;
+    filter.passes[0].srcHeight = 1.0f;
+    filter.passes[0].dstWidth = DX_RT_WIDTH(target);
+    filter.passes[0].dstHeight = DX_RT_HEIGHT(target);
+    filter.passes[0].tapHalfCount = 0;
+    filter.passes[0].material = RGP_GLOW_SETUP_MAT();
+    filter.passCount = 1;
+    g_TotalFilterPasses += 1;
+    RB_ApplyFilterPasses(&filter, 0);
+}
+#endif
+
 void RB_GlowFilterImage(float *radius)
 {
     float radiusX, radiusY;

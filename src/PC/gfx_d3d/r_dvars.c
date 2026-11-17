@@ -460,6 +460,8 @@ void R_RegisterDvars(void)
      * instead of from a copy of the scene made in the middle of it (rb_fxlayer.c:
      * RB_ScreenPass_NonSkyAlpha). 0 makes the copy every frame, as the game does. */
     ri.Dvar_RegisterInt("r_glowSkyFromDepth", 1, 0, 1, 0x1);
+    /* Above 1600 lines, work glow and blur out from the picture at half size (takes a vid_restart). */
+    ri.Dvar_RegisterInt("r_glowHalfRes", 1, 0, 1, 0x1);
 #endif
 
     r_lockPvs = ri.Dvar_RegisterBool("r_lockPvs", 0, 0x2080);

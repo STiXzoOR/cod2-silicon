@@ -545,6 +545,12 @@ extern int RB_SceneTarget_InScene(void);
 extern int RB_SceneTarget_Select(int scene);
 extern void RB_SceneTarget_Resolve(void);
 static void RB_SceneTargetBind(int scene);
+static void RB_ForgetSamplerImage(const GfxImage *image);
+static void RB_SceneCopyFlush(void);
+static int rb_sceneCopyPending;
+static void *RB_HalfSceneBegin(void);
+static void RB_HalfSceneEnd(void *fullTexture);
+static int RB_GlowSetupQuarter(void);
 static int rb_sceneResolved; /* this frame's scene is already in the back buffer */
 int rb_postSunUsed = 1;      /* something drew with the mid-scene copy of the scene (rb_shade.c) */
 static int rb_postSunFromDepth; /* this frame's glow has no such copy: see RB_ScreenPass_NonSkyAlpha */
@@ -1817,6 +1823,109 @@ static void RB_SetViewportCmd(GfxRenderCommandExecState *execState)
 }
 
 #if COD2_MAC_D3D9
+/* Unbind `image` wherever a sampler holds it, so that the next use binds it afresh. */
+static void RB_ForgetSamplerImage(const GfxImage *image)
+{
+    int samplerIndex;
+    for (samplerIndex = 0; samplerIndex < ((const vidConfig_t *)imp_vidConfig)->maxTextureMaps; ++samplerIndex)
+        if (dxState.samplerImage[samplerIndex] == image)
+            RB_SetSampler(samplerIndex, 0, NULL);
+}
+
+/* The resolved scene goes into the back buffer as a draw, and as the first thing drawn
+ * there in the frame: after glow has made its own pictures, so that the back buffer is
+ * entered once and drawn on to the end, and behind a clear, so that the graphics chip
+ * has no old contents to read in. */
+static void RB_SceneCopyFlush(void)
+{
+    extern void RB_ScreenPass_Copy(void *device, void *texture, unsigned width, unsigned height);
+    void *device = dx.device;
+
+    if (!rb_sceneCopyPending)
+        return;
+    rb_sceneCopyPending = 0;
+    if (tess.indexCount || tess.optimizedIndexCount)
+        RB_EndSurface();
+    RB_SetRenderTarget(R_RENDERTARGET_FRAME_BUFFER);
+    ((HRESULT (*)(void *, unsigned, const void *, unsigned, unsigned, float, unsigned))(*(void ***)device)[43])(
+        device, 0, NULL, 1, 0xff000000u, 1.0f, 0);
+    RB_ScreenPass_Copy(device, dx.renderTargets[R_RENDERTARGET_RESOLVED_SCENE].image->texture.map,
+                       (unsigned)dx.renderTargets[R_RENDERTARGET_RESOLVED_SCENE].width,
+                       (unsigned)dx.renderTargets[R_RENDERTARGET_RESOLVED_SCENE].height);
+}
+
+extern int R_ReducedTargetPicmip(void);
+extern void *RB_SceneTarget_Scratch(void *device, int slot, unsigned width, unsigned height, unsigned format,
+                                    void **surface);
+extern int RB_SceneTarget_Shrink(void *device, void *from, void *to);
+
+/* Where the reduced targets are an eighth of the screen (R_ReducedTargetPicmip), glow
+ * still starts as the game starts it: the set-up pass, which picks out what glows and
+ * what is sky, reads the full picture and writes a quarter-size one. That picture is
+ * then averaged down to an eighth, into the blurred-screen target (free until blur,
+ * which comes after glow), and the blur passes go on from there. Only the blur, which
+ * makes a smooth picture, works on fewer pixels. Returns 0 when not done. */
+static int RB_GlowSetupQuarter(void)
+{
+    extern void RB_GlowSetupPass(GfxRenderTargetId target);
+    GfxRenderTarget *pingPong = &dx.renderTargets[R_RENDERTARGET_PINGPONG_0], saved = *pingPong;
+    unsigned width = (unsigned)dx.renderTargets[R_RENDERTARGET_RESOLVED_SCENE].width >> 2;
+    unsigned height = (unsigned)dx.renderTargets[R_RENDERTARGET_RESOLVED_SCENE].height >> 2;
+    void *surface;
+
+    if (R_ReducedTargetPicmip() != 3 || backEnd.resolvedSceneTarget != R_RENDERTARGET_RESOLVED_SCENE)
+        return 0;
+    if (!RB_SceneTarget_Scratch(dx.device, 1, width, height, (unsigned)dx.backBufferFormat, &surface))
+        return 0;
+    /* The engine draws into targets from its table: lend it this one for the pass. */
+    pingPong->colorSurface = surface;
+    pingPong->width = width;
+    pingPong->height = height;
+    dxState.renderTargetId = (GfxRenderTargetId)-1;
+    RB_GlowSetupPass(R_RENDERTARGET_PINGPONG_0);
+    *pingPong = saved;
+    dxState.renderTargetId = (GfxRenderTargetId)-1;
+    return RB_SceneTarget_Shrink(dx.device, surface, dx.renderTargets[R_RENDERTARGET_BLURRED_SCREEN].colorSurface);
+}
+
+/* There, blur reads the resolved scene at half size: its first pass was made to
+ * average a quarter-size target's pixels. Begin fills the half-size copy and puts it
+ * in the scene image's place; it returns the texture End puts back, or NULL when
+ * nothing was changed. */
+static void *RB_HalfSceneBegin(void)
+{
+    GfxImage *sceneImage = dx.renderTargets[R_RENDERTARGET_RESOLVED_SCENE].image;
+    void *fullTexture = sceneImage->texture.map, *halfTexture, *halfSurface, *sceneSurface;
+    int filled;
+
+    if (R_ReducedTargetPicmip() != 3 || backEnd.resolvedSceneTarget != R_RENDERTARGET_RESOLVED_SCENE)
+        return NULL;
+    halfTexture = RB_SceneTarget_Scratch(dx.device, 0,
+                                         ((unsigned)dx.renderTargets[R_RENDERTARGET_RESOLVED_SCENE].width + 1) / 2,
+                                         ((unsigned)dx.renderTargets[R_RENDERTARGET_RESOLVED_SCENE].height + 1) / 2,
+                                         (unsigned)dx.backBufferFormat, &halfSurface);
+    if (!halfTexture)
+        return NULL;
+    sceneSurface = Image_GetSurface(sceneImage);
+    filled = RB_SceneTarget_Shrink(dx.device, sceneSurface, halfSurface);
+    ((HRESULT (*)(void *))(*(void ***)sceneSurface)[2])(sceneSurface);
+    if (!filled)
+        return NULL;
+    RB_ForgetSamplerImage(sceneImage);
+    sceneImage->texture.map = halfTexture;
+    return fullTexture;
+}
+
+static void RB_HalfSceneEnd(void *fullTexture)
+{
+    GfxImage *sceneImage = dx.renderTargets[R_RENDERTARGET_RESOLVED_SCENE].image;
+
+    if (!fullTexture)
+        return;
+    RB_ForgetSamplerImage(sceneImage);
+    sceneImage->texture.map = fullTexture;
+}
+
 /* The frame buffer becomes the scene's own multisampled target (1) or the device's
  * back buffer (0); see rb_scenetarget.c. Entering the scene clears all of it, so the
  * graphics chip has nothing of the last frame to read back in. */
@@ -4581,10 +4690,8 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
         /* The scene ends here. Its resolved picture goes into the back buffer, and what
          * follows is drawn on that. */
         if (frameBufferTarget == R_RENDERTARGET_FRAME_BUFFER && RB_SceneTarget_InScene()) {
-            extern void RB_ScreenPass_Copy(void *device, void *texture, unsigned width, unsigned height);
             RB_SceneTargetBind(0);
-            RB_ScreenPass_Copy(dxg->device, ((GfxImage *)offscreenImage)->texture.map, (unsigned)dxs->renderTargetWidth,
-                               (unsigned)dxs->renderTargetHeight);
+            rb_sceneCopyPending = 1; /* drawn once glow's own passes are done: RB_SceneCopyFlush */
         }
 #endif
 
@@ -4657,9 +4764,14 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
             {
                 /* Glow's own set-up pass reads the copy too; it is not what the copy waits for. */
                 int postSunUsed = rb_postSunUsed;
+                GfxRenderTargetId sceneTarget = backEnd.resolvedSceneTarget;
+
                 if (rb_postSunFromDepth)
                     backEnd.resolvedPostSunTarget = backEnd.resolvedSceneTarget;
+                if (glowRadii[0] != 0.0f && RB_GlowSetupQuarter())
+                    backEnd.resolvedSceneTarget = R_RENDERTARGET_BLURRED_SCREEN;
                 RB_GlowFilterImage((float *)(glowRadii));
+                backEnd.resolvedSceneTarget = sceneTarget;
                 if (rb_postSunFromDepth)
                     backEnd.resolvedPostSunTarget = (GfxRenderTargetId)(0xe);
                 rb_postSunUsed = postSunUsed;
@@ -4670,6 +4782,9 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
         }
 
         RB_SetRenderTarget(0);
+#if COD2_MAC_D3D9
+        RB_SceneCopyFlush();
+#endif
 
         {
             int glowCount = backEnd.glowCount;
@@ -4731,6 +4846,9 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
             backEnd.glowCount = 0;
         }
     }
+#if COD2_MAC_D3D9
+    RB_SceneCopyFlush();
+#endif
 
     if (!isDx7) {
         float blurVal = r_blur->current.value;
@@ -4763,7 +4881,15 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
                 }
 #endif
 
+#if COD2_MAC_D3D9
+                {
+                    void *fullTexture = RB_HalfSceneBegin();
+                    RB_GaussianFilterImage(totalBlur, R_RENDERTARGET_BLURRED_SCREEN);
+                    RB_HalfSceneEnd(fullTexture);
+                }
+#else
                 RB_GaussianFilterImage(totalBlur, R_RENDERTARGET_BLURRED_SCREEN);
+#endif
                 {
                     RB_SetRenderTarget(0);
 

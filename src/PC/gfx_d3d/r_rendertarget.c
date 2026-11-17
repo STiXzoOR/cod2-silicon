@@ -144,6 +144,25 @@ static IDirect3DSurface9 *R_GetOrCreateDepthStencil(byte *dxPtr, int fullWidth, 
     return ((DxGlobals *)(dxPtr))->singleSampleDepthStencilSurface ;
 }
 
+#if COD2_MAC_D3D9
+/* The glow and blur filters work on reduced copies of the screen: a quarter of its
+ * size each way. Their cost grows with the square of the resolution (more pixels, and
+ * more passes to reach the same width of blur): at 5120x2880 glow took nineteen passes
+ * over 1280x720. The picture they make is smooth by design, so above 1600 lines the
+ * Metal path gives them an eighth, which at 2160 lines is what 1080 lines has always
+ * had. What decides which pixels glow still runs on the full picture at a quarter
+ * (rb_backend.c: RB_GlowSetupQuarter); only the blur after it works on fewer pixels
+ * (r_glowHalfRes 0 turns this off). */
+int R_ReducedTargetPicmip(void)
+{
+    extern int Dvar_GetInt(const char *name);
+    return VIDCONFIG()->height > 1600 && Dvar_GetInt("r_glowHalfRes") ? 3 : 2;
+}
+#define R_REDUCED_PICMIP R_ReducedTargetPicmip()
+#else
+#define R_REDUCED_PICMIP 2
+#endif
+
 static void R_InitFullscreenRenderTargetImage(int imageProgId, int picmip, D3DFORMAT format, RenderTargetUsage usage, GfxRenderTarget *renderTarget)
 {
     vidConfig_t *vidCfg = VIDCONFIG();
@@ -433,23 +452,23 @@ void R_InitRenderTargets(void)
         R_InitFullscreenRenderTargetImage(12, 0, D3DFMT_R32F, RENDERTARGET_USAGE_RENDER,
                                           &((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_FLOAT_Z]);
 #endif
-    R_InitFullscreenRenderTargetImage(3, 2, backBufferFormat, RENDERTARGET_USAGE_RENDER,
+    R_InitFullscreenRenderTargetImage(3, R_REDUCED_PICMIP, backBufferFormat, RENDERTARGET_USAGE_RENDER,
                                       (GfxRenderTarget *)&((DxGlobals *)dxPtr)->renderTargets[8].image);
 
     backBufferFormat = ((DxGlobals *)(dxPtr))->backBufferFormat;
-    R_InitFullscreenRenderTargetImage(4, 2, backBufferFormat, RENDERTARGET_USAGE_RENDER,
+    R_InitFullscreenRenderTargetImage(4, R_REDUCED_PICMIP, backBufferFormat, RENDERTARGET_USAGE_RENDER,
                                       (GfxRenderTarget *)&((DxGlobals *)dxPtr)->renderTargets[9].image);
 
     backBufferFormat = ((DxGlobals *)(dxPtr))->backBufferFormat;
-    R_InitFullscreenRenderTargetImage(5, 2, backBufferFormat, RENDERTARGET_USAGE_RENDER,
+    R_InitFullscreenRenderTargetImage(5, R_REDUCED_PICMIP, backBufferFormat, RENDERTARGET_USAGE_RENDER,
                                       (GfxRenderTarget *)&((DxGlobals *)dxPtr)->renderTargets[10].image);
 
     backBufferFormat = ((DxGlobals *)(dxPtr))->backBufferFormat;
-    R_InitFullscreenRenderTargetImage(6, 2, backBufferFormat, RENDERTARGET_USAGE_RENDER,
+    R_InitFullscreenRenderTargetImage(6, R_REDUCED_PICMIP, backBufferFormat, RENDERTARGET_USAGE_RENDER,
                                       (GfxRenderTarget *)&((DxGlobals *)dxPtr)->renderTargets[11].image);
 
     backBufferFormat = ((DxGlobals *)(dxPtr))->backBufferFormat;
-    R_InitFullscreenRenderTargetImage(7, 2, backBufferFormat, RENDERTARGET_USAGE_RENDER,
+    R_InitFullscreenRenderTargetImage(7, R_REDUCED_PICMIP, backBufferFormat, RENDERTARGET_USAGE_RENDER,
                                       (GfxRenderTarget *)&((DxGlobals *)dxPtr)->renderTargets[12].image);
 
 #if COD2_MAC_D3D9
