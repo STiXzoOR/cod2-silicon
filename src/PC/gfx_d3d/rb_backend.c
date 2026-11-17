@@ -2456,6 +2456,7 @@ static void RB_DrawFxLayerRun(GfxDrawSurf *drawSurfs, int count, MaterialTechniq
 {
     extern void RB_FxLayer_AlphaBegin(void);
     extern int RB_FxLayer_FarBegin(void);
+    extern int RB_FxLayer_NearBegin(void);
     int i, blendsAlpha = 0;
 
     RB_RenderDrawSurfList(drawSurfs, count, techType, order);
@@ -2465,6 +2466,8 @@ static void RB_DrawFxLayerRun(GfxDrawSurf *drawSurfs, int count, MaterialTechniq
         R_DecomposeSort(drawSurfs[i].sort, &entityIndex, &material, &lightmap);
         blendsAlpha = material && (material->stateBits[0] & 0x10000000) != 0;
     }
+    if (RB_FxLayer_NearBegin()) /* a smaller layer: its second picture */
+        RB_RenderDrawSurfList(drawSurfs, count, techType, order);
     if (blendsAlpha) {
         RB_FxLayer_AlphaBegin();
         rb_fxAlphaOnly = 1;

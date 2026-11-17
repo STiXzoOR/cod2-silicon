@@ -455,6 +455,10 @@ void R_RegisterDvars(void)
     /* Draw the layer straight after the depth prepass, ahead of the scene, so that the
      * scene's buffer is not interrupted for it. 0 draws it in its place in the emissive pass. */
     ri.Dvar_RegisterInt("r_fxLayerEarly", 1, 0, 1, 0x1);
+    /* A smaller layer is drawn twice where a block of pixels holds two surfaces, so a
+     * bush inside the smoke keeps the smoke that belongs in front of it (rb_fxlayer.c:
+     * BlendShader). 0 draws it once. */
+    ri.Dvar_RegisterInt("r_fxLayerTwice", 1, 0, 1, 0x1);
     /* With anti-aliasing on, draw the scene into a multisampled target of its own and
      * everything after it onto the resolved picture (rb_scenetarget.c). 0 draws all of
      * it into a multisampled back buffer, as Direct3D 9 does. Takes a vid_restart. */

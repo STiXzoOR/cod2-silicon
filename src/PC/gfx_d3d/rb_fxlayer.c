@@ -75,6 +75,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 typedef int32_t HRESULT;
 typedef uint32_t DWORD;
@@ -140,6 +141,7 @@ enum { MARK_FAR = 0x40, MARK_NEAR = 0x80, MARK_ANY = 0xc0 };
 /* The engine draws the view weapon into depths 0 to 0.2 (rb_backend.c: RB_SetDepthRange);
  * the world's nearest surface lies beyond that. */
 #define WEAPON_DEPTH 0.2
+#define NEAR_EVEN "1.03" /* a block's depths count as one surface within this ratio */
 enum { LEVELS = 3, DIRECT = -1 }; /* the picture's size (0), a half (1) and a quarter (2); or no layer */
 
 extern void RB_ClearAllStreamSources(void);
@@ -157,8 +159,10 @@ typedef struct {
     void *markShader[2];               /* samples farther, and nearer, than the layer's depth */
     void *fixShader[2];                /* the layer's value for each of the two */
     unsigned width, height;
-    void *blendShader[3]; /* a smaller layer: BlendShader, by `pick` */
+    void *blendShader[2][3]; /* a smaller layer: BlendShader, by one picture or two and by `pick` */
     void *farTexture, *farSurface; /* a smaller layer: the farthest depth its effects reach in each texel */
+    /* A smaller layer, a second time: tested against the nearest depth of each block. */
+    void *nearTexture, *nearSurface, *nearColorTexture, *nearColorSurface, *reduceNearShader;
     int failed;
 } Layer;
 
@@ -188,6 +192,13 @@ static void *s_query;
 static int s_queryPending, s_queryMode, s_measuring;
 static double s_fill;                   /* frame buffer pixels, as last counted */
 static int s_farPass;        /* the run is being drawn a last time, for the depth its effects reach */
+static int s_nearPass;       /* the run is being drawn into the layer's second picture */
+static int s_nearFrame = 1;  /* this frame's smaller layer has a second picture */
+static int s_nearOn = 1;     /* the frame has time for it (NearGovern) */
+static int s_nearDrawn;      /* it was drawn in the frame before this */
+static double s_nearOffFill; /* the fill at which it stopped being affordable */
+static double s_frameMs;     /* the time between frames, smoothed */
+static uint64_t s_frameAt;
 static DWORD s_zFuncWanted, s_zEnableWanted; /* the engine's, while that pass has its own */
 static int s_early;          /* the layer is being drawn ahead of the scene (RB_FxLayer_BeginEarly) */
 static int s_earlyPending;   /* and waits to be put over the frame buffer */
@@ -235,7 +246,7 @@ static double Tolerance(int level)
 
 static void ReleaseLayers(void)
 {
-    int i;
+    int i, k;
     for (i = 0; i < LEVELS; i++) {
         Layer *layer = &s_layers[i];
         Release(&layer->colorSurface);
@@ -249,11 +260,15 @@ static void ReleaseLayers(void)
         Release(&layer->markShader[1]);
         Release(&layer->fixShader[0]);
         Release(&layer->fixShader[1]);
-        Release(&layer->blendShader[0]);
-        Release(&layer->blendShader[1]);
-        Release(&layer->blendShader[2]);
+        for (k = 0; k < 6; k++)
+            Release(&layer->blendShader[k / 3][k % 3]);
         Release(&layer->farSurface);
         Release(&layer->farTexture);
+        Release(&layer->nearSurface);
+        Release(&layer->nearTexture);
+        Release(&layer->nearColorSurface);
+        Release(&layer->nearColorTexture);
+        Release(&layer->reduceNearShader);
         memset(layer, 0, sizeof(*layer));
     }
 }
@@ -272,7 +287,7 @@ void RB_FxLayer_Release(void)
     s_filmValued = s_sceneDepthDrawn = 0;
     Release(&s_redShader);
     s_alphaPass = s_alphaDrawn = 0;
-    s_active = s_depthOnly = s_queryPending = s_measuring = s_farPass = 0;
+    s_active = s_depthOnly = s_queryPending = s_measuring = s_farPass = s_nearPass = 0;
     s_fill = 0.0;
     s_mode = DIRECT;
 }
@@ -336,12 +351,17 @@ static void *CompileShader(const char *name, const char *source)
 }
 
 /* Depth of a block of the scene's texels (2 by 2 for a half, 4 by 4 for a quarter):
- * the farthest, so an effect is drawn wherever any pixel of the block would show it.
+ * the farthest, so an effect is drawn wherever any pixel of the block would show it,
+ * or the nearest, for the layer's second picture (RB_FxLayer_NearBegin). That picture
+ * is only wanted where a block holds two surfaces. Where its depths are all but equal
+ * the nearest is written as 0, in front of everything, and the depth test turns every
+ * effect away there before it costs anything: drawn everywhere, the second picture
+ * cost as much as the first.
  * Sizes are written into the source, so the shaders here need no constants of the
  * engine's. */
-static void *ReduceShader(int level)
+static void *ReduceShader(int level, int nearest)
 {
-    char source[4096];
+    char source[8192];
     int count = 1 << level, x, y, used;
     used = snprintf(source, sizeof source,
                     "sampler depthMap : register(s0);\n"
@@ -349,18 +369,24 @@ static void *ReduceShader(int level)
                     "Out main(float2 uv : TEXCOORD0)\n"
                     "{\n"
                     "    Out o;\n"
-                    "    float z = 0.0;\n");
+                    "    float t;\n"
+                    "    float z = 0.0;\n"
+                    "    float n = 1.0;\n");
     for (y = 0; y < count; y++)
         for (x = 0; x < count; x++)
             used += snprintf(source + used, sizeof source - (size_t)used,
-                             "    z = max(z, tex2D(depthMap, uv + float2(%.9g, %.9g)).r);\n",
-                             (x + 0.5 - count / 2.0) / s_sceneWidth, (y + 0.5 - count / 2.0) / s_sceneHeight);
+                             "    t = tex2D(depthMap, uv + float2(%.9g, %.9g)).r;\n"
+                             "    z = max(z, t);\n"
+                             "%s",
+                             (x + 0.5 - count / 2.0) / s_sceneWidth, (y + 0.5 - count / 2.0) / s_sceneHeight,
+                             nearest ? "    n = min(n, t);\n" : "");
     snprintf(source + used, sizeof source - (size_t)used,
-             "    o.depth = z;\n"
+             "    o.depth = %s;\n"
              "    o.color = 0;\n"
              "    return o;\n"
-             "}\n");
-    return CompileShader("fxlayer_reduce", source);
+             "}\n",
+             nearest ? "lerp(n, 0.0, step(1.0 - n, (1.0 - z) * " NEAR_EVEN "))" : "z");
+    return CompileShader(nearest ? "fxlayer_reduce_near" : "fxlayer_reduce", source);
 }
 
 /* The marking shaders write a depth for the frame buffer's own depth test to compare
@@ -444,45 +470,71 @@ static void *FixShader(const Layer *layer, int nearer, int level)
 
 /* What a smaller layer gives one pixel of the frame buffer.
  *
- * A texel of a smaller layer stands for a block of pixels and was tested against the
- * farthest depth in it. Blending the four texels around a pixel as a picture is
- * blended would let smoke leak across every edge: beside the hand that holds the
- * weapon, a pixel of the street would take part of its smoke from a texel that lies on
- * the hand and has none. So a texel counts only if it holds what this pixel should
- * show. One tested against this pixel's own surface does: its depth is within the
- * tolerance of a reference depth. So does one tested against another surface when all
- * of its smoke lies in front of both (the far wall and the sky behind a cloud that
- * hangs in the street): the layer keeps the farthest depth its effects reach in each
- * texel for that (RB_FxLayer_FarBegin). Refusing those as well drew every roofline
- * behind the smoke into it as a row of steps. The texels that count are blended by
- * their usual weights. If there is none (a blade of grass in front of a far wall: every
- * texel around it was tested against the wall), all four are blended, each counting
- * for more the nearer its depth is to the reference; taking the nearest one alone
- * showed every such blade as a speck in the smoke.
+ * A texel of a smaller layer stands for a block of pixels. Blending the four texels
+ * around a pixel as a picture is blended would let smoke leak across every edge:
+ * beside the hand that holds the weapon, a pixel of the street would take part of its
+ * smoke from a texel that lies on the hand and has none. And one answer per block is
+ * not enough where a block holds two surfaces: a bush in thick smoke, drawn with the
+ * smoke of the wall behind it, was gone.
  *
- * The reference is the prepass's depth for this pixel (`pick` 0). The samples of an
- * anti-aliased edge that belong to the surface next door use the nearest (`pick` 1) or
- * the farthest (`pick` 2) depth among the pixel and the eight around it instead; Mark
- * tells them apart.
+ * So a smaller layer is two pictures of the same effects, one tested against the
+ * farthest depth of each block and one against the nearest, and it keeps the farthest
+ * depth its effects reach in each texel (RB_FxLayer_NearBegin, RB_FxLayer_FarBegin).
+ * A texel counts for a pixel in two cases:
  *
- * The view weapon and the hands holding it are drawn into the first fifth of the depth
- * range, which nothing else reaches, and no effect lies in front of them. A reference
- * depth there takes nothing from the layer.
+ * - The pixel's depth lies between the block's nearest and farthest (within the
+ *   tolerance). It takes the near picture at the nearest depth, the far picture at
+ *   the farthest, and a mix by its place between them. A block of one surface has
+ *   no near picture (ReduceShader) and gives the far one.
+ * - All of the texel's smoke lies in front of both the pixel and the block (the far
+ *   wall and the sky behind a cloud that hangs in the street). It takes the far
+ *   picture, which then holds all of it. Refusing these drew every roofline behind
+ *   the smoke into it as a row of steps.
+ *
+ * The texels that count are blended by their usual weights. If there is none, all four
+ * are blended, each counting for more the nearer its depth is to the pixel's.
+ *
+ * `pick` chooses the pixel's depth: the prepass's depth of the pixel itself (0), or
+ * the nearest (1) or farthest (2) of the pixels around it, for the samples that
+ * anti-aliasing puts on the surface next door. Nothing is given to the view weapon,
+ * which is drawn in a depth range of its own (WEAPON_DEPTH).
  *
  * Sampler 0 is the layer's depth, 1 the layer, 2 the prepass's depth, 3 the depth the
- * layer's effects reach. */
-static void *BlendShader(const Layer *layer, int level, int pick)
+ * layer's effects reach, 4 and 5 the layer's second depth and picture. */
+static void *BlendShader(const Layer *layer, int level, int pick, int twice)
 {
     static const char *const names[] = { "fxlayer_blend", "fxlayer_blend_near", "fxlayer_blend_far" };
-    char source[8192];
+    char source[8192], counted[2048];
     double tolerance = Tolerance(level);
     int x, y, used;
 
+    if (twice)
+        snprintf(counted, sizeof counted,
+                 "    float4 zn = float4(tex2D(nearDepth, o).r, tex2D(nearDepth, o + float2(e.x, 0.0)).r,\n"
+                 "                       tex2D(nearDepth, o + float2(0.0, e.y)).r, tex2D(nearDepth, o + e).r);\n"
+                 "    float4 even = step(zn, 0.0);\n"
+                 "    float4 qn = lerp(1.0 - zn, q, even);\n"
+                 "    float4 inside = step(q, r * %.9g) * step(r, qn * %.9g);\n"
+                 "    float4 front = step(max(q, r) * %.9g, reach);\n"
+                 "    float4 place = max(max(saturate((qn - r) / max(qn - q, 0.0000001)), front), even);\n"
+                 "    c0 = lerp(tex2D(nearMap, o), c0, place.x);\n"
+                 "    c1 = lerp(tex2D(nearMap, o + float2(e.x, 0.0)), c1, place.y);\n"
+                 "    c2 = lerp(tex2D(nearMap, o + float2(0.0, e.y)), c2, place.z);\n"
+                 "    c3 = lerp(tex2D(nearMap, o + e), c3, place.w);\n"
+                 "    float4 w = b * max(inside, front);\n",
+                 1.0 + tolerance, 1.0 + tolerance, 1.0 + tolerance);
+    else
+        snprintf(counted, sizeof counted,
+                 "    float4 same = step(q, r * %.9g) * step(r * %.9g, q);\n"
+                 "    float4 w = b * max(same, step(max(q, r) * %.9g, reach));\n",
+                 1.0 + tolerance, 1.0 / (1.0 + tolerance), 1.0 + tolerance);
     used = snprintf(source, sizeof source,
                     "sampler layerDepth : register(s0);\n"
                     "sampler layerMap : register(s1);\n"
                     "sampler sceneDepth : register(s2);\n"
                     "sampler layerFar : register(s3);\n"
+                    "sampler nearDepth : register(s4);\n"
+                    "sampler nearMap : register(s5);\n"
                     "float4 main(float2 uv : TEXCOORD0) : COLOR0\n"
                     "{\n"
                     "    float d = tex2D(sceneDepth, uv).r;\n");
@@ -508,8 +560,7 @@ static void *BlendShader(const Layer *layer, int level, int pick)
              "    float4 b = float4((1.0 - f.x) * (1.0 - f.y), f.x * (1.0 - f.y), (1.0 - f.x) * f.y, f.x * f.y);\n"
              "    float4 reach = 1.0 - float4(tex2D(layerFar, o).r, tex2D(layerFar, o + float2(e.x, 0.0)).r,\n"
              "                                tex2D(layerFar, o + float2(0.0, e.y)).r, tex2D(layerFar, o + e).r);\n"
-             "    float4 same = step(q, r * %.9g) * step(r * %.9g, q);\n"
-             "    float4 w = b * max(same, step(max(q, r) * %.9g, reach));\n"
+             "%s"
              "    float sum = w.x + w.y + w.z + w.w;\n"
              "    float4 mixed = (c0 * w.x + c1 * w.y + c2 * w.z + c3 * w.w) / max(sum, 0.00001);\n"
              "    float4 s = b / (abs(q - r) + r * 0.02 + 0.000001);\n"
@@ -518,7 +569,7 @@ static void *BlendShader(const Layer *layer, int level, int pick)
              "    return lerp(result, float4(0.0, 0.0, 0.0, 1.0), step(d, %.9g));\n"
              "}\n",
              layer->width, layer->height, (double)s_sceneWidth / (layer->width << level),
-             (double)s_sceneHeight / (layer->height << level), 1.0 + tolerance, 1.0 / (1.0 + tolerance), 1.0 + tolerance, WEAPON_DEPTH);
+             (double)s_sceneHeight / (layer->height << level), counted, WEAPON_DEPTH);
     return CompileShaderAs(names[pick], source, "ps_3_0");
 }
 
@@ -548,16 +599,27 @@ static Layer *GetLayer(int level)
         if (CALL(CreateTextureFn, device, DEV_CreateTexture)(device, layer->width, layer->height, 1, USAGE_RENDERTARGET,
                                                              desc.Format, 0, &layer->alphaTexture, NULL) >= 0)
             CALL(GetSurfaceFn, layer->alphaTexture, TEX_GetSurfaceLevel)(layer->alphaTexture, 0, &layer->alphaSurface);
+        if (level && CALL(CreateTextureFn, device, DEV_CreateTexture)(device, layer->width, layer->height, 1,
+                                                                      USAGE_RENDERTARGET, desc.Format, 0,
+                                                                      &layer->nearColorTexture, NULL) >= 0)
+            CALL(GetSurfaceFn, layer->nearColorTexture, TEX_GetSurfaceLevel)(layer->nearColorTexture, 0,
+                                                                             &layer->nearColorSurface);
     }
     if (!layer->colorTexture || !layer->alphaSurface ||
         CALL(GetSurfaceFn, layer->colorTexture, TEX_GetSurfaceLevel)(layer->colorTexture, 0, &layer->colorSurface) < 0 ||
         (level && (!CreateDepth(device, layer->width, layer->height, &layer->depthTexture, &layer->depthSurface) ||
-                   !(layer->reduceShader = ReduceShader(level)))) ||
+                   !(layer->reduceShader = ReduceShader(level, 0)))) ||
         !(layer->markShader[0] = MarkShader(layer, 0, 0)) || !(layer->markShader[1] = MarkShader(layer, 1, 0)) ||
         (!level && (!(layer->fixShader[0] = FixShader(layer, 0, level)) || !(layer->fixShader[1] = FixShader(layer, 1, level)))) ||
         (level && !CreateDepth(device, layer->width, layer->height, &layer->farTexture, &layer->farSurface)) ||
-        (level && (!(layer->blendShader[0] = BlendShader(layer, level, 0)) || !(layer->blendShader[1] = BlendShader(layer, level, 1)) ||
-                   !(layer->blendShader[2] = BlendShader(layer, level, 2))))) {
+        (level && (!layer->nearColorSurface || !(layer->reduceNearShader = ReduceShader(level, 1)) ||
+                   !CreateDepth(device, layer->width, layer->height, &layer->nearTexture, &layer->nearSurface))) ||
+        (level && (!(layer->blendShader[0][0] = BlendShader(layer, level, 0, 0)) ||
+                   !(layer->blendShader[0][1] = BlendShader(layer, level, 1, 0)) ||
+                   !(layer->blendShader[0][2] = BlendShader(layer, level, 2, 0)) ||
+                   !(layer->blendShader[1][0] = BlendShader(layer, level, 0, 1)) ||
+                   !(layer->blendShader[1][1] = BlendShader(layer, level, 1, 1)) ||
+                   !(layer->blendShader[1][2] = BlendShader(layer, level, 2, 1))))) {
         layer->failed = 1;
         fprintf(stderr, "r_fxLayer: no layer of %ux%u; effects are drawn without it\n", layer->width, layer->height);
         return NULL;
@@ -591,8 +653,8 @@ static void ScaleViewport(const Viewport *full, Viewport *out)
 
 /* A screen-filling pass of this module's own: every state it touches is put back. */
 typedef struct {
-    DWORD states[32], stages[6], samplers[4][5];
-    void *textures[4], *decl, *vs, *ps;
+    DWORD states[32], stages[6], samplers[6][5];
+    void *textures[6], *decl, *vs, *ps;
 } Saved;
 
 static const DWORD passStates[] = { RS_ZENABLE, RS_ZWRITEENABLE, RS_ZFUNC, RS_ALPHATESTENABLE, RS_SRCBLEND, RS_DESTBLEND,
@@ -612,7 +674,7 @@ static void PassBegin(Saved *saved)
         saved->states[i] = GetState(passStates[i]);
     for (i = 0; i < COUNT(passStages); i++)
         CALL(GetStageFn, device, DEV_GetTextureStageState)(device, passStages[i][0], passStages[i][1], &saved->stages[i]);
-    for (unit = 0; unit < 4; unit++) {
+    for (unit = 0; unit < 6; unit++) {
         saved->textures[unit] = NULL;
         CALL(GetTextureFn, device, DEV_GetTexture)(device, unit, &saved->textures[unit]);
         for (i = 0; i < COUNT(passSamplers); i++)
@@ -684,7 +746,7 @@ static void PassEnd(Saved *saved)
     void *device = s_device;
     unsigned i, unit;
 
-    for (unit = 0; unit < 4; unit++) {
+    for (unit = 0; unit < 6; unit++) {
         CALL(SetTextureFn, device, DEV_SetTexture)(device, unit, saved->textures[unit]);
         Release(&saved->textures[unit]);
         for (i = 0; i < COUNT(passSamplers); i++)
@@ -878,7 +940,7 @@ const char *RB_ScreenPass_Film(void *device, void *source, void *depthIfNone, un
 
 /* Fill the layer's smaller depth buffer from the scene's. The layer's colour target
  * is bound only because a depth buffer cannot be drawn into alone. */
-static void ReduceDepth(void)
+static void ReduceDepth(void *surface, void *shader)
 {
     void *device = s_device;
     Viewport view = { 0, 0, s_layer->width, s_layer->height, 0.0f, 1.0f };
@@ -888,9 +950,9 @@ static void ReduceDepth(void)
     SetState(RS_ZFUNC, CMP_ALWAYS);
     SetState(RS_ALPHABLENDENABLE, 0);
     SetState(RS_COLORWRITEENABLE, 0);
-    CALL(SetDepthFn, device, DEV_SetDepthStencilSurface)(device, s_layer->depthSurface);
+    CALL(SetDepthFn, device, DEV_SetDepthStencilSurface)(device, surface);
     CALL(ViewportFn, device, DEV_SetViewport)(device, &view);
-    CALL(SetObjectFn, device, DEV_SetPixelShader)(device, s_layer->reduceShader);
+    CALL(SetObjectFn, device, DEV_SetPixelShader)(device, shader);
     PassTexture(0, s_sceneDepthTexture, 1);
     /* A layer of odd size reaches past the scene's edge; read as far as it reaches. */
     PassDraw(0.0f, 0.0f, (float)view.Width, (float)view.Height, 0.0f, 0.0f,
@@ -946,7 +1008,9 @@ static void Composite(void)
         PassTexture(1, s_layer->colorTexture, 1);
         PassTexture(2, s_sceneDepthTexture, 1);
         PassTexture(3, s_layer->farTexture, 1);
-        CALL(SetObjectFn, device, DEV_SetPixelShader)(device, s_layer->blendShader[0]);
+        PassTexture(4, s_layer->nearTexture, 1);
+        PassTexture(5, s_layer->nearColorTexture, 1);
+        CALL(SetObjectFn, device, DEV_SetPixelShader)(device, s_layer->blendShader[s_nearFrame][0]);
         PassDrawViewport((float)s_sceneWidth, (float)s_sceneHeight);
     } else {
         CALL(SetObjectFn, device, DEV_SetPixelShader)(device, NULL);
@@ -965,7 +1029,8 @@ static void Composite(void)
         SetState(RS_STENCILREF, pass ? MARK_NEAR : MARK_FAR);
         SetState(RS_STENCILMASK, pass ? MARK_NEAR : MARK_ANY);
         CALL(SetObjectFn, device, DEV_SetPixelShader)(device,
-                                                      s_level ? s_layer->blendShader[pass ? 1 : 2] : s_layer->fixShader[pass]);
+                                                      s_level ? s_layer->blendShader[s_nearFrame][pass ? 1 : 2]
+                                                              : s_layer->fixShader[pass]);
         PassDrawViewport((float)s_sceneWidth, (float)s_sceneHeight);
     }
     SetState(RS_STENCILPASS, OP_KEEP);
@@ -1037,6 +1102,33 @@ static double Cost(int mode)
     return s_fill / (double)(1u << (2 * mode));
 }
 
+/* A smaller layer's second picture restores what stands inside the smoke (a bush, long
+ * grass), and in a field of grass it costs as much again as the first. It is drawn
+ * while the frame rate asked for is held. When frames come late with it, it is left
+ * out, and it comes back once the effects cover clearly less than they did then, so it
+ * is not tried again in the same smoke. With vertical sync on, a frame is paced by the
+ * display and says nothing about what it cost; the picture is kept. */
+static void NearGovern(int cap)
+{
+    uint64_t now = clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
+    double target = 1000.0 / cap, took = s_frameAt ? (double)(now - s_frameAt) / 1.0e6 : target;
+
+    s_frameAt = now;
+    if (took > 3.0 * target)
+        took = 3.0 * target; /* a hitch is not a trend */
+    s_frameMs += (took - s_frameMs) / 32.0;
+    if (s_nearOn) {
+        if (s_nearDrawn && s_frameMs > target * 1.04 && !Dvar_GetInt("r_swapInterval")) {
+            s_nearOn = 0;
+            s_nearOffFill = s_fill;
+        }
+    } else if (s_fill < s_nearOffFill * 0.7) {
+        s_nearOn = 1;
+        s_frameMs = target;
+    }
+    s_nearDrawn = 0;
+}
+
 /* How the effects are drawn this frame: DIRECT, or the layer's level. Called once
  * before the emissive pass draws them. */
 static int ChooseMode(void *device)
@@ -1054,6 +1146,7 @@ static int ChooseMode(void *device)
                                            : (double)count * (double)(1u << (2 * s_queryMode));
         }
     }
+    s_nearFrame = Dvar_GetInt("r_fxLayerTwice") != 0;
     if (!setting || !s_sceneDepthTexture)
         return DIRECT;
     if (setting >= 2)
@@ -1068,6 +1161,8 @@ static int ChooseMode(void *device)
         cap = 250;
     if (cap < 60)
         cap = 60;
+    NearGovern(cap);
+    s_nearFrame = s_nearOn && Dvar_GetInt("r_fxLayerTwice");
     budget = (double)Dvar_GetInt("r_fxLayerBudget") * 1.0e6 * 250.0 / cap;
     for (mode = DIRECT; mode < LEVELS - 1; mode++) {
         if (mode == 0 && s_samples <= 1)
@@ -1181,7 +1276,9 @@ int RB_FxLayer_Begin(void *device, int sceneDepthValid)
     CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, s_layer->colorSurface);
     if (s_level) {
         PassBegin(&saved);
-        ReduceDepth();
+        ReduceDepth(s_layer->depthSurface, s_layer->reduceShader);
+        if (s_nearFrame)
+            ReduceDepth(s_layer->nearSurface, s_layer->reduceNearShader);
         PassEnd(&saved);
     }
     CALL(SetDepthFn, device, DEV_SetDepthStencilSurface)(device, s_level ? s_layer->depthSurface : s_sceneDepthSurface);
@@ -1215,14 +1312,37 @@ void RB_FxLayer_AlphaBegin(void)
         return;
     CountEnd();
     s_alphaPass = s_alphaDrawn = 1;
+    s_nearPass = 0;
     ApplyAlphaTest();
     CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, s_layer->alphaSurface);
+    CALL(SetDepthFn, device, DEV_SetDepthStencilSurface)(device, s_level ? s_layer->depthSurface : s_sceneDepthSurface);
     ScaleViewport(&s_viewport, &scaled);
     CALL(ViewportFn, device, DEV_SetViewport)(device, &scaled);
     CALL(ClearFn, device, DEV_Clear)(device, 0, NULL, 1, 0x00ffffffu, 1.0f, 0); /* product 1, sum 0 */
     SetState(RS_SRCBLEND, BLEND_ZERO);
     SetState(RS_SRCBLENDALPHA, s_sourceBlend);
     SetState(RS_DESTBLENDALPHA, s_destBlend);
+}
+
+/* A smaller layer's run is drawn. The caller now draws it a second time, into a
+ * picture tested against the nearest depth of each block where the first was tested
+ * against the farthest (BlendShader says what for). Returns 0 when there is nothing to
+ * do. Called before the alpha pass, while the device is as the first drawing left it. */
+int RB_FxLayer_NearBegin(void)
+{
+    void *device = s_device;
+    Viewport scaled;
+
+    if (!s_active || !s_level || !s_nearFrame || s_nearPass || s_alphaPass || s_farPass)
+        return 0;
+    CountEnd();
+    s_nearPass = s_nearDrawn = 1;
+    CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, s_layer->nearColorSurface);
+    CALL(SetDepthFn, device, DEV_SetDepthStencilSurface)(device, s_layer->nearSurface);
+    ScaleViewport(&s_viewport, &scaled);
+    CALL(ViewportFn, device, DEV_SetViewport)(device, &scaled);
+    CALL(ClearFn, device, DEV_Clear)(device, 0, NULL, 1, 0xff000000u, 1.0f, 0);
+    return 1;
 }
 
 /* A smaller layer's run is drawn. The caller now draws it one more time, without
@@ -1241,6 +1361,7 @@ int RB_FxLayer_FarBegin(void)
         SetState(RS_SRCBLEND, s_sourceBlend);
     }
     s_farPass = 1;
+    s_nearPass = 0;
     ApplyAlphaTest(); /* the engine's own: a sprite's empty corners reach nowhere */
     s_zFuncWanted = GetState(RS_ZFUNC);
     s_zEnableWanted = GetState(RS_ZENABLE);
@@ -1317,7 +1438,7 @@ static void Leave(void)
     void *device = s_device;
     unsigned i;
 
-    s_active = 0;
+    s_active = s_nearPass = 0;
     if (s_alphaPass) {
         s_alphaPass = 0;
         SetState(RS_SRCBLEND, s_sourceBlend);
