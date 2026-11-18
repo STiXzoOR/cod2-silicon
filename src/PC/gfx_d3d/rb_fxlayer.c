@@ -163,6 +163,9 @@ typedef struct {
     void *farTexture, *farSurface; /* a smaller layer: the farthest depth its effects reach in each texel */
     /* A smaller layer, a second time: tested against the nearest depth of each block. */
     void *nearTexture, *nearSurface, *nearColorTexture, *nearColorSurface, *reduceNearShader;
+    /* A smaller layer: the scene's float-Z at this size, for the effects that feather (CopyFloatZ). */
+    void *floatZTexture, *floatZSurface, *floatZShader;
+    int floatZFailed;
     int failed;
 } Layer;
 
@@ -172,6 +175,8 @@ static int s_depthOnly; /* the prepass is drawing models and sky: depth, no colo
 static int s_depthPass; /* the Direct3D 7 depth pass is bound (RB_FxLayer_DepthPassBegin) */
 static void *s_depthPassColor, *s_depthPassDepth; /* what was bound before it */
 static void *s_sceneDepthTexture, *s_sceneDepthSurface; /* the prepass's depth, at the picture's size */
+static void *s_sceneFloatZ; /* the engine's float-Z texture, when this frame's effects feather against it */
+static int s_floatZReady;   /* the layer in use holds this frame's copy of it */
 static unsigned s_sceneWidth, s_sceneHeight;
 static Layer s_layers[LEVELS], *s_layer; /* s_layer: the one in use */
 static Layer *GetLayer(int level);
@@ -271,6 +276,9 @@ static void ReleaseLayers(void)
         Release(&layer->nearColorSurface);
         Release(&layer->nearColorTexture);
         Release(&layer->reduceNearShader);
+        Release(&layer->floatZSurface);
+        Release(&layer->floatZTexture);
+        Release(&layer->floatZShader);
         memset(layer, 0, sizeof(*layer));
     }
 }
@@ -822,6 +830,22 @@ void RB_ScreenPass_Copy(void *device, void *texture, unsigned width, unsigned he
     PassEnd(&saved);
 }
 
+/* The engine's float-Z texture, if the effects about to be drawn feather against it. */
+void RB_FxLayer_SceneFloatZ(void *texture)
+{
+    s_sceneFloatZ = texture;
+}
+
+/* What a feathering effect reads in place of the scene's float-Z while it is drawn into
+ * a smaller layer, or NULL. `slot` tells the copies of the layers' sizes apart. */
+void *RB_FxLayer_FloatZ(int *slot)
+{
+    if (!s_active || !s_level || !s_floatZReady)
+        return NULL;
+    *slot = s_level;
+    return s_layer->floatZTexture;
+}
+
 /* The float-Z prepass has drawn the scene, models included, into the depth texture. */
 void RB_FxLayer_SceneDepthDrawn(void)
 {
@@ -941,6 +965,51 @@ const char *RB_ScreenPass_Film(void *device, void *source, void *depthIfNone, un
     if (boundDepth)
         CALL(SetDepthFn, device, DEV_SetDepthStencilSurface)(device, NULL);
     return NULL;
+}
+
+/* The scene's float-Z at a smaller layer's size, one texel for each of the layer's
+ * pixels. A feathering effect reads the float-Z once for every pixel it covers, and
+ * thick smoke covers each many times over. Read from the scene's own texture, a quarter
+ * layer's pixels lie four texels apart in each direction, so every read lands on memory
+ * the graphics chip does not have at hand: at 3840x2160 that took two thirds of the
+ * time the smoke cost. The copy holds the texel the effect would have read, the one
+ * above and left of the centre of the layer pixel's block.
+ * Returns 1 when the copy is there. Leaves the layer's colour target bound. */
+static int CopyFloatZ(void)
+{
+    void *device = s_device;
+    Layer *layer = s_layer;
+    Viewport view = { 0, 0, layer->width, layer->height, 0.0f, 1.0f };
+
+    if (!s_sceneFloatZ || layer->floatZFailed)
+        return 0;
+    if (!layer->floatZSurface) {
+        char source[512];
+        snprintf(source, sizeof source,
+                 "sampler map : register(s0);\n"
+                 "float4 main(float2 uv : TEXCOORD0) : COLOR0 { return tex2D(map, uv - float2(%.9g, %.9g)); }\n",
+                 0.25 / s_sceneWidth, 0.25 / s_sceneHeight);
+        if (CALL(CreateTextureFn, device, DEV_CreateTexture)(device, layer->width, layer->height, 1, USAGE_RENDERTARGET,
+                                                             114 /* R32F */, 0, &layer->floatZTexture, NULL) < 0 ||
+            CALL(GetSurfaceFn, layer->floatZTexture, TEX_GetSurfaceLevel)(layer->floatZTexture, 0, &layer->floatZSurface) < 0 ||
+            !(layer->floatZShader = CompileShader("fxlayer_floatz", source))) {
+            Release(&layer->floatZSurface);
+            Release(&layer->floatZTexture);
+            layer->floatZFailed = 1;
+            return 0;
+        }
+    }
+    SetState(RS_ZENABLE, 0);
+    SetState(RS_ALPHABLENDENABLE, 0);
+    SetState(RS_COLORWRITEENABLE, 0xf);
+    CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, layer->floatZSurface);
+    CALL(SetDepthFn, device, DEV_SetDepthStencilSurface)(device, NULL);
+    CALL(ViewportFn, device, DEV_SetViewport)(device, &view);
+    CALL(SetObjectFn, device, DEV_SetPixelShader)(device, layer->floatZShader);
+    PassTexture(0, s_sceneFloatZ, 1);
+    PassDraw(0.0f, 0.0f, (float)view.Width, (float)view.Height, 0.0f, 0.0f, 1.0f, 1.0f);
+    CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, layer->colorSurface);
+    return 1;
 }
 
 /* Fill the layer's smaller depth buffer from the scene's. The layer's colour target
@@ -1320,6 +1389,7 @@ int RB_FxLayer_Begin(void *device, int sceneDepthValid)
     s_device = device;
     s_savedColor = s_savedDepth = NULL;
     s_layer = NULL;
+    s_floatZReady = 0;
     memset(&desc, 0, sizeof(desc));
     CALL(GetSurfaceFn, device, DEV_GetRenderTarget)(device, 0, &s_savedColor);
     CALL(GetDepthFn, device, DEV_GetDepthStencilSurface)(device, &s_savedDepth);
@@ -1349,6 +1419,7 @@ int RB_FxLayer_Begin(void *device, int sceneDepthValid)
     CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, s_layer->colorSurface);
     if (s_level) {
         PassBegin(&saved);
+        s_floatZReady = CopyFloatZ();
         ReduceDepth(s_layer->depthSurface, s_layer->reduceShader);
         if (s_nearFrame)
             ReduceDepth(s_layer->nearSurface, s_layer->reduceNearShader);

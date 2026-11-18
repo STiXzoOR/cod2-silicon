@@ -2485,6 +2485,14 @@ static void RB_DrawFxLayerRun(GfxDrawSurf *drawSurfs, int count, MaterialTechniq
         RB_RenderDrawSurfList(drawSurfs, count, techType, order);
 }
 
+/* Tell the layer where the float-Z is, when the effects it is about to hold feather. */
+static void RB_FxLayerFloatZ(int feathers)
+{
+    extern void RB_FxLayer_SceneFloatZ(void *texture);
+    GfxImage *image = feathers ? (GfxImage *)dx.renderTargets[R_RENDERTARGET_FLOAT_Z].image : NULL;
+    RB_FxLayer_SceneFloatZ(image ? (void *)image->texture.map : NULL);
+}
+
 /* Called when the float-Z prepass is done: draw the frame's effects into the layer now
  * if that can be done ahead of the scene (rb_fxlayer.c: RB_FxLayer_BeginEarly). It can
  * when they make one run in the list, and none of them reads the scene itself (the
@@ -2527,6 +2535,7 @@ static void RB_FxLayerEarly(GfxDrawSurf *drawSurfs, int drawSurfCount, MaterialT
         if (technique && (technique->flags & 3))
             return;
     }
+    RB_FxLayerFloatZ(emissive == TECHNIQUE_EMISSIVE_FEATHERED);
     if (!RB_FxLayer_BeginEarly(dx.device, dx.multiSampleType > 1 ? (int)dx.multiSampleType : 1))
         return;
     RB_DrawFxLayerRun(drawSurfs + runFirst, runEnd - runFirst, emissive, (GfxDrawSurfOrder)0);
@@ -2615,6 +2624,7 @@ static void RB_RenderDrawSurfListFxLayer(GfxDrawSurf *drawSurfs, int drawSurfCou
                 RB_UpdateViewport();
             RB_FxLayer_ApplyEarly(dx.device, 1, rb_postSunFromDepth);
         } else if (inLayer) {
+            RB_FxLayerFloatZ(R_UseZFeather());
             if (RB_FxLayer_Begin(dx.device, R_UseZFeather() || rb_fxSceneDepth))
                 RB_DrawFxLayerRun(drawSurfs + first, end - first, techType, order);
             else

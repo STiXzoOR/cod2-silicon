@@ -658,6 +658,23 @@ static void RB_GetTextureFromCode_impl(int codeTexture, void **image, byte *samp
     case 21:
 #if defined(COD2_X64)
         *image = ((DxGlobals *)dx)->renderTargets[R_RENDERTARGET_FLOAT_Z].image;
+#if COD2_MAC_D3D9
+        {
+            /* Drawn into a smaller effects layer, it reads the layer's copy (rb_fxlayer.c:
+             * CopyFloatZ). The sampler remembers its image by address, so each size of
+             * layer has an image of its own. */
+            extern void *RB_FxLayer_FloatZ(int *slot);
+            static GfxImage layerImages[8];
+            int slot = 0;
+            void *map = *image ? RB_FxLayer_FloatZ(&slot) : NULL;
+            if (map) {
+                GfxImage *copy = &layerImages[slot & 7];
+                *copy = *(GfxImage *)*image;
+                copy->texture.map = map;
+                *image = copy;
+            }
+        }
+#endif
 #else
         *image = NULL;
 #endif
