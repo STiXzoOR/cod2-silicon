@@ -1,6 +1,12 @@
 {
   "items": [
     {
+      "date": "2026-11-18",
+      "title": "Crash reports, if you want them",
+      "summary": "0.3.4 adds a switch in Settings › Privacy that sends crash reports to the project. It is off until you turn it on.",
+      "open": "updates"
+    },
+    {
       "date": "2026-11-17",
       "title": "A new home at github.com/cod2unbound",
       "summary": "0.3.3 follows the project to its organisation. From 0.3.2 or earlier, download it once by hand.",

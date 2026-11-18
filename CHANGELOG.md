@@ -5,6 +5,23 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-11-18
+
+### Added
+
+- **Crash reports can go to this project, if you turn them on.** Settings →
+  Privacy has a new switch, "Send crash reports to CoD2 Silicon". It is off
+  until you turn it on. With it on, when the game crashes or stops
+  responding the launcher sends the report the game wrote, once, to the
+  project's own report service (Sentry, hosted in the EU). A report holds
+  what failed, the app's version, your macOS version, your Mac's model and
+  the game's report with your Mac's user name replaced by `~` and every
+  command line removed. No account or name goes with it, the service is
+  told not to record the address it came from, and a report that seems to
+  hold a CD key stays on your Mac. **See What's Sent…** beside the switch
+  shows the fields with your Mac's values. Earlier versions were built
+  without a report service, so they never offered the switch.
+
 ## [0.3.3] - 2026-11-17
 
 ### Changed

@@ -53,6 +53,15 @@ was tested and what was not.
 The [0.3.1 verification](macos-port/release-0.3.1-verification.md) says what
 was tested and what was not.
 
+## 0.3.4 — Crash reports, if you want them (released 0.3.4)
+
+- **A switch in Settings → Privacy sends crash reports to this project.** It
+  is off until you turn it on, and **See What's Sent…** shows what a report
+  holds. Nothing in the game changed.
+
+The [0.3.4 verification](macos-port/release-0.3.4-verification.md) says what
+was tested and what was not.
+
 ## 0.3.3 — A new home (released 0.3.3)
 
 - **The project moved to github.com/cod2unbound.** The app, its update

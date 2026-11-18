@@ -14,7 +14,7 @@ the rest. A Windows 1.3 install's folder works as it is.
 
 ## Status
 
-Version `0.3.3` is playable on original 1.3 and CoD2x 1.4 servers, with a
+Version `0.3.4` is playable on original 1.3 and CoD2x 1.4 servers, with a
 native launcher, server browser and Config Studio. Movement, firing, grenades, mounted
 turrets, HTTP mod downloads and round restarts have been tested, and every
 menu is opened by an automated sweep. The picture is compared with the
@@ -41,7 +41,7 @@ Existing Windows 1.3 data works as it is. See
 ### Prebuilt app
 
 1. Open [GitHub Releases](https://github.com/cod2unbound/cod2-unbound/releases).
-2. Download `CoD2-Silicon-0.3.3-macos-arm64.zip` and `SHA256SUMS` into the same
+2. Download `CoD2-Silicon-0.3.4-macos-arm64.zip` and `SHA256SUMS` into the same
    folder. Verify the archive, then unzip it:
 
    ```sh
@@ -210,9 +210,17 @@ all of it before you post, and the app sends nothing itself.
 - **Report a Problem** opens a prefilled issue in your browser; the app sends
   nothing itself.
 - **Crash reports** are sent only if you turn a switch on in **Settings →
-  Privacy**. 0.3.0 has one, for CoD2x's own reports to the CoD2x project. It
-  is built without a report service of this project's own, so nothing is
-  sent here. Your CD key is never part of a report.
+  Privacy**. There are two, both off until you turn them on. One sends
+  CoD2x's own reports to the CoD2x project, as CoD2x does on Windows. The
+  other, new in 0.3.4, sends the report the game wrote when it crashed or
+  froze to this project's report service (Sentry, hosted in the EU): what
+  failed, the app's version, your macOS version, your Mac's model and the
+  report itself, with your Mac's user name replaced by `~` and every command
+  line removed. No account or name goes with it, and the service is told not
+  to record the address it came from. Your CD key is never part of a
+  report: one that seems to hold a key is not sent. A copy you build
+  yourself has no report service unless you give it one, so it sends
+  nothing here.
 
 ## Known limitations
 
@@ -266,6 +274,8 @@ new performance claims for every release. Verified development results include:
 - 0.3.1 fixed two of the differences 0.3.0 listed (menu panel edges, and fog
   in the Direct3D 7 renderer) and measured a third, the near clip plane, as
   not a difference. [What was tested for 0.3.1](docs/macos-port/release-0.3.1-verification.md)
+- 0.3.4 adds the switch that sends crash reports to this project and
+  changes nothing in the game. [What was tested for 0.3.4](docs/macos-port/release-0.3.4-verification.md)
 - 0.3.3 moves the project to github.com/cod2unbound and changes nothing
   in the game. [What was tested for 0.3.3](docs/macos-port/release-0.3.3-verification.md)
 - 0.3.2 enlarges the in-game console above 1080 lines and changes what the
