@@ -63,7 +63,7 @@ extension SetupView {
             group {
                 steamFact("arrow.down.circle", "First, a small download tool", "DepotDownloader, free and open source (32 MB), from its own page on GitHub. It is checked before it runs.")
                 divider()
-                steamFact("checkmark.shield", "You sign in on your phone", "A QR code for the Steam app. Your Steam name and password never pass through CoD2 Silicon.")
+                steamFact("checkmark.shield", "You sign in on your phone", "A QR code for the Steam app. Your Steam name and password never pass through CoD2 Unbound.")
                 divider()
                 steamFact("lock", "Signed out when it ends", "The sign-in and the tool are removed afterwards. Nothing about your Steam account stays on this Mac.")
             }

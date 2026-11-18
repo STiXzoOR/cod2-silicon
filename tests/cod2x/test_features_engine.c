@@ -383,7 +383,7 @@ int main(void)
         assert(errorCount == 0);
         Cod2x_UpdateConfirmed();
         assert(strstr(openedURL, "github.com/cod2unbound/cod2-unbound/releases"));
-        assert(strstr(lastError, "CoD2 Silicon") && strstr(lastError, "launcher"));
+        assert(strstr(lastError, "CoD2 Unbound") && strstr(lastError, "launcher"));
     }
     {
         char version[601], body[800];

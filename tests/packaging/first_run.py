@@ -12,19 +12,19 @@ os.environ.setdefault('COD2X_TEST_UPDATER_ADDRESS', '127.0.0.1:9')
 os.environ.setdefault('COD2X_TEST_UPDATER_URL', 'http://127.0.0.1:9/api/updater/check')
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-with tempfile.TemporaryDirectory(prefix="cod2-silicon-first-run-", suffix=".noindex") as directory:
+with tempfile.TemporaryDirectory(prefix="cod2-unbound-first-run-", suffix=".noindex") as directory:
     scratch = pathlib.Path(directory)
     executable = scratch / "first-run"
     subprocess.run(["taskpolicy", "-b", "nice", "-n", "19", "clang", "-fobjc-arc",
                     "-mmacosx-version-min=26.0", "-DCOD2_X64=1", "-DCOD2_CODX=1", "-Isrc",
                     "tests/packaging/first_run.m", "src/platform/cod2x_native_shaders.m",
                     "-framework", "AppKit", "-o", str(executable)], cwd=ROOT, check=True)
-    app = scratch / "CoD2 Silicon.app"
+    app = scratch / "CoD2 Unbound.app"
     subprocess.run(["taskpolicy", "-b", "nice", "-n", "19", "python3",
                     "tools/cod2x/make_macos_app.py", str(executable), str(app), "--engine-only"], cwd=ROOT, check=True)
     info = plistlib.loads((app / "Contents/Info.plist").read_bytes())
     assert "CoD2GameDirectory" not in info
-    assert info["CFBundleIdentifier"] == "io.github.stixzoor.cod2silicon"
+    assert info["CFBundleIdentifier"] == "com.cod2unbound.app"
     assert info["CFBundleShortVersionString"] == (ROOT / "RELEASE_VERSION").read_text().strip()
     assert not (app / "Contents/Resources/tools").exists()
     home = scratch / "home"
@@ -39,7 +39,7 @@ with tempfile.TemporaryDirectory(prefix="cod2-silicon-first-run-", suffix=".noin
                    "COD2_SETUP_NONINTERACTIVE": "1", "COD2_SETUP_CD_KEY": '000000000000000086D3'}
     command = [str(app / "Contents/MacOS/cod2_macos")]
     subprocess.run(command, env=environment, check=True)
-    new = home / "Library/Application Support/CoD2 Silicon"
+    new = home / "Library/Application Support/CoD2 Unbound"
     assert (new / "main/config_mp.cfg").read_bytes() == (old / "main/config_mp.cfg").read_bytes()
     assert (new / "data-path.txt").read_text() == str(game)
     preferences = home / ".cod2/preferences"
@@ -69,7 +69,26 @@ with tempfile.TemporaryDirectory(prefix="cod2-silicon-first-run-", suffix=".noin
     assert (new / "main/config_mp.cfg").read_text() == '// changed after migration\n'
     environment["COD2_SETUP_GAME_DIR"] = str(scratch / "absent")
     assert subprocess.run(command, env=environment).returncode == 1
+    # 0.3.6 renamed the app. A home that only has the old folder is taken over whole, once;
+    # a home that already has the new one keeps both as they are.
+    del environment["COD2_SETUP_GAME_DIR"]
+    renamed = scratch / "renamed-home"
+    before = renamed / "Library/Application Support/CoD2 Silicon"
+    (before / "main").mkdir(parents=True)
+    (before / "main/config_mp.cfg").write_text("// set under the old name\n")
+    (before / "data-path.txt").write_text(str(steam_game))
+    (before / "launcher-settings.json").write_text("kept\n")
+    environment.update(CFFIXED_USER_HOME=str(renamed), HOME=str(renamed), COD2_SETUP_CD_KEY="000000000000000086D3")
+    subprocess.run(command, env=environment, check=True)
+    after = renamed / "Library/Application Support/CoD2 Unbound"
+    assert not before.exists() and (after / "main/config_mp.cfg").read_text() == "// set under the old name\n"
+    assert (after / "launcher-settings.json").read_text() == "kept\n" and (after / "data-path.txt").read_text() == str(steam_game)
+    (before / "main").mkdir(parents=True)
+    (before / "main/config_mp.cfg").write_text("// an older copy started again\n")
+    subprocess.run(command, env=environment, check=True)
+    assert (before / "main/config_mp.cfg").read_text() == "// an older copy started again\n"
+    assert (after / "main/config_mp.cfg").read_text() == "// set under the old name\n"
     subprocess.run(["codesign", "--verify", "--deep", "--strict", str(app)], check=True)
     subprocess.run(["/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister",
                     "-u", str(app)], check=True)
-    print("PASS: identity, no baked path/runtime Python, empty home, private fake key, auto/remembered/Steam data, migration once, invalid data")
+    print("PASS: identity, no baked path/runtime Python, empty home, private fake key, auto/remembered/Steam data, migration once, invalid data, the old folder taken over once")

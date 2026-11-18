@@ -499,7 +499,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     Cod2xNativeURL_Install();
     if (lpCmdLine && !strncasecmp(lpCmdLine, "cod2x://", 8)) {
         if (!Cod2xNativeURL_Queue(lpCmdLine))
-            fprintf(stderr, "CoD2 Silicon: rejected launch link; only connect and password are accepted.\n");
+            fprintf(stderr, "CoD2 Unbound: rejected launch link; only connect and password are accepted.\n");
         lpCmdLine = "";
     }
 #endif

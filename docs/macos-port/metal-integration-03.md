@@ -144,7 +144,7 @@ The owned i386 Mac MP 1.3 reference is present and its hash matches WS75:
 The Steam Mac value reference is also present. Neither binary nor decompiler
 output belongs in Git.
 
-Machine-local existence checks found `~/Library/Application Support/CoD2 Silicon/shaders`,
+Machine-local existence checks found `~/Library/Application Support/CoD2 Unbound/shaders`,
 `CoD2-native-ws39`, and the current readiness `release-live-20261012.noindex/bench_command.py`.
 The historical `CoD2-native-ws35`, `CoD2-native-ws37`, and `CoD2x Native/shaders`
 paths were absent. Recover archived evidence where available or rerun; do not

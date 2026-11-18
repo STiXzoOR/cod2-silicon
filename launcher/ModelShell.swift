@@ -18,7 +18,7 @@ enum LaunchProblem: Equatable, Identifiable {
     var message: String {
         switch self {
         case .dataMissing: "The game data folder has moved or its drive isn’t connected."
-        case .helperMissing: "This copy of CoD2 Silicon is missing the game itself. Download CoD2 Silicon again to put it back."
+        case .helperMissing: "This copy of CoD2 Unbound is missing the game itself. Download CoD2 Unbound again to put it back."
         case .other(let text): text
         }
     }
@@ -40,7 +40,7 @@ enum PlayerNameRules {
 
 @MainActor extension LauncherModel {
     // MARK: While the game runs
-    /// Settings › General › Hide CoD2 Silicon while the game is running.
+    /// Settings › General › Hide CoD2 Unbound while the game is running.
     var hidesLauncherWhilePlaying: Bool { settings.hideWhilePlaying }
     /// The game has the screen: the launcher keeps its Dock icon (clicking it brings the launcher
     /// back), and its windows step aside if the player wants that.
@@ -84,7 +84,7 @@ enum PlayerNameRules {
     /// Quitting with the game open asks first (AllSheets › Quit while the game runs).
     func confirmQuitWithGame() {
         confirm(ConfirmationRequest(title: "Call of Duty 2 is still running",
-                                    message: "Quitting CoD2 Silicon leaves the game open. Match summaries for this session won’t be saved.",
+                                    message: "Quitting CoD2 Unbound leaves the game open. Match summaries for this session won’t be saved.",
                                     actionTitle: "Quit Launcher Only", destructive: false,
                                     others: [(title: "Quit Both", action: { [weak self] in
                                         self?.quitConfirmed = true
@@ -167,10 +167,10 @@ enum PlayerNameRules {
         if ProcessInfo.processInfo.environment["COD2_SETUP_NONINTERACTIVE"] == "1" { openLink(text); return }
         showMainWindow()
         guard let address = Self.joinAddress(text) else {
-            notice = "This link isn’t a server address CoD2 Silicon can open."
+            notice = "This link isn’t a server address CoD2 Unbound can open."
             return
         }
-        print("CoD2 Silicon: join link opened Connect to Address (\(address)).")
+        print("CoD2 Unbound: join link opened Connect to Address (\(address)).")
         fflush(stdout)
         let input = ServerAddressInput.parse(text)?.password == nil ? address : text
         if onboard { pendingJoinAddress = input; return }
@@ -248,7 +248,7 @@ enum PlayerNameRules {
     /// An automatic update check found a newer release (ship-settings calls this). Never while the game runs.
     func notifyUpdateReady(version: String, installsOnQuit: Bool) {
         guard !gameRunning, !snapshot else { return }
-        ShellNotifications.post(id: "update-\(version)", title: "CoD2 Silicon \(version) is ready",
+        ShellNotifications.post(id: "update-\(version)", title: "CoD2 Unbound \(version) is ready",
                                 body: installsOnQuit ? "Installs the next time you quit. Click to see what’s new." : "Click to see what’s new.", kind: .update)
     }
     /// A notification was clicked.

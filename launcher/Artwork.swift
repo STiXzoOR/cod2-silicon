@@ -350,32 +350,59 @@ struct MapArt: View {
 
 // MARK: - Marks
 
-/// Icon G at sidebar scale: stencilled 2 over a raised star on an olive plate.
+/// The app's mark: the gold star with the cream 2 cut out of it, on the olive plate. The same shapes as
+/// the app icon and the logo (`BrandShapes`, written by tools/brand/artwork.py), at whatever size it is given.
 struct BrandMark: View {
     var body: some View {
         Canvas { context, size in
-            let s = size.width / 824
-            context.scaleBy(x: s, y: s)
-            context.translateBy(x: -100, y: -100)
-            let tile = Path(roundedRect: CGRect(x: 100, y: 100, width: 824, height: 824), cornerRadius: 185, style: .continuous)
-            context.fill(tile, with: .linearGradient(Gradient(colors: [hex(0x6f7a44), hex(0x323819)]), startPoint: CGPoint(x: 512, y: 100), endPoint: CGPoint(x: 718, y: 924)))
-            let points: [CGPoint] = [(512, 160), (592.8, 408.7), (854.4, 408.8), (642.8, 562.5), (723.6, 811.2), (512, 657.5), (300.4, 811.2), (381.2, 562.5), (169.6, 408.8), (431.2, 408.7)].map { CGPoint(x: $0.0, y: $0.1) }
-            for index in 0..<10 {
-                var facet = Path(); facet.move(to: CGPoint(x: 512, y: 520)); facet.addLine(to: points[index]); facet.addLine(to: points[(index + 1) % 10]); facet.closeSubpath()
-                // Quieter facets than the full icon so the numeral leads at sidebar scale.
-                context.fill(facet, with: .color(hex(index % 2 == 1 ? 0x9a8b55 : 0x4c4320)))
+            let scale = size.width / 1024
+            context.scaleBy(x: scale, y: scale)
+            func down(_ pair: (top: UInt32, base: UInt32), from top: CGFloat, to base: CGFloat) -> GraphicsContext.Shading {
+                .linearGradient(Gradient(colors: [hex(pair.top), hex(pair.base)]), startPoint: CGPoint(x: 512, y: top), endPoint: CGPoint(x: 512, y: base))
+            }
+            let two = SVGPath.parse(BrandShapes.two)
+            // The 2's corners are softened by stroking its outline with round joins, as in the artwork.
+            func paintTwo(_ layer: inout GraphicsContext, stroke: CGFloat, with shading: GraphicsContext.Shading) {
+                layer.fill(two, with: shading)
+                layer.stroke(two, with: shading, style: StrokeStyle(lineWidth: stroke, lineJoin: .round))
+            }
+            context.fill(Path(roundedRect: CGRect(x: 0, y: 0, width: 1024, height: 1024), cornerRadius: BrandShapes.plateRadius),
+                         with: down(BrandShapes.plate, from: 0, to: 1024))
+            context.drawLayer { layer in
+                layer.fill(SVGPath.parse(BrandShapes.star), with: down(BrandShapes.gold, from: BrandShapes.starTop, to: BrandShapes.starBase))
+                layer.blendMode = .destinationOut
+                paintTwo(&layer, stroke: BrandShapes.cutStroke, with: .color(.black))
             }
             context.drawLayer { layer in
-                layer.stroke(SVGPath.parse("M352 404 C 352 300 428 246 516 246 C 612 246 676 306 676 392 C 676 470 628 516 566 566 L 372 740 L 700 740"),
-                             with: .color(hex(0xecdfb4)), style: StrokeStyle(lineWidth: 124, lineJoin: .miter))
-                layer.blendMode = .destinationOut
-                for (rect, angle, pivot) in [(CGRect(x: 452, y: 612, width: 34, height: 110), 42.0, CGPoint(x: 469, y: 667)),
-                                             (CGRect(x: 548, y: 676, width: 30, height: 118), 0.0, CGPoint(x: 563, y: 735))] {
-                    let turn = CGAffineTransform(translationX: pivot.x, y: pivot.y).rotated(by: angle * .pi / 180).translatedBy(x: -pivot.x, y: -pivot.y)
-                    layer.fill(Path(rect).applying(turn), with: .color(.black))
-                }
+                layer.opacity = 0.4
+                layer.addFilter(.blur(radius: 12 * scale))
+                layer.translateBy(x: 0, y: 12)
+                paintTwo(&layer, stroke: BrandShapes.twoStroke, with: .color(.black))
+            }
+            paintTwo(&context, stroke: BrandShapes.twoStroke, with: down(BrandShapes.cream, from: BrandShapes.twoTop, to: BrandShapes.twoBase))
+        }
+        .accessibilityHidden(true)
+    }
+}
+
+/// The name as it is drawn, COD 2 UNBOUND, in the mark's block lettering: cream with a gold 2 on dark
+/// grounds, ink with a darker gold 2 on light ones. `height` is the height of its box, as in the logo files.
+struct BrandWordmark: View {
+    @Environment(\.palette) private var palette
+    var height: CGFloat
+    var body: some View {
+        Canvas { context, size in
+            let scale = size.height / BrandShapes.wordmarkSize.height
+            context.scaleBy(x: scale, y: scale)
+            let colours = palette.dark ? BrandShapes.onDark : BrandShapes.onLight
+            for glyph in BrandShapes.wordmark {
+                let path = SVGPath.parse(glyph.path)
+                let shading = GraphicsContext.Shading.color(hex(glyph.two ? colours.two : colours.letters))
+                context.fill(path, with: shading, style: FillStyle(eoFill: true))
+                context.stroke(path, with: shading, style: StrokeStyle(lineWidth: BrandShapes.letterStroke, lineJoin: .round))
             }
         }
+        .frame(width: height * BrandShapes.wordmarkSize.width / BrandShapes.wordmarkSize.height, height: height)
         .accessibilityHidden(true)
     }
 }

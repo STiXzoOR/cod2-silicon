@@ -6,7 +6,7 @@ out=pathlib.Path(os.environ.get('COD2_LAUNCHER_TEST_OUTPUT',str(root/'output/ws2
 home=out/'cold-home';home.mkdir(exist_ok=True)
 game=home/'Games/CoD2/main';game.mkdir(parents=True,exist_ok=True)
 for i in range(16):(game/f'iw_{i:02}.iwd').touch()
-apphome=home/'Library/Application Support/CoD2 Silicon'
+apphome=home/'Library/Application Support/CoD2 Unbound'
 apphome.mkdir(parents=True,exist_ok=True)
 (apphome/'launcher-settings.json').write_text('{"advanced":"net_port 29973"}')
 exitfile=apphome/'exit-fixture';exitfile.unlink(missing_ok=True)
@@ -31,7 +31,7 @@ try:
             time.sleep(.05)
     wait(lambda:'fixture link localhost:28966' in output_text())
     child=int(re.search(r'fixture ready (\d+)',output_text()).group(1))
-    launcher=int(subprocess.check_output([str(fixture),'find','io.github.stixzoor.cod2silicon.ws25fixture'],text=True).strip())
+    launcher=int(subprocess.check_output([str(fixture),'find','com.cod2unbound.app.ws25fixture'],text=True).strip())
     # Another process sees activation-policy changes asynchronously, so wait for each state.
     policy=lambda:subprocess.check_output([str(fixture),'policy',str(launcher)],text=True).strip()
     visible=lambda:int(subprocess.check_output([str(fixture),'visible-windows',str(launcher)],text=True))

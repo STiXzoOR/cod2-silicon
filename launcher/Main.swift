@@ -77,7 +77,7 @@ import UserNotifications
         LauncherFonts.register()
     }
     var body: some Scene {
-        Window("CoD2 Silicon", id: LauncherWindowID.main.rawValue) {
+        Window("CoD2 Unbound", id: LauncherWindowID.main.rawValue) {
             LauncherScene().frame(idealWidth: 1440, idealHeight: 900)
         }
         .defaultSize(width: 1440, height: 900)
@@ -132,7 +132,7 @@ struct LauncherCommands: Commands {
         // URL launches may never create a view. Commands still supply the scene-opening action.
         let _ = LauncherState.registerWindowAction(openWindow)
         CommandGroup(replacing: .appInfo) {
-            Button("About CoD2 Silicon") { model.openSettings(.about) }.disabled(!settingsAvailable)
+            Button("About CoD2 Unbound") { model.openSettings(.about) }.disabled(!settingsAvailable)
         }
         CommandGroup(replacing: .appSettings) {
             Button("Check for Updates…") { model.openSettings(.updates); model.checkUpdates() }
@@ -151,7 +151,7 @@ struct LauncherCommands: Commands {
         CommandMenu("Server") { serverMenu }
         CommandMenu("Loadout") { loadoutMenu }
         CommandGroup(replacing: .help) {
-            Button("CoD2 Silicon Help") { model.openHelp() }.keyboardShortcut("?", modifiers: .command)
+            Button("CoD2 Unbound Help") { model.openHelp() }.keyboardShortcut("?", modifiers: .command)
             Button("Keyboard Shortcuts") { model.showMainWindow(); model.showKeyboardShortcuts() }
             Divider()
             Button("Release Notes") { model.openReleaseNotes() }

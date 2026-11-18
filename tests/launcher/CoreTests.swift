@@ -4,7 +4,7 @@ import Foundation
     static func main() throws {
         try displayResolutions()
         let fixtures = URL(fileURLWithPath: CommandLine.arguments[1])
-        precondition(Dispatch.bundled.first?.title == "CoD2 Silicon 0.3.5", "bundled news must describe the shipping release")
+        precondition(Dispatch.bundled.first?.title == "CoD2 Unbound 0.3.5", "bundled news must describe the shipping release")
         precondition(!Dispatch.bundled.contains { $0.summary.contains("Planned for 0.3") }, "future work has no promised version")
         let master = try Data(contentsOf: fixtures.appendingPathComponent("master.cod2x.me-120.bin"))
         let servers = WireParser.master(master)
@@ -151,9 +151,9 @@ import Foundation
         let fm = FileManager.default
         // CoD2x's switch reaches the engine only for a CoD2x game with the switch on; an inherited value never leaks through.
         for (engine, on, expected) in [(GameEngine.cod2x, true, "1"), (.cod2x, false, nil), (.original, true, nil), (.original, false, nil)] as [(GameEngine, Bool, String?)] {
-            var environment = ["COD2_SILICON_COD2X_REPORTS": "1", "HOME": "/h"]
+            var environment = ["COD2_UNBOUND_COD2X_REPORTS": "1", "HOME": "/h"]
             CrashReporting.applyConsent(to: &environment, engine: engine, cod2xReports: on)
-            precondition(environment["COD2_SILICON_COD2X_REPORTS"] == expected && environment["HOME"] == "/h", "\(engine) \(on)")
+            precondition(environment["COD2_UNBOUND_COD2X_REPORTS"] == expected && environment["HOME"] == "/h", "\(engine) \(on)")
         }
         let off = try JSONDecoder().decode(GameSettings.self, from: Data(#"{"fps":125}"#.utf8))
         precondition(!off.sendCrashReports && !off.sendCoD2xReports, "both switches are off until turned on")
@@ -171,18 +171,18 @@ import Foundation
 
         // Shortened before it leaves: home folder names, command lines; a CD key (by the game's checksum) stops it.
         let original = """
-            ================ CoD2 Silicon CRASH REPORT ================
+            ================ CoD2 Unbound CRASH REPORT ================
 
             crash      : SIGSEGV (Segmentation fault) at 0x0
-            executable : /Users/jane.doe/Applications/CoD2 Silicon.app/Contents/Helpers/CoD2 Game.app/Contents/MacOS/cod2_macos_stock
-            command    : +set fs_homepath "/Users/jane.doe/Library/Application Support/CoD2 Silicon" +set name Jane
+            executable : /Users/jane.doe/Applications/CoD2 Unbound.app/Contents/Helpers/CoD2 Game.app/Contents/MacOS/cod2_macos_stock
+            command    : +set fs_homepath "/Users/jane.doe/Library/Application Support/CoD2 Unbound" +set name Jane
               stack@rsp: 0x0000000102345678 0000000000000000 000000016fdff000
             X0 =0x0000000000000001  X1 =0x000000016fdfe9c8
             0x00000001a2b3c4d5 /Users/jane.doe/Library/Frameworks/SDL3.framework/SDL3
             """
         let shortened = try CrashReporting.redact(original, home: "/Users/jane.doe")
         precondition(!shortened.contains("jane") && !shortened.contains("Jane") && !shortened.contains("command") && !shortened.contains("fs_homepath"), shortened)
-        precondition(shortened.contains("executable : ~/Applications/CoD2 Silicon.app") && shortened.contains("0x00000001a2b3c4d5 ~/Library/Frameworks/SDL3.framework/SDL3"))
+        precondition(shortened.contains("executable : ~/Applications/CoD2 Unbound.app") && shortened.contains("0x00000001a2b3c4d5 ~/Library/Frameworks/SDL3.framework/SDL3"))
         let users = try CrashReporting.redact("dyld /Users/sam/a\n/Users/sam", home: "/Elsewhere/sam")
         let elsewhere = try CrashReporting.redact("in /Elsewhere/sam/game", home: "/Elsewhere/sam")
         precondition(users == "dyld ~/a\n~" && elsewhere == "in ~/game", "any /Users name, and a home outside /Users")
@@ -200,7 +200,7 @@ import Foundation
         let facts = CrashReporting.Facts(release: "0.3.0", macOS: "26.1.0", model: "Mac15,8")
         let envelope = CrashReporting.envelope(log: "cod2_crash_77.txt", text: "crash : boom\n", occurred: Date(timeIntervalSince1970: 1_800_000_000),
                                                facts: facts, dsn: dsn, eventID: "0123456789abcdef0123456789abcdef", sentAt: Date(timeIntervalSince1970: 1_800_000_060))
-        let event = #"{"contexts":{"device":{"model":"Mac15,8","type":"device"},"os":{"name":"macOS","type":"os","version":"26.1.0"}},"event_id":"0123456789abcdef0123456789abcdef","level":"fatal","logentry":{"formatted":"boom"},"platform":"native","release":"0.3.0","sdk":{"name":"cod2-silicon.launcher","settings":{"infer_ip":"never"},"version":"0.3.0"},"tags":{"engine":"original","mac_model":"Mac15,8","macos":"26.1.0"},"timestamp":1800000000}"#
+        let event = #"{"contexts":{"device":{"model":"Mac15,8","type":"device"},"os":{"name":"macOS","type":"os","version":"26.1.0"}},"event_id":"0123456789abcdef0123456789abcdef","level":"fatal","logentry":{"formatted":"boom"},"platform":"native","release":"0.3.0","sdk":{"name":"cod2-unbound.launcher","settings":{"infer_ip":"never"},"version":"0.3.0"},"tags":{"engine":"original","mac_model":"Mac15,8","macos":"26.1.0"},"timestamp":1800000000}"#
         let expected = #"{"dsn":"https://pub@o1.example.com/42","event_id":"0123456789abcdef0123456789abcdef","sent_at":"2027-01-15T08:01:00Z"}"# + "\n"
             + #"{"length":\#(event.utf8.count),"type":"event"}"# + "\n" + event + "\n"
             + #"{"content_type":"text/plain","filename":"cod2_crash_77.txt","length":13,"type":"attachment"}"# + "\ncrash : boom\n\n"
@@ -235,8 +235,8 @@ import Foundation
         let head = String(decoding: raw[..<split.lowerBound], as: UTF8.self).components(separatedBy: "\r\n")
         let body = Data(raw[split.upperBound...])
         precondition(head[0] == "POST /api/42/envelope/ HTTP/1.1", head[0])
-        precondition(head.contains("X-Sentry-Auth: Sentry sentry_version=7, sentry_client=cod2-silicon-launcher/0.3.0, sentry_key=pub"), "\(head)")
-        precondition(head.contains("Content-Type: application/x-sentry-envelope") && head.contains("User-Agent: CoD2-Silicon-Launcher"), "\(head)")
+        precondition(head.contains("X-Sentry-Auth: Sentry sentry_version=7, sentry_client=cod2-unbound-launcher/0.3.0, sentry_key=pub"), "\(head)")
+        precondition(head.contains("Content-Type: application/x-sentry-envelope") && head.contains("User-Agent: CoD2-Unbound-Launcher"), "\(head)")
         print("Sentry stand-in received: " + head.joined(separator: " | ") + " | body \(body.count) bytes")
         let lines = body.split(separator: UInt8(ascii: "\n"), omittingEmptySubsequences: false).map { Data($0) }
         let header = try requireValue(JSONSerialization.jsonObject(with: lines[0]) as? [String: Any])
@@ -266,21 +266,21 @@ import Foundation
         // What the update check offers: the newest non-prerelease release's archive for this Mac and its SHA256SUMS.
         let base = "https://github.com/cod2unbound/cod2-unbound/releases/download/v0.4.0/"
         let feed = try ReleaseNotes.parse(Data(#"""
-            [{"tag_name":"v0.5.0-beta.1","prerelease":true,"assets":[{"name":"CoD2-Silicon-0.5.0-macos-arm64.zip","size":9,"browser_download_url":"https://github.com/x"}]},
-             {"tag_name":"v0.4.0","prerelease":false,"assets":[{"name":"CoD2-Silicon-0.4.0-macos-arm64.zip","size":123456,"browser_download_url":"\#(base)CoD2-Silicon-0.4.0-macos-arm64.zip"},
+            [{"tag_name":"v0.5.0-beta.1","prerelease":true,"assets":[{"name":"CoD2-Unbound-0.5.0-macos-arm64.zip","size":9,"browser_download_url":"https://github.com/x"}]},
+             {"tag_name":"v0.4.0","prerelease":false,"assets":[{"name":"CoD2-Unbound-0.4.0-macos-arm64.zip","size":123456,"browser_download_url":"\#(base)CoD2-Unbound-0.4.0-macos-arm64.zip"},
               {"name":"SHA256SUMS","size":100,"browser_download_url":"\#(base)SHA256SUMS"}]}]
             """#.utf8))
         precondition(feed.latestVersion == "0.4.0" && feed.latestAssets.count == 2)
         let offer = try requireValue(AppUpdate.offer(version: "0.4.0", assets: feed.latestAssets))
-        precondition(offer.archiveSize == 123456 && offer.archive.lastPathComponent == "CoD2-Silicon-0.4.0-macos-arm64.zip" && offer.sums.lastPathComponent == "SHA256SUMS")
+        precondition(offer.archiveSize == 123456 && offer.archive.lastPathComponent == "CoD2-Unbound-0.4.0-macos-arm64.zip" && offer.sums.lastPathComponent == "SHA256SUMS")
         let zipAsset = feed.latestAssets[0], sumsAsset = feed.latestAssets[1]
-        var foreign = zipAsset; foreign.url = URL(string: "https://example.com/cod2unbound/cod2-unbound/releases/download/v0.4.0/CoD2-Silicon-0.4.0-macos-arm64.zip")!
-        var other = zipAsset; other.url = URL(string: "https://github.com/someone/else/releases/download/v0.4.0/CoD2-Silicon-0.4.0-macos-arm64.zip")!
+        var foreign = zipAsset; foreign.url = URL(string: "https://example.com/cod2unbound/cod2-unbound/releases/download/v0.4.0/CoD2-Unbound-0.4.0-macos-arm64.zip")!
+        var other = zipAsset; other.url = URL(string: "https://github.com/someone/else/releases/download/v0.4.0/CoD2-Unbound-0.4.0-macos-arm64.zip")!
         var huge = zipAsset; huge.size = AppUpdate.archiveLimit + 1
         // The same repository at the addresses it had before is still this project.
         for root in ["https://github.com/STiXzoOR/cod2-silicon", "https://github.com/cod2unbound/cod2-silicon"] {
             var zip = zipAsset, sums = sumsAsset
-            zip.url = URL(string: root + "/releases/download/v0.4.0/CoD2-Silicon-0.4.0-macos-arm64.zip")!
+            zip.url = URL(string: root + "/releases/download/v0.4.0/CoD2-Unbound-0.4.0-macos-arm64.zip")!
             sums.url = URL(string: root + "/releases/download/v0.4.0/SHA256SUMS")!
             precondition(AppUpdate.offer(version: "0.4.0", assets: [zip, sums])?.archive == zip.url, root)
         }
@@ -311,8 +311,8 @@ import Foundation
         expect(.mismatch, "missing") { try AppUpdate.verify(root.appendingPathComponent("none.zip"), size: 0, sha256: digest) }
 
         // Refusals: a running game, a translocated app, a folder that can't be written.
-        let folder = root.appendingPathComponent("Applications"), app = folder.appendingPathComponent("CoD2 Silicon.app")
-        func makeApp(_ url: URL, id: String = "io.github.stixzoor.cod2silicon.test", version: String = "0.4.0", marker: String = "new") throws {
+        let folder = root.appendingPathComponent("Applications"), app = folder.appendingPathComponent("CoD2 Unbound.app")
+        func makeApp(_ url: URL, id: String = "com.cod2unbound.app.test", version: String = "0.4.0", marker: String = "new") throws {
             let macos = url.appendingPathComponent("Contents/MacOS")
             try fm.createDirectory(at: macos, withIntermediateDirectories: true)
             try fm.copyItem(at: URL(fileURLWithPath: "/usr/bin/true"), to: macos.appendingPathComponent("CoD2Launcher"))
@@ -325,7 +325,7 @@ import Foundation
         try makeApp(app, version: "0.3.0", marker: "old")
         precondition(AppUpdate.refusal(app: app, gameRunning: false) == nil)
         precondition(AppUpdate.refusal(app: app, gameRunning: true) == .gameRunning)
-        precondition(AppUpdate.refusal(app: URL(fileURLWithPath: "/private/var/folders/xy/T/AppTranslocation/1234-5678/d/CoD2 Silicon.app"), gameRunning: false) == .readOnly)
+        precondition(AppUpdate.refusal(app: URL(fileURLWithPath: "/private/var/folders/xy/T/AppTranslocation/1234-5678/d/CoD2 Unbound.app"), gameRunning: false) == .readOnly)
         try fm.setAttributes([.posixPermissions: 0o555], ofItemAtPath: folder.path)
         precondition(AppUpdate.refusal(app: app, gameRunning: false) == .notWritable)
         try fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: folder.path)
@@ -334,20 +334,20 @@ import Foundation
         // The unpacked app: one app inside, this app's identifier, the offered version, a valid signature, the same Team ID.
         let staging = root.appendingPathComponent("staging"), built = root.appendingPathComponent("built")
         try fm.createDirectory(at: staging, withIntermediateDirectories: true)
-        try makeApp(built.appendingPathComponent("CoD2 Silicon.app"))
+        try makeApp(built.appendingPathComponent("CoD2 Unbound.app"))
         let release = staging.appendingPathComponent(name)
-        precondition(AppUpdate.run("/usr/bin/ditto", ["-c", "-k", "--keepParent", built.appendingPathComponent("CoD2 Silicon.app").path, release.path]) == 0)
+        precondition(AppUpdate.run("/usr/bin/ditto", ["-c", "-k", "--keepParent", built.appendingPathComponent("CoD2 Unbound.app").path, release.path]) == 0)
         let candidate = try AppUpdate.unpack(release, in: staging)
-        precondition(candidate.lastPathComponent == "CoD2 Silicon.app")
-        try AppUpdate.check(candidate, bundleID: "io.github.stixzoor.cod2silicon.test", version: "0.4.0", team: nil)
+        precondition(candidate.lastPathComponent == "CoD2 Unbound.app")
+        try AppUpdate.check(candidate, bundleID: "com.cod2unbound.app.test", version: "0.4.0", team: nil)
         expect(.notThisApp, "another app") { try AppUpdate.check(candidate, bundleID: "io.github.someone.else", version: "0.4.0", team: nil) }
-        expect(.notThisApp, "another version") { try AppUpdate.check(candidate, bundleID: "io.github.stixzoor.cod2silicon.test", version: "0.4.1", team: nil) }
-        expect(.developer, "ad hoc, where this app has a Team ID") { try AppUpdate.check(candidate, bundleID: "io.github.stixzoor.cod2silicon.test", version: "0.4.0", team: "ABCDE12345") }
+        expect(.notThisApp, "another version") { try AppUpdate.check(candidate, bundleID: "com.cod2unbound.app.test", version: "0.4.1", team: nil) }
+        expect(.developer, "ad hoc, where this app has a Team ID") { try AppUpdate.check(candidate, bundleID: "com.cod2unbound.app.test", version: "0.4.0", team: "ABCDE12345") }
         precondition(AppUpdate.teamIdentifier(of: candidate) == nil)
-        let tampered = root.appendingPathComponent("tampered/CoD2 Silicon.app")
+        let tampered = root.appendingPathComponent("tampered/CoD2 Unbound.app")
         try makeApp(tampered)
         try Data("changed".utf8).write(to: tampered.appendingPathComponent("Contents/Resources/marker"))
-        expect(.signature, "changed after signing") { try AppUpdate.check(tampered, bundleID: "io.github.stixzoor.cod2silicon.test", version: "0.4.0", team: nil) }
+        expect(.signature, "changed after signing") { try AppUpdate.check(tampered, bundleID: "com.cod2unbound.app.test", version: "0.4.0", team: nil) }
         let two = root.appendingPathComponent("two"), twoZip = root.appendingPathComponent("two.zip"), twoStaging = root.appendingPathComponent("two-staging")
         try makeApp(two.appendingPathComponent("A.app")); try makeApp(two.appendingPathComponent("B.app"))
         try fm.createDirectory(at: twoStaging, withIntermediateDirectories: true)
@@ -364,7 +364,7 @@ import Foundation
             discarded.append(old)
         }
         precondition(discarded.count == 1 && AppUpdate.run("/usr/bin/codesign", ["--verify", "--deep", "--strict", app.path]) == 0)
-        try AppUpdate.check(app, bundleID: "io.github.stixzoor.cod2silicon.test", version: "0.4.0", team: nil)
+        try AppUpdate.check(app, bundleID: "com.cod2unbound.app.test", version: "0.4.0", team: nil)
         expect(.install, "nothing to put in place") { try AppUpdate.swap(app, with: staging.appendingPathComponent("missing.app")) { _ in preconditionFailure("discarded") } }
         precondition((try? String(contentsOf: app.appendingPathComponent("Contents/Resources/marker"), encoding: .utf8)) == "new", "a failed swap leaves the app as it was")
         precondition(AppUpdate.message(AppUpdate.Failure.mismatch) == "The download didn’t match the release, so it wasn’t installed.")
@@ -532,10 +532,10 @@ import Foundation
         precondition(!feed.dispatches.contains { $0.summary.contains("Draft") })
         precondition(feed.dispatches[0].date != nil && feed.dispatches[0].version == "0.2.0-beta.1")
         var first = feed.dispatches[0]; first.date = nil; first.version = nil
-        precondition(first == Dispatch(stamp: "02 NOV", title: "CoD2 Silicon 0.2 beta",
+        precondition(first == Dispatch(stamp: "02 NOV", title: "CoD2 Unbound 0.2 beta",
             summary: "Launcher redesign with Liquid Glass navigation. Server browser favourites.",
             link: "https://github.com/cod2unbound/cod2-unbound/releases/tag/v0.2.0-beta.1"))
-        precondition(feed.dispatches[1].title == "CoD2 Silicon 0.1.1" && feed.dispatches[1].link == nil && feed.dispatches[1].stamp == "20 OCT")
+        precondition(feed.dispatches[1].title == "CoD2 Unbound 0.1.1" && feed.dispatches[1].link == nil && feed.dispatches[1].stamp == "20 OCT")
         precondition(feed.dispatches[1].summary.hasSuffix("…") && feed.dispatches[1].summary.count <= 161 && feed.dispatches[1].summary.hasPrefix("Fixes r_mode on 6K"))
         precondition(feed.dispatches[2].summary == "Call of Duty 2 multiplayer, native on Apple silicon. CoD2x 1.4 compatible.")
         precondition(ReleaseNotes.isNewer("0.1.10", than: "0.1.9") && !ReleaseNotes.isNewer("0.1.0", than: "0.1.0"))
@@ -574,13 +574,13 @@ import Foundation
         func dated(_ title: String, _ day: Int, version: String? = nil) -> Dispatch {
             Dispatch(stamp: "\(day) NOV", title: title, summary: "", link: nil, date: utc.date(from: DateComponents(year: 2026, month: 11, day: day)), version: version)
         }
-        let mine = dated("CoD2 Silicon 0.3.0", 18, version: "0.3.0"), newer = dated("CoD2 Silicon 0.3.1", 25, version: "0.3.1")
+        let mine = dated("CoD2 Unbound 0.3.0", 18, version: "0.3.0"), newer = dated("CoD2 Unbound 0.3.1", 25, version: "0.3.1")
         let note = dated("A note", 21), late = dated("A later note", 27)
-        precondition(HomeDispatches.list(version: "0.3.0", releases: [mine], news: [note], next: news.next).map(\.title) == ["A note", "CoD2 Silicon 0.3.0", "A Metal renderer"])
-        precondition(HomeDispatches.list(version: "0.3.0", releases: [newer, mine], news: [late, note], next: news.next).map(\.title) == ["A later note", "CoD2 Silicon 0.3.0", "A Metal renderer"])
-        precondition(HomeDispatches.list(version: "0.3.0", releases: [newer, mine], news: [late, note]).map(\.title) == ["A later note", "CoD2 Silicon 0.3.1", "CoD2 Silicon 0.3.0"])
+        precondition(HomeDispatches.list(version: "0.3.0", releases: [mine], news: [note], next: news.next).map(\.title) == ["A note", "CoD2 Unbound 0.3.0", "A Metal renderer"])
+        precondition(HomeDispatches.list(version: "0.3.0", releases: [newer, mine], news: [late, note], next: news.next).map(\.title) == ["A later note", "CoD2 Unbound 0.3.0", "A Metal renderer"])
+        precondition(HomeDispatches.list(version: "0.3.0", releases: [newer, mine], news: [late, note]).map(\.title) == ["A later note", "CoD2 Unbound 0.3.1", "CoD2 Unbound 0.3.0"])
         precondition(HomeDispatches.list(version: "0.3.9", releases: [mine], news: [note]).map(\.stamp) == ["21 NOV", "18 NOV", "NOW"])
-        let stored = try JSONDecoder().decode(LauncherLibrary.self, from: Data(#"{"dispatches":[{"stamp":"02 NOV","title":"CoD2 Silicon 0.3.0","summary":"Old."}],"news":"damaged"}"#.utf8))
+        let stored = try JSONDecoder().decode(LauncherLibrary.self, from: Data(#"{"dispatches":[{"stamp":"02 NOV","title":"CoD2 Unbound 0.3.0","summary":"Old."}],"news":"damaged"}"#.utf8))
         precondition(stored.news.isEmpty && stored.newsNext == nil && stored.dispatches[0].date == nil)
         precondition(HomeDispatches.list(version: "0.3.0", releases: stored.dispatches).map(\.stamp) == ["02 NOV"], "a release an older build stored still stands for this version")
 
@@ -721,7 +721,7 @@ extension CoreTests {
         precondition(SettingsText.maskedKey(lastFour: "7k2d") == "•••• •••• •••• •••• 7K2D")
 
         let notes = """
-        ## CoD2 Silicon 0.3.1
+        ## CoD2 Unbound 0.3.1
 
         ### Added
         - **Connect to an address.** Join a server by address or `cod2x://` link,
@@ -744,13 +744,13 @@ extension CoreTests {
 
         let report = ReportDetails(version: "0.3.0", build: "412", engines: ["CoD2x 1.4.6.8", "Original 1.3"], macOS: "27.0",
                                    model: "MacBook Pro, Apple M4 Pro", shaders: "original", display: "2560 × 1440 borderless")
-        precondition(report.lines == ["CoD2 Silicon 0.3.0 (412)", "CoD2x 1.4.6.8 · Original 1.3", "macOS 27.0 · MacBook Pro, Apple M4 Pro",
+        precondition(report.lines == ["CoD2 Unbound 0.3.0 (412)", "CoD2x 1.4.6.8 · Original 1.3", "macOS 27.0 · MacBook Pro, Apple M4 Pro",
                                       "Shaders: original · Display: 2560 × 1440 borderless"])
         let issue = try requireValue(report.issueURL().flatMap { URLComponents(url: $0, resolvingAgainstBaseURL: false) })
         precondition(issue.host == "github.com" && issue.path == "/cod2unbound/cod2-unbound/issues/new")
         let fields = Dictionary(uniqueKeysWithValues: (issue.queryItems ?? []).map { ($0.name, $0.value ?? "") })
         precondition(fields["template"] == "bug_report.yml" && fields["version"] == "0.3.0 (412)" && fields["macos"] == "27.0")
-        precondition(!report.text.lowercased().contains("key") && ReportDetails(version: "0.3.0", build: "", engines: [], macOS: "", model: "", shaders: "", display: "").lines[0] == "CoD2 Silicon 0.3.0")
+        precondition(!report.text.lowercased().contains("key") && ReportDetails(version: "0.3.0", build: "", engines: [], macOS: "", model: "", shaders: "", display: "").lines[0] == "CoD2 Unbound 0.3.0")
 
         for line in ["+set com_hunkMegs 512", "+seta com_hunkMegs 512", "seta com_hunkMegs 512", "set com_hunkMegs=512", "com_hunkMegs 512"] {
             precondition(GameSettings.advancedPair(line).map { $0.0 == "com_hunkMegs" && $0.1 == "512" } == true, line)

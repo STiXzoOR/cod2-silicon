@@ -53,7 +53,7 @@ struct CrashReportsQuestionSheet: View {
     @Environment(\.palette) private var palette
     @State private var detailsShown = false
     var body: some View {
-        SheetScaffold(icon: .symbol("ladybug"), title: "Send crash reports to CoD2 Silicon?",
+        SheetScaffold(icon: .symbol("ladybug"), title: "Send crash reports to CoD2 Unbound?",
                       message: "New in this version. If the game crashes or stops responding, the launcher can send this project a report of what went wrong. The choice is yours.",
                       width: 560,
                       actions: [SheetAction(title: "See What’s Sent…", role: .leading) { detailsShown = true },

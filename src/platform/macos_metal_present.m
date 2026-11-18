@@ -233,7 +233,7 @@ static void PresentDrawable(MacMetalPresenter *p, id<CAMetalDrawable> drawable)
     dispatch_group_enter(p->inFlight);
     [command addCompletedHandler:^(id<MTLCommandBuffer> completed) {
         if (completed.status == MTLCommandBufferStatusError)
-            fprintf(stderr, "CoD2 Silicon Metal present: %s\n", completed.error.localizedDescription.UTF8String);
+            fprintf(stderr, "CoD2 Unbound Metal present: %s\n", completed.error.localizedDescription.UTF8String);
         /* GPU reads have finished before GL can reuse this IOSurface. */
         atomic_store_explicit(&slot->state, SLOT_FREE, memory_order_release);
         dispatch_group_leave(p->inFlight);
@@ -366,7 +366,7 @@ static MacMetalPresenter *CreatePresenter(SDL_Window *window, int width, int hei
         options.fastMathEnabled = NO;
         id<MTLLibrary> library = [p->device newLibraryWithSource:@(presentSource) options:options error:&error];
         if ((!p->queue && !p->gpu) || !library) {
-            fprintf(stderr, "CoD2 Silicon Metal shader setup: %s\n", error.localizedDescription.UTF8String);
+            fprintf(stderr, "CoD2 Unbound Metal shader setup: %s\n", error.localizedDescription.UTF8String);
             MacMetal_Destroy(p);
             return NULL;
         }
@@ -390,7 +390,7 @@ static MacMetalPresenter *CreatePresenter(SDL_Window *window, int width, int hei
             p->pipeline = [compiler newRenderPipelineStateWithDescriptor:nativePipeline compilerTaskOptions:nil error:&error];
         }
         if ((!p->queue && !p->gpu) || !p->pipeline) {
-            fprintf(stderr, "CoD2 Silicon Metal setup: %s\n", error.localizedDescription.UTF8String);
+            fprintf(stderr, "CoD2 Unbound Metal setup: %s\n", error.localizedDescription.UTF8String);
             MacMetal_Destroy(p);
             return NULL;
         }
@@ -421,7 +421,7 @@ static MacMetalPresenter *CreatePresenter(SDL_Window *window, int width, int hei
             if (!slot->texture || result != kCGLNoError) {
                 if (usesGL)
                     glBindTexture(GL_TEXTURE_RECTANGLE_ARB, binding);
-                fprintf(stderr, "CoD2 Silicon IOSurface setup: %s\n", CGLErrorString(result));
+                fprintf(stderr, "CoD2 Unbound IOSurface setup: %s\n", CGLErrorString(result));
                 MacMetal_Destroy(p);
                 return NULL;
             }
@@ -472,7 +472,7 @@ static MacMetalPresenter *CreatePresenter(SDL_Window *window, int width, int hei
             return NULL;
         }
         p->threadStarted = 1;
-        fprintf(stderr, "CoD2 Silicon Metal present: %dx%d BGRA8 IOSurface, %s output, %s, 2 drawables\n",
+        fprintf(stderr, "CoD2 Unbound Metal present: %dx%d BGRA8 IOSurface, %s output, %s, 2 drawables\n",
                 width, height, edr ? "EDR" : "classic", NSClassFromString(@"CAMetalDisplayLink") ? "display link" : "worker timeout");
     }
     return p;
@@ -510,7 +510,7 @@ unsigned int MacMetal_BeginFrame(MacMetalPresenter *p)
                 atomic_store_explicit(&slot->state, SLOT_READY, memory_order_release);
             } else if (result == GL_WAIT_FAILED) {
                 /* Do not hand a texture with unknown completion to Metal. */
-                fprintf(stderr, "CoD2 Silicon GL/Metal fence failed; dropping frame\n");
+                fprintf(stderr, "CoD2 Unbound GL/Metal fence failed; dropping frame\n");
                 atomic_store(&slot->state, SLOT_RENDERING);
             }
         }

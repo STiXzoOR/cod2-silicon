@@ -360,7 +360,7 @@ enum AppUpdate {
         let sums: URL
         var archiveName: String { AppUpdate.archiveName(version) }
     }
-    static func archiveName(_ version: String) -> String { "CoD2-Silicon-\(version)-macos-arm64.zip" }
+    static func archiveName(_ version: String) -> String { "CoD2-Unbound-\(version)-macos-arm64.zip" }
     /// The release's archive for this Mac and its SHA256SUMS, each listed once and served from this project's releases.
     static func offer(version: String, assets: [ReleaseAsset]) -> Offer? {
         guard version.range(of: "\\A[0-9]+\\.[0-9]+\\.[0-9]+\\z", options: .regularExpression) != nil else { return nil }
@@ -379,8 +379,8 @@ enum AppUpdate {
         var errorDescription: String? {
             switch self {
             case .gameRunning: "Quit the game before installing the update."
-            case .notWritable: "CoD2 Silicon can’t replace itself in this folder, so the Releases page opened instead."
-            case .readOnly: "CoD2 Silicon can’t replace itself where it’s running from, so the Releases page opened instead. Move the app to your Applications folder to update it here next time."
+            case .notWritable: "CoD2 Unbound can’t replace itself in this folder, so the Releases page opened instead."
+            case .readOnly: "CoD2 Unbound can’t replace itself where it’s running from, so the Releases page opened instead. Move the app to your Applications folder to update it here next time."
             case .download: "Couldn’t download the update. Check your connection and try again."
             case .mismatch: "The download didn’t match the release, so it wasn’t installed."
             case .notThisApp: "The download isn’t this app’s update, so it wasn’t installed."
@@ -397,7 +397,7 @@ enum AppUpdate {
         static func downloading(_ version: String) -> String { "Downloading version \(version)…" }
         static let checking = "Checking the update…"
         static func installing(_ version: String) -> String { "Installing version \(version)…" }
-        static let restarting = "Restarting CoD2 Silicon…"
+        static let restarting = "Restarting CoD2 Unbound…"
     }
 
     /// Why the app at `app` can't replace itself now, if it can't: a game is running, it runs from a
@@ -445,7 +445,7 @@ enum AppUpdate {
         func get(_ url: URL, limit: Int) async throws -> URL {
             var request = URLRequest(url: url)
             request.timeoutInterval = 60
-            request.setValue("CoD2-Silicon-Launcher", forHTTPHeaderField: "User-Agent")
+            request.setValue("CoD2-Unbound-Launcher", forHTTPHeaderField: "User-Agent")
             let result: (URL, URLResponse)
             do { result = try await session.download(for: request) } catch { throw Failure.download }
             let target = folder.appendingPathComponent(UUID().uuidString)
@@ -550,11 +550,11 @@ struct SentryDSN: Equatable, Sendable {
 
 /// Crash reports leave the Mac only when the player turns sending on in Settings › Privacy.
 /// A fault inside CoD2x's own code is CoD2x's: the CoD2x engine writes `<log>.pending.json`
-/// beside its log and, only when COD2_SILICON_COD2X_REPORTS is 1, sends it to the CoD2x project
+/// beside its log and, only when COD2_UNBOUND_COD2X_REPORTS is 1, sends it to the CoD2x project
 /// at its next start (cod2x_report.c). Every other report is ours: the launcher sends it once to the
 /// project's Sentry, shortened and checked first, and never to CoD2x.
 enum CrashReporting {
-    static let consentVariable = "COD2_SILICON_COD2X_REPORTS"
+    static let consentVariable = "COD2_UNBOUND_COD2X_REPORTS"
     static let infoKey = "CoD2SentryDSN"
     static let sizeLimit = 1 << 20
     static let ledgerName = "crash-reports-sent.json"
@@ -653,7 +653,7 @@ enum CrashReporting {
             "tags": ["engine": engine, "macos": facts.macOS, "mac_model": facts.model],
             "contexts": ["os": ["type": "os", "name": "macOS", "version": facts.macOS], "device": ["type": "device", "model": facts.model]],
             // No user, and Sentry is told never to take the address the report came from.
-            "sdk": ["name": "cod2-silicon.launcher", "version": facts.release, "settings": ["infer_ip": "never"]],
+            "sdk": ["name": "cod2-unbound.launcher", "version": facts.release, "settings": ["infer_ip": "never"]],
         ]
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime]
@@ -670,8 +670,8 @@ enum CrashReporting {
         var request = URLRequest(url: dsn.envelopeURL)
         request.httpMethod = "POST"; request.httpBody = envelope; request.timeoutInterval = 15
         request.setValue("application/x-sentry-envelope", forHTTPHeaderField: "Content-Type")
-        request.setValue(dsn.authorization(client: "cod2-silicon-launcher/" + release), forHTTPHeaderField: "X-Sentry-Auth")
-        request.setValue("CoD2-Silicon-Launcher", forHTTPHeaderField: "User-Agent")
+        request.setValue(dsn.authorization(client: "cod2-unbound-launcher/" + release), forHTTPHeaderField: "X-Sentry-Auth")
+        request.setValue("CoD2-Unbound-Launcher", forHTTPHeaderField: "User-Agent")
         request.setValue("en", forHTTPHeaderField: "Accept-Language")  // not the Mac's own languages
         return request
     }
@@ -941,7 +941,7 @@ enum CoD2xFiles {
 }
 
 struct GameSettings: Codable, Sendable, Equatable {
-    /// What CoD2 Silicon sets at every launch: the display mode, which the game has no control for,
+    /// What CoD2 Unbound sets at every launch: the display mode, which the game has no control for,
     /// and what must be decided before it starts. Resolution and vertical sync are not here: they
     /// belong to each loadout, and the game's own Graphics menu changes them too.
     static let machineDvarNames: Set<String> = ["r_fullscreen", "r_borderless", "r_renderer", "r_renderscale", "r_metalfx", "r_hdr", "com_introplayed", "logfile", "developer", "fs_basepath", "fs_homepath", "fs_game", "fs_cdpath", "fs_copyfiles", "fs_restrict", "loc_language", "dedicated", "com_hunkmegs", "net_port", "cl_matchsummaries"]
@@ -966,7 +966,7 @@ struct GameSettings: Codable, Sendable, Equatable {
     /// people set up before the question existed). Until then nothing is sent and the question is owed.
     var crashReportsAsked = false
     // MARK: - ship-settings (launcher preferences other units read; decoded below)
-    /// General › Hide CoD2 Silicon while the game is running. On by default; the launcher comes back when the game quits.
+    /// General › Hide CoD2 Unbound while the game is running. On by default; the launcher comes back when the game quits.
     var hideWhilePlaying = true
     /// General › Appearance: Match System, Light or Dark, applied to every window at once.
     var appearance = LauncherAppearance.system
@@ -1169,7 +1169,7 @@ final class GameSessionLog: @unchecked Sendable {
     static let totalLimit = 20 * 1024 * 1024
     let url: URL
     let pipe = Pipe()
-    private let queue = DispatchQueue(label: "CoD2Silicon.game-log", qos: .utility)
+    private let queue = DispatchQueue(label: "CoD2Unbound.game-log", qos: .utility)
     private let handle: FileHandle
     private var source: DispatchSourceRead?
     private var pending = Data()

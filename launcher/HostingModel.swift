@@ -157,7 +157,7 @@ enum ZPAMState: Equatable {
         guard !isRunning(server.id) else { return }
         let binary = executable(server.engine), data = dataPath()
         guard FileManager.default.isExecutableFile(atPath: binary.path) else {
-            phases[server.id] = .failed("This copy of CoD2 Silicon doesn’t include the \(server.engine == .cod2x ? "CoD2x" : "original 1.3") server. Reinstall CoD2 Silicon to restore it."); return
+            phases[server.id] = .failed("This copy of CoD2 Unbound doesn’t include the \(server.engine == .cod2x ? "CoD2x" : "original 1.3") server. Reinstall CoD2 Unbound to restore it."); return
         }
         guard !data.isEmpty, FileManager.default.fileExists(atPath: data + "/main/iw_00.iwd") else {
             phases[server.id] = .failed("The server uses your game files, and they aren’t set up yet. Choose your Call of Duty 2 folder in Settings › Game Data."); return

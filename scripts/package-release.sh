@@ -28,7 +28,7 @@ if [[ -n $profile && $identity != "Developer ID Application:"* ]]; then
 fi
 mkdir -p "$build" "$root/dist"
 build=$(cd "$build" && pwd -P)
-app="$build/CoD2 Silicon.app"
+app="$build/CoD2 Unbound.app"
 COD2_SIGN_IDENTITY=$identity build_app "$root" "$build" "$app" "$version" "$mac_binary" "$stabs_binary"
 signing="ad-hoc signed, not notarized"
 [[ $identity == "-" ]] || signing="signed by $identity, not notarized"
@@ -42,7 +42,7 @@ if [[ -n $profile ]]; then
     /usr/sbin/spctl --assess --type execute --verbose=2 "$app"
     signing="signed by $identity, notarized and stapled"
 fi
-archive="CoD2-Silicon-$version-macos-arm64.zip"
+archive="CoD2-Unbound-$version-macos-arm64.zip"
 /usr/bin/ditto -c -k --keepParent "$app" "$root/dist/$archive"
 (cd "$root/dist" && /usr/bin/shasum -a 256 "$archive" > SHA256SUMS)
 printf 'Created dist/%s and dist/SHA256SUMS (%s).\n' "$archive" "$signing"

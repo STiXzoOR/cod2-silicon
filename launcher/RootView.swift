@@ -208,18 +208,14 @@ private extension View {
 }
 
 struct BrandHeader: View {
-    @Environment(\.palette) private var palette
     var body: some View {
         HStack(spacing: 10) {
-            BrandMark().frame(width: 34, height: 34)
-            VStack(alignment: .leading, spacing: 3) {
-                Text("COD2").font(.stencil(24)).tracking(0.96).foregroundStyle(palette.dark ? Palette.hex(0xf0e7d0) : Palette.hex(0x2c3018))
-                Text("SILICON").font(.system(size: 10, weight: .semibold)).tracking(3.4).foregroundStyle(palette.dark ? Palette.hex(0xb9b19c) : palette.secondary)
-            }
+            BrandMark().frame(width: 36, height: 36)
+            BrandWordmark(height: 15)
             Spacer(minLength: 0)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("CoD2 Silicon")
+        .accessibilityLabel("CoD2 Unbound")
         .accessibilityAddTraits(.isHeader)
     }
 }

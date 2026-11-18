@@ -1,6 +1,6 @@
 # License and provenance notice
 
-The [MIT license](LICENSE) covers CoD2 Silicon's own original work: this
+The [MIT license](LICENSE) covers CoD2 Unbound's own original work: this
 project's changes after opencod2 commit `410342a` in the Git history. It does
 not relicense the upstream code or third-party components.
 
@@ -9,7 +9,7 @@ license and remains under its authors' rights. The history through `410342a`
 identifies that base. Existing third-party copyright and license notices
 continue to apply; see [CREDITS.md](CREDITS.md).
 
-CoD2 Silicon independently reimplemented behavior after studying CoD2x,
+CoD2 Unbound independently reimplemented behavior after studying CoD2x,
 cod2engine, CoD2rev_Server, KisakCOD, xtnded/cod2, janost/vcod,
 tonga54/cod2-wasm and skowronmateusz/OpenIW2. These projects were behavior and type references, read
 rather than copied. The resulting port changes are original work. Format

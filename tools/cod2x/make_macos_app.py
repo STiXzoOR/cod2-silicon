@@ -72,7 +72,7 @@ def make_portable(parser, machos, executables, frameworks):
 
 
 def build_icon(root, output):
-    """Compile CoD2 Silicon.icon, or draw the static fallback without Xcode's actool."""
+    """Compile CoD2 Unbound.icon, or draw the static fallback without Xcode's actool."""
     result = subprocess.run([str(root / "scripts/compile-launcher-icon.sh"), str(output)])
     if result.returncode == 0:
         with (output / "icon-info.plist").open("rb") as file:
@@ -82,13 +82,16 @@ def build_icon(root, output):
             raise SystemExit("actool did not produce the expected icon files")
         return files, keys
     if result.returncode != 3:
-        raise SystemExit("actool failed to compile CoD2 Silicon.icon")
+        raise SystemExit("actool failed to compile CoD2 Unbound.icon")
     print("Using the static icon fallback; install Xcode for the layered macOS 26 icon.")
-    iconset = output / "CoD2 Silicon.iconset"
-    subprocess.run(["swift", str(root / "tools/cod2x/app_icon.swift"), str(iconset)], check=True)
-    icns = output / "CoD2 Silicon.icns"
+    iconset = output / "CoD2 Unbound.iconset"
+    # The drawer takes its shapes from the launcher's generated file, so both go to swift as one script.
+    drawer = output / "app_icon.swift"
+    drawer.write_text((root / "launcher/BrandShapes.swift").read_text() + (root / "tools/cod2x/app_icon.swift").read_text())
+    subprocess.run(["swift", str(drawer), str(iconset)], check=True)
+    icns = output / "CoD2 Unbound.icns"
     subprocess.run(["iconutil", "-c", "icns", str(iconset), "-o", str(icns)], check=True)
-    return [icns], {"CFBundleIconFile": "CoD2 Silicon"}
+    return [icns], {"CFBundleIconFile": "CoD2 Unbound"}
 
 
 def main():
@@ -117,7 +120,7 @@ def main():
     fullscreen.add_argument("--exclusive", dest="borderless", action="store_false",
                             help="select an explicit display mode")
     parser.add_argument("--no-game-mode", action="store_true", help="disable eligibility for a controlled comparison")
-    parser.add_argument("--bundle-id", default="io.github.stixzoor.cod2silicon")
+    parser.add_argument("--bundle-id", default="com.cod2unbound.app")
     parser.add_argument("--replace", action="store_true", help="replace an existing bundle with the same ID after verification")
     parser.add_argument("--sentry-dsn", default="",
                         help="crash report receiver for the launcher (a Sentry DSN); without one the launcher never sends reports")
@@ -247,8 +250,8 @@ def main():
         "CFBundleDevelopmentRegion": "en",
         "CFBundleExecutable": "cod2_macos" if args.engine_only else "CoD2Launcher",
         "CFBundleIdentifier": args.bundle_id,
-        "CFBundleName": "CoD2 Silicon",
-        "CFBundleDisplayName": "CoD2 Silicon",
+        "CFBundleName": "CoD2 Unbound",
+        "CFBundleDisplayName": "CoD2 Unbound",
         "CFBundlePackageType": "APPL",
         "CFBundleShortVersionString": args.version,
         "CFBundleVersion": "1",
@@ -276,14 +279,14 @@ def main():
         # alternate handler, so .cfg files keep opening in the player's text editor by default).
         "CFBundleDocumentTypes": [
             {"CFBundleTypeName": "Call of Duty 2 demo", "CFBundleTypeRole": "Viewer", "LSHandlerRank": "Default",
-             "LSItemContentTypes": ["io.github.stixzoor.cod2silicon.demo"]},
+             "LSItemContentTypes": ["com.cod2unbound.app.demo"]},
             {"CFBundleTypeName": "Call of Duty 2 config", "CFBundleTypeRole": "Viewer", "LSHandlerRank": "Alternate",
-             "LSItemContentTypes": ["io.github.stixzoor.cod2silicon.config"]},
+             "LSItemContentTypes": ["com.cod2unbound.app.config"]},
         ],
         "UTImportedTypeDeclarations": [
-            {"UTTypeIdentifier": "io.github.stixzoor.cod2silicon.demo", "UTTypeDescription": "Call of Duty 2 demo",
+            {"UTTypeIdentifier": "com.cod2unbound.app.demo", "UTTypeDescription": "Call of Duty 2 demo",
              "UTTypeConformsTo": ["public.data"], "UTTypeTagSpecification": {"public.filename-extension": ["dm_1"]}},
-            {"UTTypeIdentifier": "io.github.stixzoor.cod2silicon.config", "UTTypeDescription": "Call of Duty 2 config",
+            {"UTTypeIdentifier": "com.cod2unbound.app.config", "UTTypeDescription": "Call of Duty 2 config",
              "UTTypeConformsTo": ["public.plain-text"], "UTTypeTagSpecification": {"public.filename-extension": ["cfg"]}},
         ],
     }

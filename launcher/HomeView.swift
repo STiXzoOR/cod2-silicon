@@ -76,17 +76,17 @@ private struct HomeHero: View {
         VStack(alignment: .leading, spacing: 18) {
             if running {
                 Eyebrow(text: (["In the field now", server?.knownMap.flatMap(MapCatalog.region)].compactMap { $0 }).joined(separator: " · "), size: 15, tracking: 0.34)
-                StencilTitle(text: (server?.knownMap.map(MapCatalog.displayName) ?? "CoD2 Silicon").uppercased())
+                StencilTitle(text: (server?.knownMap.map(MapCatalog.displayName) ?? "CoD2 Unbound").uppercased())
                 TimelineView(.periodic(from: .now, by: 30)) { context in
                     MetaLine(items: meta(server, when: Self.playing(since: model.gameStartedAt, now: context.date)))
                 }
             } else if let server {
                 Eyebrow(text: (["Last played", server.knownMap.flatMap(MapCatalog.region)].compactMap { $0 }).joined(separator: " · "), size: 15, tracking: 0.34)
-                StencilTitle(text: (server.knownMap.map(MapCatalog.displayName) ?? "CoD2 Silicon").uppercased())
+                StencilTitle(text: (server.knownMap.map(MapCatalog.displayName) ?? "CoD2 Unbound").uppercased())
                 MetaLine(items: meta(server, when: model.lastPlayed(server.address).map { PlayedDate.sentence($0) }))
             } else {
                 Eyebrow(text: "Ready to play", size: 15, tracking: 0.34)
-                StencilTitle(text: "COD2 SILICON")
+                StencilTitle(text: "COD2 UNBOUND")
                 Text("You’re set up. Pick a server to join your first match, or open the game’s own menu.")
                     .font(.system(size: 16)).lineSpacing(5)
                     .foregroundStyle(palette.dark ? Palette.hex(0xddd5c3) : Palette.hex(0x3a382e))
@@ -292,7 +292,7 @@ enum HeroInk {
 
 // MARK: - Update pill
 
-/// “CoD2 Silicon 0.3.1 is ready to install · What’s New · Install Update” at the trailing end of the
+/// “CoD2 Unbound 0.3.1 is ready to install · What’s New · Install Update” at the trailing end of the
 /// toolbar, while a release is ready or being installed. Checking and up-to-date live in Settings › Updates.
 private struct UpdatePillToolbar: ViewModifier {
     @ObservedObject var model: LauncherModel
@@ -350,7 +350,7 @@ private struct UpdatePill: View {
                 Button("Details") { model.openSettings(.updates) }.quietAction()
             case .ready(let version, let installable):
                 Image(systemName: "arrow.down.circle").foregroundStyle(palette.accent).accessibilityHidden(true)
-                Text(version.isEmpty ? "A new version of CoD2 Silicon is available" : installable ? "CoD2 Silicon \(version) is ready to install" : "CoD2 Silicon \(version) is available")
+                Text(version.isEmpty ? "A new version of CoD2 Unbound is available" : installable ? "CoD2 Unbound \(version) is ready to install" : "CoD2 Unbound \(version) is available")
                     .font(.system(size: 13)).foregroundStyle(palette.text).lineLimit(1)
                 Button("What’s New", action: model.showWhatsNew).quietAction()
                 if installable { Button("Install Update", action: model.installUpdate).prominentAction().actionControlSize() }

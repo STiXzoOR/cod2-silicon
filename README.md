@@ -1,8 +1,8 @@
-# CoD2 Silicon
+# CoD2 Unbound
 
 **Call of Duty 2 multiplayer, native on Apple silicon. CoD2x 1.4 compatible.**
 
-CoD2 Silicon ports the reconstructed [opencod2](https://github.com/opencod2/opencod2)
+CoD2 Unbound ports the reconstructed [opencod2](https://github.com/opencod2/opencod2)
 engine to native macOS arm64. It runs directly on Apple silicon, with raw mouse
 input, native audio and an OpenGL renderer. Bring a licensed copy of Call of
 Duty 2: no game content is included.
@@ -42,14 +42,14 @@ have it installed nowhere, setup can download it for you. See
 ### Prebuilt app
 
 1. Open [GitHub Releases](https://github.com/cod2unbound/cod2-unbound/releases).
-2. Download `CoD2-Silicon-0.3.5-macos-arm64.zip` and `SHA256SUMS` into the same
+2. Download `CoD2-Unbound-0.3.5-macos-arm64.zip` and `SHA256SUMS` into the same
    folder. Verify the archive, then unzip it:
 
    ```sh
    shasum -a 256 -c SHA256SUMS
    ```
 
-3. Move **CoD2 Silicon.app** to `/Applications` and open it.
+3. Move **CoD2 Unbound.app** to `/Applications` and open it.
 
 The app is signed with a Developer ID and notarized by Apple, so it opens
 like any other downloaded app.
@@ -57,18 +57,18 @@ like any other downloaded app.
 ### From source
 
 ```sh
-git clone https://github.com/cod2unbound/cod2-unbound && cd cod2-silicon && ./scripts/install.sh
+git clone https://github.com/cod2unbound/cod2-unbound && cd cod2-unbound && ./scripts/install.sh
 ```
 
 The installer needs Swift 6 (Xcode 26 or later), the Xcode Command Line Tools and CMake and explains how to
 get them. It downloads and builds the pinned SDL release itself (no Homebrew),
-compiles the client and installs `~/Applications/CoD2 Silicon.app`. No original
+compiles the client and installs `~/Applications/CoD2 Unbound.app`. No original
 game binary is needed to build. A locally built app is not quarantined, so
 Gatekeeper does not block it.
 
 ## First run and playing
 
-Open **CoD2 Silicon.app** to use Home, Servers, Library and Configs (⌘1–⌘4).
+Open **CoD2 Unbound.app** to use Home, Servers, Library and Configs (⌘1–⌘4).
 Setup walks through your game data, CD key, shaders, name and display mode,
 asks whether to send crash reports, then shows a Ready summary. It finds a
 game folder, lets you choose or drop one, or downloads your copy from Steam
@@ -79,7 +79,7 @@ need one. A verified key is stored in
 The app builds original shaders from your own game files. If that fails, you
 can choose a Steam Mac copy or continue with approximate shaders. Configs,
 logs, demos, screenshots and the shader cache live in
-`~/Library/Application Support/CoD2 Silicon`.
+`~/Library/Application Support/CoD2 Unbound`.
 
 **Launch** (⌘↩) rejoins the last server, or the selected server when Servers
 is showing one. **Open Game Menu** (⇧⌘↩) opens the multiplayer menu. Servers
@@ -156,7 +156,7 @@ A `cod2x://` join link opens Connect to Address for review before Launch;
 pasted `cod2://` links work too. For example:
 
 ```sh
-open -a "/Applications/CoD2 Silicon.app" 'cod2x://connect/127.0.0.1:28960'
+open -a "/Applications/CoD2 Unbound.app" 'cod2x://connect/127.0.0.1:28960'
 ```
 
 Replace the address with your server. For a source install, use the app under
@@ -178,7 +178,7 @@ all of it before you post, and the app sends nothing itself.
   are left out, and your user name is replaced in paths. A log can still hold
   server names and player names, so read what you paste.
 - The game's logs are under `logs` in
-  `~/Library/Application Support/CoD2 Silicon` (**Settings → Advanced → Logs →
+  `~/Library/Application Support/CoD2 Unbound` (**Settings → Advanced → Logs →
   Show in Finder**); a hosted server's are in its own folder (**Show in
   Finder** on its page).
 
@@ -238,7 +238,7 @@ all of it before you post, and the app sends nothing itself.
   so players on that release for Windows and Linux can join a server you
   host. This was tested against the server's own version rules, not yet with
   a person on the released Windows CoD2x. A CoD2x server still hosted from
-  CoD2 Silicon 0.3.0 turns 0.3.1 players away until it updates. A server on
+  CoD2 Unbound 0.3.0 turns 0.3.1 players away until it updates. A server on
   the original 1.3 takes any 1.3 player.
 - Voice chat works with the original 1.3 only; CoD2x turns it off. It records
   from your microphone only while you hold the voice chat
@@ -362,5 +362,5 @@ play. [Full credits and provenance](CREDITS.md)
 Upstream opencod2 declares no license and retains its authors' rights;
 third-party licenses remain applicable. Read [NOTICE.md](NOTICE.md) for scope.
 
-“Call of Duty” is a trademark of Activision. CoD2 Silicon is not affiliated
+“Call of Duty” is a trademark of Activision. CoD2 Unbound is not affiliated
 with Activision, Infinity Ward, Aspyr or the CoD2x project.

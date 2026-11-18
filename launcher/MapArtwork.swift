@@ -283,7 +283,7 @@ struct IWDArtworkArchive: Sendable {
     }
 
     private nonisolated static func cacheDirectory(home: URL, dataPath: String) -> URL? {
-        let expected = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Library/Application Support/CoD2 Silicon", isDirectory: true)
+        let expected = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Library/Application Support/CoD2 Unbound", isDirectory: true)
         guard home.standardizedFileURL.path == expected.standardizedFileURL.path else { return nil }
         let main = URL(fileURLWithPath: dataPath).appendingPathComponent("main", isDirectory: true)
         var identity = main.standardizedFileURL.path

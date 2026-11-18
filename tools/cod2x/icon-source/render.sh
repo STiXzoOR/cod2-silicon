@@ -12,8 +12,8 @@ if [ ! -x "$tool" ]; then
 fi
 mkdir -p "$output"
 for appearance in Default Dark ClearLight ClearDark TintedLight TintedDark; do
-    "$tool" "$root/tools/cod2x/icon-source/CoD2 Silicon.icon" \
-        --export-image --output-file "$output/CoD2 Silicon-$appearance.png" \
+    "$tool" "$root/tools/cod2x/icon-source/CoD2 Unbound.icon" \
+        --export-image --output-file "$output/CoD2 Unbound-$appearance.png" \
         --platform macOS --rendition "$appearance" \
         --width "$size" --height "$size" --scale 1 >/dev/null
 done

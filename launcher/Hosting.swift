@@ -184,7 +184,7 @@ enum HostingConfig {
 
     /// A complete server.cfg for a server with public rules.
     static func serverConfig(_ server: HostedServer, passwords: Bool = true) -> String {
-        var text = "// \(safe(server.name, limit: 64)): written by CoD2 Silicon. Lines starting with // are comments.\n"
+        var text = "// \(safe(server.name, limit: 64)): written by CoD2 Unbound. Lines starting with // are comments.\n"
         for line in lines(server, passwords: passwords) { text += "// \(line.comment)\nset \(line.name) \"\(line.value)\"\n" }
         // Starting through the rotation, so Next Map goes on to the second map instead of repeating the first.
         text += "// Start on the first map of the rotation\nmap_rotate\n"
@@ -256,7 +256,7 @@ enum HostingConfig {
                      "start-linux.sh": "#!/bin/sh\n# Run from the game folder, beside main/. server.cfg goes into main/.\n\(linuxNote)\(linux) \(options)\n",
                      "start-windows.bat": "@echo off\r\nrem Run from the game folder, beside main\\. server.cfg goes into main\\.\r\nCoD2MP_s.exe \(options)\r\n"]
         var readme = """
-        \(safe(server.name, limit: 64)): server files written by CoD2 Silicon
+        \(safe(server.name, limit: 64)): server files written by CoD2 Unbound
 
         1. Copy server.cfg into the main folder of a Call of Duty 2 install on the server, patched to 1.3\(server.engine == .cod2x ? " with CoD2x installed (https://github.com/callofduty2x/CoD2x)" : "").
         2. Start the server with start-linux.sh or start-windows.bat from the game folder.

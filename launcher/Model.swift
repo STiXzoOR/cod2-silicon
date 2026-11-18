@@ -324,7 +324,7 @@ struct MediaEntry: Identifiable {
 
     init(snapshot: Bool = false, catalog: @escaping @Sendable () throws -> ConfigCatalog = { try ConfigStudioModel.bundledCatalog() }) {
         self.snapshot = snapshot
-        home = URL(fileURLWithPath: snapshot ? "/Preview/CoD2 Silicon" : LauncherHome())
+        home = URL(fileURLWithPath: snapshot ? "/Preview/CoD2 Unbound" : LauncherHome())
         artwork = MapArtworkStore(home: home)
         preferences = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".cod2/preferences")
         let gameApp = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/CoD2 Game.app")
@@ -528,7 +528,7 @@ struct MediaEntry: Identifiable {
         if let report = GameSessionLog.latest(home: home) ?? CrashReports.latest(in: home, since: .distantPast) { NSWorkspace.shared.activateFileViewerSelecting([report]) }
         else { openHomeFolder() }
     }
-    /// Help › CoD2 Silicon Help: the project's documentation page.
+    /// Help › CoD2 Unbound Help: the project's documentation page.
     func openHelp() { NSWorkspace.shared.open(URL(string: "https://github.com/cod2unbound/cod2-unbound")!) }
     /// Help › Release Notes.
     func openReleaseNotes() { NSWorkspace.shared.open(AppUpdate.releases) }
@@ -628,7 +628,7 @@ struct MediaEntry: Identifiable {
         do { try configStudio?.reconcileGames(Set(attachedGames.keys)) } catch { notice = error.localizedDescription }
         // ship-shell: hide the windows if the player wants them hidden while playing (ModelShell.swift).
         gameTookOver()
-        print("CoD2 Silicon: reconnected to existing game (pid \(app.processIdentifier)).")
+        print("CoD2 Unbound: reconnected to existing game (pid \(app.processIdentifier)).")
         fflush(stdout)
         startGameMonitor()
         return true
@@ -750,7 +750,7 @@ struct MediaEntry: Identifiable {
             if let link = plan.link { scheduleLink(link, pid: process.processIdentifier) }
             cancelRefresh()
             handOff(to: process.processIdentifier)
-            print("CoD2 Silicon: game started (pid \(process.processIdentifier)).")
+            print("CoD2 Unbound: game started (pid \(process.processIdentifier)).")
             fflush(stdout)
         } catch {
             sessionLog?.finish(); sessionLog = nil
@@ -815,7 +815,7 @@ struct MediaEntry: Identifiable {
         }
         if code == nil && crashReport != nil { notice = "The game closed unexpectedly. Your settings and loadouts are safe." }
         if !closed { sendCrashReports(CrashReports.all(in: home, since: gameStartedAt)) }
-        print("CoD2 Silicon: returned to launcher (game exit \(code.map(String.init) ?? "unavailable")).")
+        print("CoD2 Unbound: returned to launcher (game exit \(code.map(String.init) ?? "unavailable")).")
         fflush(stdout)
         readPlayerName()
         refreshMatchSummaries()
@@ -861,7 +861,7 @@ struct MediaEntry: Identifiable {
             ("^2Sunday ^7Rifles · EU", "mp_carentan", "tdm", 15, 24, 30, false, "", 0, false, "198.51.100.7:28960"),
             ("^3Desert ^7Fox ^1SD", "mp_matmata", "sd", 12, 20, 42, true, "zPAM 3", 250, false, "203.0.113.90:28962"),
             ("^1Classic ^7Headquarters", "mp_dawnville", "hq", 9, 24, 54, false, "", 0, false, "198.51.100.41:28960"),
-            ("^5Silicon ^7Sessions", "mp_leningrad", "tdm", 6, 16, 66, true, "", 250, true, "192.0.2.10:28960"),
+            ("^5Night ^7Sessions", "mp_leningrad", "tdm", 6, 16, 66, true, "", 250, true, "192.0.2.10:28960"),
             ("^7Eastern ^1Front", "mp_stalingrad", "dm", 20, 32, 71, false, "", 0, false, "198.51.100.88:28961"),
             ("^2Hedgerow ^7League", "mp_brecourt", "sd", 10, 10, 35, true, "zPAM 3", 250, false, "203.0.113.150:28960"),
             ("^6Railyard ^7Night", "mp_railyard", "ctf", 0, 20, 88, true, "", 250, false, "192.0.2.77:28960"),

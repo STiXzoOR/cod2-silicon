@@ -69,7 +69,7 @@ struct SetupView: View {
                     steamPanel
                 } else {
                     head(model.dataPath.isEmpty || !model.dataError.isEmpty ? "Find your game data" : "Game data found",
-                         "Choose the Call of Duty 2 folder from your own copy. CoD2 Silicon uses the files where they are; nothing is copied.")
+                         "Choose the Call of Duty 2 folder from your own copy. CoD2 Unbound uses the files where they are; nothing is copied.")
                     dataPanel
                 }
             case .key: head("Enter your CD key", "The 20-character key that came with your game. It unlocks multiplayer on official and CoD2x servers.")
@@ -79,7 +79,7 @@ struct SetupView: View {
                 shaderPanel
             case .yours: head("Make it yours", "Two things most players set first. Skip this and you start with the game’s defaults.")
                 yoursPanel
-            case .crash: head("Send crash reports?", "If the game crashes or stops responding, CoD2 Silicon can send this project a report of what went wrong. It is how problems on Macs like yours get found and fixed. The choice is yours.")
+            case .crash: head("Send crash reports?", "If the game crashes or stops responding, CoD2 Unbound can send this project a report of what went wrong. It is how problems on Macs like yours get found and fixed. The choice is yours.")
                 crashPanel
             case .ready: head("You’re ready to play", "Your setup is saved. Review your choices below.")
                 readyPanel
@@ -155,7 +155,7 @@ struct SetupView: View {
         VStack(spacing: 12) {
             BrandMark().frame(width: 124, height: 124).shadow(color: .black.opacity(0.35), radius: 18, y: 8)
             Eyebrow(text: "Reporting for duty").padding(.top, 14)
-            Text("Welcome to CoD2 Silicon").font(.system(size: 40, weight: .bold)).foregroundStyle(palette.inkOnArt).multilineTextAlignment(.center)
+            Text("Welcome to CoD2 Unbound").font(.system(size: 40, weight: .bold)).foregroundStyle(palette.inkOnArt).multilineTextAlignment(.center)
                 .accessibilityAddTraits(.isHeader)
             Text("Call of Duty 2, running natively on your Mac. Setup takes about two minutes and uses your own copy of the game.")
                 .font(.system(size: 15)).foregroundStyle(palette.inkOnArt.opacity(0.82)).multilineTextAlignment(.center).lineSpacing(3)
@@ -237,7 +237,7 @@ struct SetupView: View {
                             Button("Finish the Download…", action: model.resumeSteamUnfinished).glassAction().controlSize(.large)
                         }
                     } else {
-                        row("arrow.down.circle", "Own it on Steam, but not installed anywhere?", "CoD2 Silicon can download your copy for you. About 3.7 GB.", control: true) {
+                        row("arrow.down.circle", "Own it on Steam, but not installed anywhere?", "CoD2 Unbound can download your copy for you. About 3.7 GB.", control: true) {
                             Button("Download from Steam…", action: model.offerSteam).glassAction().controlSize(.large)
                         }
                     }

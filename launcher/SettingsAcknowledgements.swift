@@ -7,7 +7,7 @@ import Foundation
 // - vkd3d 2.1: scripts/build-vkd3d.sh (SHA-256 7510146a…) builds libvkd3d-shader for the shader generator;
 //   the texts are the tarball's COPYING, AUTHORS and LICENSE, which make_macos_app.py also ships.
 // - Speex: src/PC/speex is compiled into both engines; the notices are the ones in those files.
-// - The typefaces: launcher/Resources/Fonts and their OFL files. opencod2: NOTICE.md. CoD2 Silicon: LICENSE.
+// - The typefaces: launcher/Resources/Fonts and their OFL files. opencod2: NOTICE.md. CoD2 Unbound: LICENSE.
 // Not listed because they are not shipped: zlib (the system's), libjpeg-turbo (not built for macOS), CoD2x
 // (a behaviour reference; no CoD2x code or files ship), and any crash-report SDK (the launcher sends reports itself).
 
@@ -16,7 +16,7 @@ struct Acknowledgement: Identifiable, Sendable {
     let name: String
     let author: String
     let licence: String
-    /// What it does in CoD2 Silicon, in a few words.
+    /// What it does in CoD2 Unbound, in a few words.
     let role: String
     let text: String
     var id: String { name }
@@ -24,7 +24,7 @@ struct Acknowledgement: Identifiable, Sendable {
 
 enum Acknowledgements {
     static let all: [Acknowledgement] = [
-        Acknowledgement(name: "opencod2", author: "The opencod2 authors", licence: "No licence declared", role: "The reconstructed engine CoD2 Silicon is built on.",
+        Acknowledgement(name: "opencod2", author: "The opencod2 authors", licence: "No licence declared", role: "The reconstructed engine CoD2 Unbound is built on.",
                         text: #"""
 The upstream opencod2 code declares no license and remains under its authors' rights. The history through `410342a` identifies that base. Existing third-party copyright and license notices continue to apply; see CREDITS.md.
 """#),
@@ -883,11 +883,11 @@ DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
 OTHER DEALINGS IN THE FONT SOFTWARE.
 """#),
-        Acknowledgement(name: "CoD2 Silicon", author: "CoD2 Silicon contributors", licence: "MIT", role: "This app’s own work.",
+        Acknowledgement(name: "CoD2 Unbound", author: "CoD2 Unbound contributors", licence: "MIT", role: "This app’s own work.",
                         text: #"""
 MIT License
 
-Copyright (c) 2026 Neoptolemos Kyriakou and CoD2 Silicon contributors
+Copyright (c) 2026 Neoptolemos Kyriakou and CoD2 Unbound contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction, including

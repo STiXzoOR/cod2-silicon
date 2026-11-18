@@ -14,8 +14,8 @@ int main(void)
     @autoreleasepool {
         char arguments[4096];
         if (Cod2xNativeApp_Arguments(arguments, sizeof(arguments)) < 0) return 1;
-        if (!strstr(arguments, "CoD2 Silicon") || !strstr(arguments, "+set fs_basepath")) return 2;
-        puts("CoD2 Silicon first-run paths prepared");
+        if (!strstr(arguments, "CoD2 Unbound") || !strstr(arguments, "+set fs_basepath")) return 2;
+        puts("CoD2 Unbound first-run paths prepared");
         return 0;
     }
 }

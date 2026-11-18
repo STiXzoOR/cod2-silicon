@@ -87,7 +87,7 @@ static int StartWithGPU(struct SDL_Window *window, int width, int height, int ed
 #if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
     if (!MacMetalTargets_PrepareGPU(gpu)) { MacMetalBackend_Stop(); return 0; }
 #endif
-    fprintf(stderr, "CoD2 Silicon renderer: Metal 4, shared device/queue/timeline, clear-only\n");
+    fprintf(stderr, "CoD2 Unbound renderer: Metal 4, shared device/queue/timeline, clear-only\n");
     return 1;
 }
 int MacMetalBackend_Start(struct SDL_Window *window, int width, int height, int edr)

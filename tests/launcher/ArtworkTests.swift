@@ -69,7 +69,7 @@ import Foundation
         let synchronous = MapArtworkStore(home: outside)
         synchronous.loadPrivatePreviewSynchronously(dataPath: root.path, maps: ["toujane", "carentan"])
         precondition(synchronous.images.count == 2 && !FileManager.default.fileExists(atPath: outside.path))
-        let home = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Library/Application Support/CoD2 Silicon")
+        let home = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Library/Application Support/CoD2 Unbound")
         let cached = MapArtworkStore(home: home)
         await cached.load(dataPath: root.path, maps: ["mp_dawnville"])
         let cacheRoot = home.appendingPathComponent("map-artwork-v1")

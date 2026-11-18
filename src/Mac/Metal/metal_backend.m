@@ -110,7 +110,7 @@ static void RetirePayload(uint64_t value, MacMetalRetireFn release, void *payloa
     if (!gpu) { release(payload); return; } /* Shutdown already drained work. */
     if (!MacMetalRetirement_Add(retirement, value, release, payload)) {
         if (MacMetalGPU_Drain(gpu)) release(payload);
-        else fprintf(stderr, "CoD2 Silicon Metal: keep failed retirement alive until exit\n");
+        else fprintf(stderr, "CoD2 Unbound Metal: keep failed retirement alive until exit\n");
     }
 }
 static void Detach(MacShimSidecar *side)

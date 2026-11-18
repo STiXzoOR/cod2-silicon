@@ -48,7 +48,7 @@ for name in ["Fonts", "Assets.car", "ConfigCatalog.json", "ConfigRulesets.json",
         shutil.copy2(source, resources / name)
 info = plistlib.loads((build / "Info.plist").read_bytes())
 identity = hashlib.sha256(str(build.resolve()).encode()).hexdigest()[:12]
-info.update(CFBundleIdentifier=f"io.github.stixzoor.cod2silicon.snapshots.{identity}", CFBundleExecutable="LauncherSnapshots", CFBundleName="CoD2 Launcher Review", CFBundlePackageType="APPL", CFBundleShortVersionString=(root / "RELEASE_VERSION").read_text().strip(), LSMinimumSystemVersion="26.0")
+info.update(CFBundleIdentifier=f"com.cod2unbound.app.snapshots.{identity}", CFBundleExecutable="LauncherSnapshots", CFBundleName="CoD2 Launcher Review", CFBundlePackageType="APPL", CFBundleShortVersionString=(root / "RELEASE_VERSION").read_text().strip(), LSMinimumSystemVersion="26.0")
 (app / "Contents/Info.plist").write_bytes(plistlib.dumps(info))
 harness = macos / "LauncherSnapshots"
 # The screens, the window each renders in and its groups, and the window-driving suites: each unit

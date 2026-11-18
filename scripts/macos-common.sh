@@ -2,13 +2,13 @@
 # Shared source-build prerequisites and the app build.
 check_prerequisites() {
     if [[ $(/usr/bin/uname -s) != Darwin || $(/usr/bin/uname -m) != arm64 ]]; then
-        printf 'CoD2 Silicon requires an Apple silicon Mac running macOS 26 or later.\n' >&2
+        printf 'CoD2 Unbound requires an Apple silicon Mac running macOS 26 or later.\n' >&2
         return 1
     fi
     local os_version
     os_version=$(/usr/bin/sw_vers -productVersion)
     if [[ ${os_version%%.*} -lt 26 ]]; then
-        printf 'CoD2 Silicon requires macOS 26 or later; this Mac runs %s.\n' "$os_version" >&2
+        printf 'CoD2 Unbound requires macOS 26 or later; this Mac runs %s.\n' "$os_version" >&2
         return 1
     fi
     if ! /usr/bin/xcode-select -p >/dev/null 2>&1 || ! /usr/bin/xcrun --find clang >/dev/null 2>&1 || ! /usr/bin/xcrun --find swiftc >/dev/null 2>&1; then

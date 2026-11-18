@@ -11,7 +11,7 @@ import unittest
 @unittest.skipUnless(platform.system() == 'Darwin', 'macOS plutil and stat')
 class ServerServiceTest(unittest.TestCase):
     def test_install_preserves_arguments_configs_and_rotate_open_log(self):
-        helper = Path(__file__).resolve().parents[2] / 'scripts/server/cod2-silicon-server'
+        helper = Path(__file__).resolve().parents[2] / 'scripts/server/cod2-unbound-server'
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             data = root / 'owned data & test'
@@ -20,11 +20,11 @@ class ServerServiceTest(unittest.TestCase):
             home = root / 'server home'
             environment = dict(os.environ, COD2_SERVER_HOME=str(home),
                                COD2_SERVER_AGENT_DIR=str(root / 'agents'),
-                               COD2_SERVER_LABEL='io.github.stixzoor.cod2silicon.fixture')
+                               COD2_SERVER_LABEL='com.cod2unbound.app.fixture')
             command = [str(helper), 'install', '--binary', '/usr/bin/true',
                        '--data', str(data), '--port', '29230', '--bind', '127.0.0.1']
             subprocess.run(command, env=environment, check=True, capture_output=True)
-            plist = root / 'agents/io.github.stixzoor.cod2silicon.fixture.plist'
+            plist = root / 'agents/com.cod2unbound.app.fixture.plist'
             values = plistlib.loads(plist.read_bytes())
             self.assertEqual(values['ProgramArguments'], [
                 '/usr/bin/true', '+set', 'fs_basepath', f'"{data}"',

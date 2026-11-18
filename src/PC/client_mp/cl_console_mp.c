@@ -715,7 +715,7 @@ static BM_NOINLINE void Con_DrawOuputWindow(void)
 
 #if defined(COD2_X64) && COD2_X64 && defined(__APPLE__) && (defined(__aarch64__) || defined(__arm64__))
 #if defined(COD2_CODX) && COD2_CODX
-    version = va("CoD2 Silicon %s · CoD2x " COD2X_RELEASE " · macOS arm64", COD2_RELEASE_VERSION);
+    version = va("CoD2 Unbound %s · CoD2x " COD2X_RELEASE " · macOS arm64", COD2_RELEASE_VERSION);
 #else
     version = va("Build %s %s", getBuildNumber(), "macOS arm64");
 #endif
@@ -798,7 +798,7 @@ static BM_NOINLINE void Con_DrawOuputWindow(void)
 
 #if defined(COD2_X64) && COD2_X64 && defined(__APPLE__) && (defined(__aarch64__) || defined(__arm64__))
 #if defined(COD2_CODX) && COD2_CODX
-    version = va("CoD2 Silicon %s · CoD2x " COD2X_RELEASE " · macOS arm64", COD2_RELEASE_VERSION);
+    version = va("CoD2 Unbound %s · CoD2x " COD2X_RELEASE " · macOS arm64", COD2_RELEASE_VERSION);
 #else
     version = va("Build %s %s", getBuildNumber(), "macOS arm64");
 #endif

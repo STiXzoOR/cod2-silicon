@@ -128,7 +128,7 @@ for x64, codx, release in [(1, 0, '9.8.7'), (1, 1, '9.8.7'), (1, 1, '10.20.30'),
     if not x64:
         footer = 'Build reference-build MacOSXS-i386'
     else:
-        footer = 'CoD2 Silicon ' + release + ' · CoD2x ' + cod2x_release + ' · macOS arm64' if codx else 'Build reference-build macOS arm64'
+        footer = 'CoD2 Unbound ' + release + ' · CoD2x ' + cod2x_release + ' · macOS arm64' if codx else 'Build reference-build macOS arm64'
     subprocess.run([str(exe), prompt, footer], cwd=out, check=True)
 print('PASS production stock/CoD2x prompt, footer, dynamic release version, feature gates and input width')
 

@@ -289,9 +289,9 @@ BOOL Cod2xShadersSetup(NSString *data, NSArray<NSString *> *binaries, NSString *
         NSString *staging = [parent stringByAppendingPathComponent:[@".shaders-" stringByAppendingString:NSUUID.UUID.UUIDString]];
         if (ShaderRun(tool, @[[data stringByAppendingPathComponent:@"main"], staging]) && ShaderInstall(staging, cache)) {
             verified = YES;
-            fprintf(stderr, "CoD2 Silicon: built the shaders from the game's HLSL (%s).\n", version.UTF8String);
+            fprintf(stderr, "CoD2 Unbound: built the shaders from the game's HLSL (%s).\n", version.UTF8String);
         } else {
-            fprintf(stderr, "CoD2 Silicon: the shaders could not be built from the game's HLSL.\n");
+            fprintf(stderr, "CoD2 Unbound: the shaders could not be built from the game's HLSL.\n");
         }
         [files removeItemAtPath:staging error:nil];
     }
@@ -318,7 +318,7 @@ BOOL Cod2xShadersSetup(NSString *data, NSArray<NSString *> *binaries, NSString *
         [files removeItemAtPath:staging error:nil];
     }
     flock(lock, LOCK_UN); close(lock);
-    if (verified) fprintf(stderr, "CoD2 Silicon: verified 834 shader/constant files with SHA-256.\n");
+    if (verified) fprintf(stderr, "CoD2 Unbound: verified 834 shader/constant files with SHA-256.\n");
     return verified;
 }
 #endif

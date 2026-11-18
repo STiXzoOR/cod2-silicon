@@ -1,6 +1,6 @@
 # Security policy
 
-CoD2 Silicon is an experimental reconstruction of an engine from 2005.
+CoD2 Unbound is an experimental reconstruction of an engine from 2005.
 Networking, file parsing, downloaded content and memory safety retain
 engine-era risks. It has not had a comprehensive security audit and is not
 a hardened engine. Use trusted game data, mods and servers; keep test servers

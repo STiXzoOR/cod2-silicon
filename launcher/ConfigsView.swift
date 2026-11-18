@@ -29,7 +29,7 @@ private struct ConfigsUnavailable: View {
     var body: some View {
         StudioEmptyState(title: "UNAVAILABLE",
                          message: snapshot ? "Configs need a game folder, which this preview doesn’t have."
-                                           : "CoD2 Silicon couldn’t open the folder where your loadouts live. Check that your CoD2 Silicon folder is writable, then reopen the app.")
+                                           : "CoD2 Unbound couldn’t open the folder where your loadouts live. Check that your CoD2 Unbound folder is writable, then reopen the app.")
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
@@ -179,7 +179,7 @@ struct ConfigsShell: View {
                 ConfigBanners(studio: studio, session: session)
                 StudioEmptyState(title: "NO LOADOUTS",
                                  message: session.migrationError.map { "Your current settings couldn’t be brought into a loadout yet: \($0)" }
-                                    ?? "Your current game settings become your first loadout, Main, the first time CoD2 Silicon prepares a game. You can also start a new one.",
+                                    ?? "Your current game settings become your first loadout, Main, the first time CoD2 Unbound prepares a game. You can also start a new one.",
                                  action: model.canNewLoadout ? ("New Loadout…", { model.newLoadout() }) : nil)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -376,7 +376,7 @@ struct LoadoutHeader: View {
 
     static func provenance(_ origin: ConfigOrigin) -> String {
         switch origin.kind {
-        case .created: return "Made in CoD2 Silicon"
+        case .created: return "Made in CoD2 Unbound"
         case .copied: return origin.source.map { "Copied from \($0)" } ?? "A copy"
         case .imported: return origin.credit.map { "Imported from \($0)" } ?? "Imported"
         case .migration: return "Your earlier launcher settings"

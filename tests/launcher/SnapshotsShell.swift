@@ -426,7 +426,7 @@ extension Snapshots {
     }
     /// Labels a screen must expose, so an empty or unbuilt tree can't pass.
     static let labels: [String: [String]] = [
-        "setup-welcome": ["Welcome to CoD2 Silicon", "Get Started"],
+        "setup-welcome": ["Welcome to CoD2 Unbound", "Get Started"],
         "setup-data": ["Choose Folder…", "Download from Steam…", "Other ways to get the files"],
         "setup-data-unfinished": ["Choose Folder…", "An unfinished Steam download", "Finish the Download…"],
         "setup-steam-unfinished": ["Your Steam download isn’t finished", "Finish the Download…", "Choose Folder…"],
@@ -443,7 +443,7 @@ extension Snapshots {
         "setup-steam-done": ["Downloaded and checked", "3.70 GB from Steam", "Signed out of Steam."],
         "setup-crash": ["Send crash reports?", "Don’t Send", "See What’s Sent…", "What it never holds"],
         "setup-ready-reports": ["Crash reports", "On"],
-        "sheet-crash-reports-question": ["Send crash reports to CoD2 Silicon?", "Don’t Send", "Send Crash Reports", "See What’s Sent…"],
+        "sheet-crash-reports-question": ["Send crash reports to CoD2 Unbound?", "Don’t Send", "Send Crash Reports", "See What’s Sent…"],
         "setup-data-found": ["Choose a Different Folder…", "Game data found"],
         "setup-data-error": ["Choose Folder…", "4 of 16 game archives found"],
         "setup-key": ["CD key, twenty characters", "Paste", "Skip for Now"],
@@ -452,7 +452,7 @@ extension Snapshots {
         "setup-shaders": ["Building shaders"],
         "setup-shaders-failed": ["Try Again", "Choose Mac Copy…"],
         "setup-yours": ["In-game name", "Skip for Now"],
-        "setup-ready": ["Find a Server", "Open CoD2 Silicon"],
+        "setup-ready": ["Find a Server", "Open CoD2 Unbound"],
         "setup-again": ["Cancel", "Back", "Replace…"],
         "home-loadout-player-card": ["In-game name", "Replace…", "Loadout for your next game", "Done", "Add colours…"],
         "home-loadout-player-card-no-key": ["Enter Key…", "Not entered"],

@@ -1,6 +1,6 @@
-# CoD2 Silicon roadmap
+# CoD2 Unbound roadmap
 
-CoD2 Silicon is **Mac-first**. The goal is the best way to play Call of Duty 2
+CoD2 Unbound is **Mac-first**. The goal is the best way to play Call of Duty 2
 multiplayer anywhere, built natively for Apple silicon and current macOS
 standards first, and for Windows and Linux after. These are planned directions, not release promises. The current
 evidence is in the [port reports](macos-port/README.md).

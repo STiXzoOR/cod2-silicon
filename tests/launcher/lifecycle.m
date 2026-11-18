@@ -75,7 +75,7 @@ int main(int argc, char **argv)
         NSData *receipt = [NSJSONSerialization dataWithJSONObject:arguments options:0 error:nil];
         [receipt writeToFile:[home stringByAppendingPathComponent:@"fixture-arguments.json"] atomically:YES];
         /* Whether the launcher let CoD2x's own crash reports go to CoD2x (Settings › Privacy). */
-        const char *consent = getenv("COD2_SILICON_COD2X_REPORTS");
+        const char *consent = getenv("COD2_UNBOUND_COD2X_REPORTS");
         [(consent ? @(consent) : @"unset") writeToFile:[home stringByAppendingPathComponent:@"fixture-reports-consent.txt"] atomically:YES encoding:NSUTF8StringEncoding error:nil];
         [@"Synthetic crash report\n" writeToFile:[home stringByAppendingPathComponent:@"cod2_crash_fixture.txt"] atomically:YES encoding:NSUTF8StringEncoding error:nil];
         for (;;) {

@@ -81,7 +81,7 @@ import UniformTypeIdentifiers
         guard let data else { return }
         if studio.catalog == nil { studio.loadCatalogNow() }
         if studio.checkup.rules == nil { studio.checkup.load() }
-        guard let catalog = studio.catalog else { failure = "The settings catalog is missing or damaged. Reinstall CoD2 Silicon to restore it."; return }
+        guard let catalog = studio.catalog else { failure = "The settings catalog is missing or damaged. Reinstall CoD2 Unbound to restore it."; return }
         let dialect = dialect, ruleset = ruleset, rules = studio.checkup.rules
         checking = true; failure = nil; applied = []
         task = Task { [weak self] in

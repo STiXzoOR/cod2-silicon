@@ -1,4 +1,4 @@
-# Contributing to CoD2 Silicon
+# Contributing to CoD2 Unbound
 
 Start with the [player README](README.md), [roadmap](docs/ROADMAP.md) and
 [development log](docs/macos-port/README.md). Report a reproducible problem or
@@ -272,7 +272,7 @@ for mode in stock cod2x; do
 done
 
 # Hosting, against both real servers from a built game app. Needs the game files.
-COD2_HOSTING_LIVE="/path/to/CoD2 Silicon Game.app|$HOME/Games/CoD2" sh tests/launcher/hosting.sh
+COD2_HOSTING_LIVE="/path/to/CoD2 Unbound Game.app|$HOME/Games/CoD2" sh tests/launcher/hosting.sh
 ```
 
 Every script that starts a CoD2x engine must point CoD2x's own services at a
@@ -315,7 +315,7 @@ changes. Neither fixture success nor frame-cap registration proves live
 stability or performance:
 
 ```sh
-COD2_MAC_SHADER_CACHE="$HOME/Library/Application Support/CoD2 Silicon/shaders" \
+COD2_MAC_SHADER_CACHE="$HOME/Library/Application Support/CoD2 Unbound/shaders" \
 python3 tools/parity/record.py --binary build-macos-codx/cod2_macos --windowed \
   --data "$HOME/Games/CoD2" --port 29945 --frames 100 \
   --output "$HOME/Library/Application Support/CoD2-native-ws42/smoke-new"

@@ -67,7 +67,7 @@ ask for it again (Replace… opens the Replace CD Key sheet). Shaders show the r
 (or an honest indeterminate bar until the first file appears), then ready, or failed with
 Try Again, Choose Mac Copy… and continuing with approximate shaders. Make it yours sets
 the in-game name and how the game fills the screen; nothing is saved until Continue.
-Ready summarises the real values; Open CoD2 Silicon opens Home and Find a Server opens
+Ready summarises the real values; Open CoD2 Unbound opens Home and Find a Server opens
 Servers. Set Up Again (Settings › Game Data) shows Cancel at every step, and Escape
 presses it: nothing is kept that wasn't confirmed. A notification says the shaders
 are ready only when setup is in the background.
@@ -133,11 +133,11 @@ Typefaces: Big Shoulders Stencil Display and Courier Prime (SIL OFL 1.1) live in
 `Resources/Fonts` with their licences. `scripts/fetch-launcher-fonts.sh --check`
 verifies the pinned SHA-256 of every file. Bundles register them through
 `ATSApplicationFontsPath`, and development builds load them from beside the
-executable. The app icon is `tools/cod2x/icon-source/CoD2 Silicon.icon`.
+executable. The app icon is `tools/cod2x/icon-source/CoD2 Unbound.icon`.
 
 The outer app registers `cod2x` and `cod2` links and the demo and config document types.
 A nested `CoD2 Game.app` owns the engine and its fullscreen/Game Mode eligibility. The
-launcher keeps its Dock tile (and Dock menu) during play. When Hide CoD2 Silicon while
+launcher keeps its Dock tile (and Dock menu) during play. When Hide CoD2 Unbound while
 the game is running is on, it hides its windows and brings them back when the tracked
 child exits. If the launcher is force-quit,
 reopening it reconnects to the exact running helper (bundle ID and executable path) rather
@@ -182,9 +182,9 @@ missing files never stop a game.
 Fast path:
 
 ```sh
-"CoD2 Silicon.app/Contents/MacOS/CoD2Launcher" --play
-"CoD2 Silicon.app/Contents/MacOS/CoD2Launcher" --play --exit-after-game -- +set r_fullscreen 0
-open -a "CoD2 Silicon.app" 'cod2x://connect/127.0.0.1:28960'
+"CoD2 Unbound.app/Contents/MacOS/CoD2Launcher" --play
+"CoD2 Unbound.app/Contents/MacOS/CoD2Launcher" --play --exit-after-game -- +set r_fullscreen 0
+open -a "CoD2 Unbound.app" 'cod2x://connect/127.0.0.1:28960'
 ```
 
 Arguments following `--` are forwarded verbatim to the engine's command parser
@@ -251,7 +251,7 @@ The card never runs past its edge (a title keeps two lines, a summary three, few
 any overflow); See All opens `HomeNewsSheet` with every line in full. Home keeps one row of cards at
 every window size: below 980 points of page width What's New leaves the row and becomes a chip.
 Before the first check has answered it holds one built-in line about this version, with no date. When a newer release carries
-`CoD2-Silicon-<version>-macos-arm64.zip` and `SHA256SUMS`, Install Update (only on the player's
+`CoD2-Unbound-<version>-macos-arm64.zip` and `SHA256SUMS`, Install Update (only on the player's
 click) downloads both into a folder on the app's volume, refuses any size or SHA-256 mismatch,
 unpacks with `ditto` and checks the app inside (bundle identifier, offered version,
 `codesign --verify --deep --strict`, and the running app's Team ID when it has one), swaps it into
@@ -270,9 +270,9 @@ loadouts, demos, screenshots and the CD key alone. Delete Summaries removes
 
 Crash reports leave the Mac only with Settings › Privacy switches the player turned on. A fault in
 CoD2x's own code leaves `<log>.pending.json` beside CoD2x's log; with "Send CoD2x crash reports to
-the CoD2x project" on, the launcher sets `COD2_SILICON_COD2X_REPORTS=1` for a CoD2x game and the
+the CoD2x project" on, the launcher sets `COD2_UNBOUND_COD2X_REPORTS=1` for a CoD2x game and the
 engine sends it to CoD2x at its next start. Every other report goes, with "Send crash reports to
-CoD2 Silicon" on and a build-time receiver (`make_macos_app.py --sentry-dsn`, or `COD2_SENTRY_DSN`
+CoD2 Unbound" on and a build-time receiver (`make_macos_app.py --sentry-dsn`, or `COD2_SENTRY_DSN`
 for the release scripts), to the project's Sentry as one envelope: home folder names shortened to
 `~`, command-line lines dropped, refused if it holds anything that passes the CD key checksum, and
 recorded in `crash-reports-sent.json` so it is never sent twice (`CrashReporting` in `Core.swift`).

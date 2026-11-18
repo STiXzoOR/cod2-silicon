@@ -111,7 +111,7 @@ struct SteamWork {
         case .downloading, .checking: ("Downloading Call of Duty 2", "From Steam’s servers to this Mac.")
         case .stopped: (steam.retryTitle == "Resume" ? "The download stopped" : "The sign-in didn’t finish",
                         steam.retryTitle == "Resume" ? "Nothing is lost. Start again when you are back online." : "Nothing was downloaded. You can try again.")
-        case .done: ("Game data downloaded", "CoD2 Silicon uses the files where they are; nothing is copied.")
+        case .done: ("Game data downloaded", "CoD2 Unbound uses the files where they are; nothing is copied.")
         }
     }
 

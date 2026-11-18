@@ -352,7 +352,7 @@ private struct DPIRow: View {
         let speed = studio.spec(named: "sensitivity").flatMap { studio.state($0).number }
         let yaw = studio.spec(named: "m_yaw").flatMap { studio.state($0).number } ?? 0.022
         let distance = dpi.flatMap { dpi in speed.flatMap { MouseMath.centimetresPer360(dpi: dpi, sensitivity: $0, yaw: yaw) } }
-        SettingsRow("Your mouse’s DPI", detail: "From your mouse’s own settings. CoD2 Silicon uses it only to work out how far you turn; the game never reads it.") {
+        SettingsRow("Your mouse’s DPI", detail: "From your mouse’s own settings. CoD2 Unbound uses it only to work out how far you turn; the game never reads it.") {
             HStack(spacing: 12) {
                 CommitField(value: dpi.map { ConfigValues.format($0) } ?? "", label: "Mouse DPI", width: 80, prompt: "DPI", validate: { text in
                     let trimmed = text.trimmingCharacters(in: .whitespaces)
@@ -581,7 +581,7 @@ private struct ExpertRow: View {
                     }
                     // With a comparison, Take Theirs already gives this reason.
                     if spec.launcherOwned && (theirs == nil || studio.comparisonName == nil) {
-                        Text("CoD2 Silicon sets this from Settings each time the game starts.").font(StudioTypography.help).foregroundStyle(palette.secondary)
+                        Text("CoD2 Unbound sets this from Settings each time the game starts.").font(StudioTypography.help).foregroundStyle(palette.secondary)
                     }
                     if let note = state.note {
                         Text("Note: \(note)").font(StudioTypography.help).italic().foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)

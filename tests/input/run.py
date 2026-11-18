@@ -247,7 +247,7 @@ def environment(output, probe, sdl3, trace=False):
                COD2_TEST_INPUT_FIFO=str(output / 'input.fifo'),
                COD2_TEST_INPUT_OUTPUT=str(output), COD2_TEST_INPUT_ACK=str(output / 'input.jsonl'),
                COD2_TEST_INPUT_SDL3=str(sdl3),
-               COD2_MAC_SHADER_CACHE=str(Path.home() / 'Library/Application Support/CoD2 Silicon/shaders'))
+               COD2_MAC_SHADER_CACHE=str(Path.home() / 'Library/Application Support/CoD2 Unbound/shaders'))
     if trace:
         env['COD2_TEST_INPUT_TRACE'] = '1'
         env['COD2_TEST_INPUT_TRACE_TEXT'] = '1'  # Windowless known-character fixture only.

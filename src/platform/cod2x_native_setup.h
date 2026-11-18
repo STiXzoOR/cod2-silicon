@@ -4,10 +4,11 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "cod2x_native_shaders.h"
+#include "macos_home_adopt.h"
 
 static NSString *Cod2xAppHome(void)
 {
-    return [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Application Support/CoD2 Silicon"];
+    return [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Application Support/CoD2 Unbound"];
 }
 
 static NSString *Cod2xSetupOverride(const char *name)
@@ -23,13 +24,19 @@ static BOOL Cod2xNoninteractive(void)
 
 static void Cod2xSetupAlert(NSString *message, NSString *detail)
 {
-    if (Cod2xNoninteractive()) { fprintf(stderr, "CoD2 Silicon: %s\n", message.UTF8String); return; }
+    if (Cod2xNoninteractive()) { fprintf(stderr, "CoD2 Unbound: %s\n", message.UTF8String); return; }
     [NSApplication sharedApplication];
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = message;
     alert.informativeText = detail;
     [alert addButtonWithTitle:@"OK"];
     [alert runModal];
+}
+
+/* Call before the app's folder is made: a folder that exists is never replaced. */
+static void Cod2xAdoptOldName(void)
+{
+    MacHome_AdoptOldName(NSHomeDirectory().fileSystemRepresentation);
 }
 
 static void Cod2xMigrate(void)
@@ -84,7 +91,7 @@ static NSArray<NSString *> *Cod2xInstallFolders(void)
 
 static void Cod2xGameDataAlert(void)
 {
-    NSString *detail = @"CoD2 Silicon needs your own licensed Call of Duty 2 game data: main/iw_00.iwd through iw_15.iwd. Select the containing folder, or a Call of Duty 2 app that contains it. Game files are not included in this download.";
+    NSString *detail = @"CoD2 Unbound needs your own licensed Call of Duty 2 game data: main/iw_00.iwd through iw_15.iwd. Select the containing folder, or a Call of Duty 2 app that contains it. Game files are not included in this download.";
     if (Cod2xNoninteractive()) { Cod2xSetupAlert(@"Game data folder is missing or incomplete.", detail); return; }
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = @"Choose your Call of Duty 2 game data";
@@ -236,7 +243,7 @@ static void Cod2xSetupShaders(NSString *data)
     if (!verified && !Cod2xNoninteractive()) {
         NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"The original shaders could not be built";
-        alert.informativeText = @"CoD2 Silicon builds them from your game files, and that did not work. If you own the Mac version of Call of Duty 2, choose its folder to use its shaders. You can also play now with approximate shaders; lighting and sky will differ.";
+        alert.informativeText = @"CoD2 Unbound builds them from your game files, and that did not work. If you own the Mac version of Call of Duty 2, choose its folder to use its shaders. You can also play now with approximate shaders; lighting and sky will differ.";
         [alert addButtonWithTitle:@"Choose Mac Game Folder"]; [alert addButtonWithTitle:@"Use Approximate Shaders"];
         if ([alert runModal] == NSAlertFirstButtonReturn) {
             NSOpenPanel *panel = NSOpenPanel.openPanel;
@@ -247,7 +254,7 @@ static void Cod2xSetupShaders(NSString *data)
     if (verified) setenv("COD2_MAC_SHADER_CACHE", cache.fileSystemRepresentation, 1);
     else {
         unsetenv("COD2_MAC_SHADER_CACHE");
-        fprintf(stderr, "CoD2 Silicon: no verified original shaders; using approximate shaders (lighting and sky will differ).\n");
+        fprintf(stderr, "CoD2 Unbound: no verified original shaders; using approximate shaders (lighting and sky will differ).\n");
     }
 }
 
@@ -259,6 +266,7 @@ static int Cod2xSetupAppArguments(NSBundle *bundle, NSString *arguments, char *b
     [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
     [NSApp finishLaunching];
     if (!Cod2xNoninteractive()) [NSApp activateIgnoringOtherApps:YES];
+    Cod2xAdoptOldName();
     [NSFileManager.defaultManager createDirectoryAtPath:Cod2xAppHome() withIntermediateDirectories:YES attributes:nil error:nil];
     Cod2xMigrate();
     NSString *data = Cod2xGameDirectory(bundle);

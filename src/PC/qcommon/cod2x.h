@@ -94,7 +94,7 @@ void Cod2x_ReportInit(void);
    This build asks first: the launcher sets the variable only after the player has
    agreed to send CoD2x-layer crash and error reports to CoD2x. */
 #ifndef COD2X_REPORT_CONSENT_ENV
-#define COD2X_REPORT_CONSENT_ENV "COD2_SILICON_COD2X_REPORTS"
+#define COD2X_REPORT_CONSENT_ENV "COD2_UNBOUND_COD2X_REPORTS"
 #endif
 /* Every send to CoD2x's error and crash services checks this. Without consent
    nothing is sent, but a CoD2x-layer fault still leaves its pending report, which

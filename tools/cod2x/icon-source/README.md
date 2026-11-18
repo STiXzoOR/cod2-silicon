@@ -1,39 +1,42 @@
-# CoD2 Silicon app icon (icon G)
+# CoD2 Unbound app icon
 
-`CoD2 Silicon.icon` is an Icon Composer document: a stenciled 2 over a raised
-star on olive steel, from the approved launcher design. It is original art. It
-uses no font, game data, copied logo or third-party artwork.
+`CoD2 Unbound.icon` is an Icon Composer document: a flat gold star with a cream
+block 2 cut out of it, on a plain olive plate. It is original art. It uses no
+font, game data, copied logo or third-party artwork.
+
+The document is written by `tools/brand/artwork.py`, together with the logo
+files in `docs/brand` and the shapes the launcher draws its own mark from
+(`launcher/BrandShapes.swift`). One set of numbers there is the icon, the mark
+and the wordmark; change the geometry in that file and run it again rather
+than editing what it writes.
 
 ## Document
 
-The olive background is the document `fill`, a linear gradient from `#6f7a44`
-to `#323819`. Dark uses its own olive-black gradient from `#262a1b` to
-`#0c0d08`. There are three groups, listed front to back (the first group
-renders on top):
+The olive plate is the document `fill`, a linear gradient from `#6f7a44` to
+`#323819`. Dark uses an olive-black gradient from `#262a1b` to `#0c0d08`.
+There are two groups, listed front to back (the first group renders on top):
 
-| Group | Layer | Shadow | Translucency | Appearance variants |
-| --- | --- | --- | --- | --- |
-| Stencil 2 | `stencil-two.svg`: cream paint with two stencil bridges and worn chips | layer colour, 0.5 | off | Dark uses deeper paint; mono uses a solid white fill |
-| Raised star | `star.svg`: lit and shaded facets | neutral, 0.5 | off | Dark and mono use darker facets, so the numeral leads |
-| Plate | `plate.svg`: inner bevel line and four rivets | none | 0.3 | Dark lowers the line and rivets |
+| Group | Layer | Shadow | Appearance variants |
+| --- | --- | --- | --- |
+| Characters | `characters.svg`: the 2, a block numeral with cut, softened corners | layer colour, 0.5 | Dark uses a deeper cream; tinted uses solid white |
+| Star | `star.svg`: the five-point star with the 2's shape, a little larger, cut out of it | neutral, 0.5 | Dark uses a deeper gold; tinted uses solid white |
 
-The design had a third bridge on the 2's top-left hook. At Dock sizes (32–64 px)
-it read as a separate tick mark, so it was removed and the crown stays whole.
-
-The layers are flat colour. Icon Composer supplies the specular highlights,
-refraction, translucency and shadows, and masks the canvas to the macOS shape.
-`layers.py` writes every SVG. It rescales the design board's 100–924 tile to
-the full 1024 canvas, and seeds the paint chips so its output is reproducible.
+The layers are flat shapes and the document's `fill-specializations` colour
+them. Icon Composer supplies the highlights, translucency and shadows, and
+masks the canvas to the macOS shape. There is no bevel line and there are no
+rivets on the plate.
 
 The JSON schema is not a published API. Its keys were checked against the
 strings in Icon Composer's own frameworks, and the installed `ictool` and
 `actool` validated the files. A key and its `-specializations` form must not
-both be present: if they are, the specializations are ignored.
+both be present: if they are, the specializations are ignored. Icon Composer
+drops a stroke painted with a `userSpaceOnUse` gradient under a mask, so the
+layers carry no gradients of their own.
 
 ## Build and integration
 
 ```sh
-scripts/compile-launcher-icon.sh output/ws28/icon-build
+scripts/compile-launcher-icon.sh output/icon-build
 ```
 
 Xcode 27's `actool` compiles the package directly, with no Xcode project, for a
@@ -41,20 +44,20 @@ macOS 26.0 minimum. It writes:
 
 - `Assets.car`, with layered `IconImageStack` and `IconGroup` renditions for
   Aqua, DarkAqua and tintable appearances, plus flattened renditions;
-- `CoD2 Silicon.icns`, the static fallback;
+- `CoD2 Unbound.icns`, the static fallback;
 - `icon-info.plist`, with `CFBundleIconName` and `CFBundleIconFile` set to
-  `CoD2 Silicon`.
+  `CoD2 Unbound`.
 
 `tools/cod2x/make_macos_app.py` installs `Assets.car` and the ICNS into both the
 outer launcher and the nested `CoD2 Game.app`, and merges the plist keys into
 each `Info.plist` before signing. `actool` ships with Xcode, not the Command Line
-Tools. Without it, the bundler draws the same composition with
-`tools/cod2x/app_icon.swift` and packages a static `CoD2 Silicon.icns`.
+Tools. Without it, the bundler draws the same shapes with
+`tools/cod2x/app_icon.swift` and packages a static `CoD2 Unbound.icns`.
 
 ## Review renditions
 
 ```sh
-tools/cod2x/icon-source/render.sh output/ws28/icon
+tools/cod2x/icon-source/render.sh output/icon
 ```
 
 This uses Xcode's Icon Composer `ictool`, which renders through the same system

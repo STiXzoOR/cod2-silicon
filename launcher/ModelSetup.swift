@@ -81,7 +81,7 @@ enum GameArchives {
     /// Set Up Again (from Settings): Cancel shows at every step and leaves with nothing changed.
     var canCancelSetup: Bool { setupReturnPage != nil }
     var hasPendingLaunch: Bool { pendingLink != nil || fastPlay }
-    var setupCompletionTitle: String { pendingLink != nil ? "Join Server" : fastPlay ? "Open Game Menu" : "Open CoD2 Silicon" }
+    var setupCompletionTitle: String { pendingLink != nil ? "Join Server" : fastPlay ? "Open Game Menu" : "Open CoD2 Unbound" }
     var setupServerAddress: String? { pendingLink?.address }
     /// The steps this build's setup has: without a report service there is nothing to ask about.
     var setupSteps: [SetupStep] { SetupStep.allCases.filter { $0 != .crash || crashReportService != nil } }

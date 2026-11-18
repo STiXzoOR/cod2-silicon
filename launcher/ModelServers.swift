@@ -127,7 +127,7 @@ enum ServerAddressInput {
 
 /// Server passwords the player chose to remember: the login keychain, one item per server, never synced.
 enum ServerPasswords {
-    private static var service: String { (Bundle.main.bundleIdentifier ?? "io.github.stixzoor.cod2silicon") + ".server-password" }
+    private static var service: String { (Bundle.main.bundleIdentifier ?? "com.cod2unbound.app") + ".server-password" }
     private static func query(_ address: String) -> [String: Any] {
         [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service, kSecAttrAccount as String: address]
     }
@@ -146,7 +146,7 @@ enum ServerPasswords {
         guard updated == errSecItemNotFound else { return false }
         var item = query(address)
         item[kSecValueData as String] = data
-        item[kSecAttrLabel as String] = "CoD2 Silicon server password (\(address))"
+        item[kSecAttrLabel as String] = "CoD2 Unbound server password (\(address))"
         item[kSecAttrSynchronizable as String] = false
         return SecItemAdd(item as CFDictionary, nil) == errSecSuccess
     }
@@ -454,7 +454,7 @@ enum ServerPasswords {
         guard needed != normal, installedEngines.contains(needed) else {
             if needed == .cod2x, normal == .original, !installedEngines.contains(.cod2x) {
                 pendingLink = nil; fastPlay = false
-                notice = "This server runs CoD2x, which this copy of CoD2 Silicon doesn’t include. Reinstall the app to get it."
+                notice = "This server runs CoD2x, which this copy of CoD2 Unbound doesn’t include. Reinstall the app to get it."
                 return false
             }
             stampLaunch(address); return true
@@ -617,7 +617,7 @@ enum ServerPasswords {
     func confirmQuitWithServers() {
         let count = hosting.running.count
         confirm(ConfirmationRequest(title: count == 1 ? "“\(hosting.running[0].name)” is still running" : "\(count) servers are still running",
-                                    message: "Quitting CoD2 Silicon stops \(count == 1 ? "it" : "them"). Players on \(count == 1 ? "it" : "them") are disconnected.",
+                                    message: "Quitting CoD2 Unbound stops \(count == 1 ? "it" : "them"). Players on \(count == 1 ? "it" : "them") are disconnected.",
                                     actionTitle: count == 1 ? "Stop Server and Quit" : "Stop Servers and Quit") { [weak self] in
             self?.hostingQuitConfirmed = true
             NSApp.terminate(nil)

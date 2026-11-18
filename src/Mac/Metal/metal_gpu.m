@@ -250,7 +250,7 @@ uint64_t MacMetalGPU_Commit(MacMetalSubmission *slot, void *opaqueDrawable, MacM
              * supplies no drawables. It is distinct from physical display. */
             if (!slot->role && gpu->observe)
                 gpu->observe(success ? 5 : 6, mach_absolute_time() * gpu->secondsPerTick, 0, value);
-            if (!success) fprintf(stderr, "CoD2 Silicon Metal submission: %s\n", feedback.error.localizedDescription.UTF8String);
+            if (!success) fprintf(stderr, "CoD2 Unbound Metal submission: %s\n", feedback.error.localizedDescription.UTF8String);
             if (completion)
                 completion(context, value, success);
             pthread_mutex_lock(&gpu->mutex);

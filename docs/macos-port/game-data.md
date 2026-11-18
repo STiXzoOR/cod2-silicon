@@ -1,6 +1,6 @@
 # Getting your Call of Duty 2 data
 
-CoD2 Silicon needs data from a copy of Call of Duty 2 that you legally own,
+CoD2 Unbound needs data from a copy of Call of Duty 2 that you legally own,
 plus your own CD key. Nothing in this repository supplies the game. Steam's
 [game is app 2630](https://store.steampowered.com/app/2630/Call_of_Duty_2/).
 Keep downloads, Steam credentials and manifests outside the source checkout.
@@ -103,7 +103,7 @@ not prove that the executable runs on arm64 or supports old 32-bit programs.
 ## Original shaders
 
 The Windows game compiles its shaders from HLSL sources in `main/iw_07.iwd`
-(`materials/shaders/*.hlsl`) each time it starts. CoD2 Silicon does the same
+(`materials/shaders/*.hlsl`) each time it starts. CoD2 Unbound does the same
 work once, at setup, with the bundled `cod2-shadergen`:
 
 1. It reads the 242 HLSL files from your game's `.iwd` archives.
@@ -155,7 +155,7 @@ full-STABS 1.3 reference. See [typed-data generation](../../tools/datagen/README
 The app finds your game folder or asks for it, and asks for a CD key if none
 is stored. The key lives in `~/.cod2/preferences`; configs, logs, demos,
 screenshots and the shader cache live in
-`~/Library/Application Support/CoD2 Silicon`. The key prompt checks the key's
+`~/Library/Application Support/CoD2 Unbound`. The key prompt checks the key's
 checksum before saving it with owner-only permissions. Data from an earlier
 `CoD2x Native` install is migrated once.
 
@@ -166,7 +166,7 @@ data read-only and use a separate writable home for development/parity runs:
 ```sh
 ./build-macos-codx/cod2_macos \
   +set fs_basepath "$HOME/Games/CoD2" \
-  +set fs_homepath "$HOME/Library/Application Support/CoD2 Silicon"
+  +set fs_homepath "$HOME/Library/Application Support/CoD2 Unbound"
 ```
 
 Never post your CD key, Steam login, credentials, HWID, key digest, demos or
