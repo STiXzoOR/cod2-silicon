@@ -53,6 +53,19 @@ was tested and what was not.
 The [0.3.1 verification](macos-port/release-0.3.1-verification.md) says what
 was tested and what was not.
 
+## 0.3.5 — Your Steam copy, downloaded in setup (released 0.3.5)
+
+- **Setup can download the game from Steam.** For people who own Call of
+  Duty 2 there and have it installed nowhere: pick a language and a place,
+  scan a QR code with the Steam app, and the files come straight from Steam.
+  No Steam name or password is typed, and the sign-in is removed when the
+  download ends.
+- **Setup asks about crash reports**, with neither answer chosen for you.
+  People already set up are asked once.
+
+The [0.3.5 verification](macos-port/release-0.3.5-verification.md) says what
+was tested and what was not.
+
 ## 0.3.4 — Crash reports, if you want them (released 0.3.4)
 
 - **A switch in Settings → Privacy sends crash reports to this project.** It

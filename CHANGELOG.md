@@ -5,6 +5,8 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-11-18
+
 ### Added
 
 - **Setup can download your copy from Steam.** If you own Call of Duty 2 on

@@ -203,6 +203,12 @@ all of it before you post, and the app sends nothing itself.
   Servers, and asks a single server when you type its address in **Connect to
   Address**. Passwords you choose to remember stay in your keychain on this Mac
   and are sent only to that server. **Settings → Privacy** lists these contacts.
+- **Downloading the game from Steam**, only if you choose it in setup: the
+  launcher fetches the download tool (DepotDownloader) from its release page
+  on GitHub, and that tool then talks to Steam's servers to sign in with the
+  QR code you approve on your phone and to download the game. The launcher
+  never sees a Steam name or password, and the tool's stored sign-in is
+  deleted when the download ends, stops or is cancelled.
 - **Configs** fetches the player setups catalogue from GitHub when its home page
   opens, and a setup's config when you look at it.
 - **A server you host** contacts nothing while it is set to My Network. Set to
@@ -213,7 +219,8 @@ all of it before you post, and the app sends nothing itself.
 - **Report a Problem** opens a prefilled issue in your browser; the app sends
   nothing itself.
 - **Crash reports** are sent only if you turn a switch on in **Settings →
-  Privacy**. There are two, both off until you turn them on. One sends
+  Privacy**. There are two, both off until you turn them on. From 0.3.5,
+  setup asks about the second one, with neither answer chosen for you. One sends
   CoD2x's own reports to the CoD2x project, as CoD2x does on Windows. The
   other, new in 0.3.4, sends the report the game wrote when it crashed or
   froze to this project's report service (Sentry, hosted in the EU): what

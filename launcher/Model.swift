@@ -394,7 +394,7 @@ struct MediaEntry: Identifiable {
         // Show the detected folder before asking for a key, so it can be reviewed or changed.
         step = 0
     }
-    var version: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.3.4" }
+    var version: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.3.5" }
     /// This build's crash report receiver (a Sentry DSN written at build time); without one nothing is ever sent
     /// and Settings doesn't offer it. The review harness shows the switch with a placeholder that is never used.
     var crashReportService: SentryDSN? {
