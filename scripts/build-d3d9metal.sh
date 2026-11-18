@@ -7,10 +7,13 @@
 # an application that is not a Windows program under Wine. The archive comes from this
 # project's own copy of that fork (github.com/cod2unbound/mtld3d, branch cod2-unbound).
 # The commit below is that fork's 101f37d3, which was compared file by file with a clone
-# on 2026-11-17, plus one change of this project's: a window with vertical sync off is
+# on 2026-11-17, plus two changes of this project's. A window with vertical sync off is
 # given the newest frame when the display has room for one, where every frame used to
-# wait its turn and held the game a little above 300 frames a second. The tag
-# cod2-unbound-0.4-pin-2 keeps the commit.
+# wait its turn and held the game a little above 300 frames a second. And a copy of a
+# whole anti-aliased target into a plain one, which is how Direct3D 9 resolves its
+# samples, is taken as the resolve itself (render.directResolve, which mac_d3d9.c turns
+# on) where the samples used to be resolved and the result copied. The tag
+# cod2-unbound-0.4-pin-3 keeps the commit.
 #
 # mtld3d is written in Rust, so this needs cargo 1.99 or later (`brew install rust`, or
 # rustup). cargo fetches the crates the library uses and checks each against the
@@ -20,9 +23,9 @@ cache=${1:?usage: build-d3d9metal.sh build-directory}
 mkdir -p "$cache"
 cache=$(cd "$cache" && pwd -P)
 prefix="$cache/install"
-commit=53b18121026c292f8ec22b693ae9393e0690d669
+commit=9c28df30afebcde4644feed738cc6f35cbf779a9
 archive="mtld3d-$commit.tar.gz"
-checksum=93297b914c22fedd5ba65ca7a453975ff7c3a37a4e2cf2f7c62398d55e46800a
+checksum=643502c9ec40653af5692a7c9cef2ca269e3d485d9e1c815790ab41b891b7306
 if [[ $(/usr/bin/uname -s) != Darwin || $(/usr/bin/uname -m) != arm64 ]]; then
     printf 'libd3d9metal is built for Apple silicon Macs only.\n' >&2
     exit 1

@@ -97,12 +97,15 @@ void *Win_D3D9_Direct3DCreate9(void)
         {
             /* The library's switches (its mtld3d.conf). It presents in HDR where the
              * display can; the game's picture is not made for that and is shown as it
-             * is. Entries are read in order and a later one wins, so what a developer
-             * puts in MTLD3D_CONFIG still holds. */
+             * is. With anti-aliasing the scene's samples are resolved by a copy of the
+             * whole target (rb_scenetarget.c); the library takes that copy as the
+             * resolve itself instead of resolving and then copying. Entries are read in
+             * order and a later one wins, so what a developer puts in MTLD3D_CONFIG
+             * still holds. */
             static char config[2048];
             const char *given = getenv("MTLD3D_CONFIG");
-            snprintf(config, sizeof config, "color.hdr.enable=false%s%s", given && *given ? ";" : "",
-                     given ? given : "");
+            snprintf(config, sizeof config, "color.hdr.enable=false;render.directResolve=true%s%s",
+                     given && *given ? ";" : "", given ? given : "");
             setenv("MTLD3D_CONFIG", config, 1);
         }
         host.size = (uint32_t)sizeof host;
