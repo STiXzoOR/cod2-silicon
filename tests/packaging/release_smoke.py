@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Start every engine in a packaged app once: both games load a map, both servers answer.
+"""Start every engine in a packaged app once: each game loads a map, both servers answer.
 
     release_smoke.py "<CoD2 Unbound.app>" --game <game folder> --output <new folder>
 
-For each game (CoD2x and the original 1.3): start it from the packaged app with
-an empty private home, wait for the menu, load mp_toujane, wait until the map is
+For each game (CoD2x and the original 1.3, drawing with OpenGL and again with
+Metal): start it from the packaged app with an empty private home, wait for the menu, load mp_toujane, wait until the map is
 being played, quit, and require exit 0. For each dedicated server: start it on
 127.0.0.1, ask its status, require mp_toujane, stop it. One PASS or FAIL line
 per engine; exit 1 when any failed.
@@ -29,6 +29,7 @@ os.environ.setdefault('COD2X_TEST_UPDATER_ADDRESS', '127.0.0.1:9')
 os.environ.setdefault('COD2X_TEST_UPDATER_URL', 'http://127.0.0.1:9/api/updater/check')
 
 ENGINES = (('game-cod2x', 'cod2_macos'), ('game-original', 'cod2_macos_stock'),
+           ('game-cod2x-metal', 'cod2_macos_metal'), ('game-original-metal', 'cod2_macos_stock_metal'),
            ('server-cod2x', 'cod2_macos_ded'), ('server-original', 'cod2_macos_ded_stock'))
 MAP = 'mp_toujane'
 LSREGISTER = '/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister'
@@ -157,7 +158,7 @@ def main():
     parser.add_argument('--game', type=pathlib.Path, required=True, help='the Call of Duty 2 folder (holds main/)')
     parser.add_argument('--output', type=pathlib.Path, required=True, help='a folder that does not exist yet')
     parser.add_argument('--only', help='comma-separated: ' + ', '.join(name for name, _ in ENGINES))
-    parser.add_argument('--port', type=int, default=29021, help='first of four private UDP ports')
+    parser.add_argument('--port', type=int, default=29021, help='first of six private UDP ports')
     args = parser.parse_args()
     app, game, out = args.app.resolve(), args.game.resolve(), args.output.resolve()
     bundle = app / 'Contents/Helpers/CoD2 Game.app'
@@ -172,8 +173,8 @@ def main():
     if not 1024 < args.port < 65500:
         parser.error('use a private unprivileged port')
     # Never beside a game somebody is playing: the owner's own game is not ours to disturb or to measure against.
-    busy = subprocess.run(['pgrep', '-x', 'cod2_macos|cod2_macos_stock'], capture_output=True, text=True).stdout.split()
-    if busy and chosen & {'game-cod2x', 'game-original'}:
+    busy = subprocess.run(['pgrep', '-x', 'cod2_macos|cod2_macos_stock|cod2_macos_metal|cod2_macos_stock_metal'], capture_output=True, text=True).stdout.split()
+    if busy and any(name.startswith('game') for name in chosen):
         print(f'FAIL: a game is already running (process {", ".join(busy)}); nothing was started', flush=True)
         return 1
     out.mkdir(parents=True, exist_ok=False)
