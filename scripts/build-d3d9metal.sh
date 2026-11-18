@@ -2,11 +2,15 @@
 # Build libd3d9metal, the Direct3D 9 on Metal library the Metal engines link, from a
 # pinned, checksum-verified source archive.
 #
-# The source is mtld3d (zlib licence, github.com/athei/mtld3d) at the commit below of
-# the fork that carries its native host build (github.com/kanapitsas/mtld3d): the library
-# linked into an application that is not a Windows program under Wine. The archive comes
-# from this project's own copy of that fork, where the tag cod2-unbound-0.4-pin keeps the
-# commit; it was compared file by file with a clone of that commit on 2026-11-17.
+# The source is mtld3d (zlib licence, github.com/athei/mtld3d), from the fork that
+# carries its native host build (github.com/kanapitsas/mtld3d): the library linked into
+# an application that is not a Windows program under Wine. The archive comes from this
+# project's own copy of that fork (github.com/cod2unbound/mtld3d, branch cod2-unbound).
+# The commit below is that fork's 101f37d3, which was compared file by file with a clone
+# on 2026-11-17, plus one change of this project's: a window with vertical sync off is
+# given the newest frame when the display has room for one, where every frame used to
+# wait its turn and held the game a little above 300 frames a second. The tag
+# cod2-unbound-0.4-pin-2 keeps the commit.
 #
 # mtld3d is written in Rust, so this needs cargo 1.99 or later (`brew install rust`, or
 # rustup). cargo fetches the crates the library uses and checks each against the
@@ -16,9 +20,9 @@ cache=${1:?usage: build-d3d9metal.sh build-directory}
 mkdir -p "$cache"
 cache=$(cd "$cache" && pwd -P)
 prefix="$cache/install"
-commit=101f37d3d45c760e95e20176f758b9d309c23885
+commit=53b18121026c292f8ec22b693ae9393e0690d669
 archive="mtld3d-$commit.tar.gz"
-checksum=962b46e07a5a3c627589d6ebfab4e4b506baa635703f21c4117ac168f846ce8a
+checksum=93297b914c22fedd5ba65ca7a453975ff7c3a37a4e2cf2f7c62398d55e46800a
 if [[ $(/usr/bin/uname -s) != Darwin || $(/usr/bin/uname -m) != arm64 ]]; then
     printf 'libd3d9metal is built for Apple silicon Macs only.\n' >&2
     exit 1
