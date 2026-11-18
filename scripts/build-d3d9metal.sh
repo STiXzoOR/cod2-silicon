@@ -3,9 +3,10 @@
 # pinned, checksum-verified source archive.
 #
 # The source is mtld3d (zlib licence, github.com/athei/mtld3d) at the commit below of
-# the fork that carries its native host build: the library linked into an application
-# that is not a Windows program under Wine. The archive was compared file by file with
-# a clone of that commit on 2026-11-17.
+# the fork that carries its native host build (github.com/kanapitsas/mtld3d): the library
+# linked into an application that is not a Windows program under Wine. The archive comes
+# from this project's own copy of that fork, where the tag cod2-unbound-0.4-pin keeps the
+# commit; it was compared file by file with a clone of that commit on 2026-11-17.
 #
 # mtld3d is written in Rust, so this needs cargo 1.99 or later (`brew install rust`, or
 # rustup). cargo fetches the crates the library uses and checks each against the
@@ -32,7 +33,7 @@ if [[ $(printf '%s\n' 1.99.0 "$cargo_version" | /usr/bin/sort -t. -k1,1n -k2,2n 
     exit 1
 fi
 if [[ ! -f "$cache/$archive" ]]; then
-    curl --fail --location --retry 3 "https://github.com/kanapitsas/mtld3d/archive/$commit.tar.gz" -o "$cache/$archive.part"
+    curl --fail --location --retry 3 "https://github.com/cod2unbound/mtld3d/archive/$commit.tar.gz" -o "$cache/$archive.part"
     mv "$cache/$archive.part" "$cache/$archive"
 fi
 if [[ $(/usr/bin/shasum -a 256 "$cache/$archive" | /usr/bin/awk '{print $1}') != "$checksum" ]]; then
