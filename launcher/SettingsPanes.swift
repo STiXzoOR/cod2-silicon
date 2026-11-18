@@ -767,7 +767,7 @@ struct AboutPane: View {
             }
             FormSection("Built on") {
                 FormGroup {
-                    ForEach(AboutCredits.rows, id: \.name) { row in CreditRow(name: row.name, what: row.what, licence: row.licence) }
+                    ForEach(AboutCredits.rows(metal: model.offersRenderers), id: \.name) { row in CreditRow(name: row.name, what: row.what, licence: row.licence) }
                 }
             }
             Text("Call of Duty is a registered trademark of Activision Publishing, Inc. CoD2 Unbound is a community project and is not affiliated with or endorsed by Activision. No game content is included.")
@@ -786,8 +786,8 @@ private struct AboutLabel: View {
     }
 }
 
-/// About's three facts. The graphics line describes this build: Classic OpenGL, and whether the player's
-/// original shaders are built.
+/// About's three facts. The graphics line says what the next game draws with: Metal, or OpenGL and whether
+/// the player's original shaders are built.
 private struct AboutFacts: View {
     @ObservedObject var model: LauncherModel
     @Environment(\.palette) private var palette
@@ -797,8 +797,13 @@ private struct AboutFacts: View {
         HStack(spacing: 0) {
             fact("Game versions", versions.joined(separator: " · "), versions.count > 1 ? "Both included" : "Original 1.3 isn’t in this copy", edge: false)
             fact("Requires", "macOS 26 or later", "Apple silicon", edge: true)
-            fact("Graphics", model.approximate ? "OpenGL, approximate shaders" : "OpenGL, original look",
-                 model.approximate ? "Setup builds the original ones from your game" : "Metal is planned, not in this release", edge: true)
+            if model.drawsWithMetal {
+                fact("Graphics", "Metal", "OpenGL stays as a choice in Settings", edge: true)
+            } else {
+                fact("Graphics", model.approximate ? "OpenGL, approximate shaders" : "OpenGL, original look",
+                     model.approximate ? "Setup builds the original ones from your game"
+                        : model.offersRenderers ? "Metal is a choice in Settings" : "Metal is planned, not in this release", edge: true)
+            }
         }
         .background(palette.panel, in: shape)
         .overlay(shape.strokeBorder(palette.panelStroke, lineWidth: 1))
@@ -820,13 +825,18 @@ private struct AboutFacts: View {
 
 /// About › Built on: what the app is made from, in short (Acknowledgements has every licence in full).
 enum AboutCredits {
-    static let rows: [(name: String, what: String, licence: String?)] = [
-        ("opencod2", "The reconstructed engine this port is built on.", "No licence"),
-        ("CoD2x", "The community patch multiplayer runs on. Rebuilt from how it behaves; none of its code ships.", nil),
-        ("vkd3d", "Compiles the game’s own shaders on your Mac.", "LGPL-2.1"),
-        ("SDL", "Windows, input and sound for the game.", "Zlib"),
-        ("Typefaces", "Big Shoulders Stencil and Courier Prime.", "OFL-1.1"),
-    ]
+    /// `metal`: this app carries the engines that draw with Metal, and so the library they use.
+    static func rows(metal: Bool) -> [(name: String, what: String, licence: String?)] {
+        var rows: [(name: String, what: String, licence: String?)] = [
+            ("opencod2", "The reconstructed engine this port is built on.", "No licence"),
+            ("CoD2x", "The community patch multiplayer runs on. Rebuilt from how it behaves; none of its code ships.", nil),
+            ("vkd3d", "Compiles the game’s own shaders on your Mac.", "LGPL-2.1"),
+            ("SDL", "Windows, input and sound for the game.", "Zlib"),
+            ("Typefaces", "Big Shoulders Stencil and Courier Prime.", "OFL-1.1"),
+        ]
+        if metal { rows.insert(("mtld3d", "Draws the game with Metal.", "Zlib"), at: 3) }
+        return rows
+    }
 }
 
 private struct CreditRow: View {

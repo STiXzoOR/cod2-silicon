@@ -246,6 +246,8 @@ extension KeyStore {
     /// Display › Restore Defaults: everything the Display pane shows. Returns what it replaced, for Undo.
     /// Settings › Display offers Metal or OpenGL only when this app carries a Metal engine.
     var offersRenderers: Bool { snapshot || GameEngine.allCases.contains { $0.renderer(.metal, in: gameBundle) == .metal } }
+    /// The next game draws with Metal: the choice in Settings › Display, when this app carries that engine for the game version in use.
+    var drawsWithMetal: Bool { settings.renderer == .metal && (snapshot || chosenEngine.renderer(.metal, in: gameBundle) == .metal) }
     @discardableResult func restoreDisplayDefaults() -> GameSettings {
         let previous = settings, defaults = defaultSettings
         resolutionAdjustment = nil

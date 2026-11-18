@@ -7,6 +7,8 @@ import Foundation
 // - vkd3d 2.1: scripts/build-vkd3d.sh (SHA-256 7510146a…) builds libvkd3d-shader for the shader generator;
 //   the texts are the tarball's COPYING, AUTHORS and LICENSE, which make_macos_app.py also ships.
 // - Speex: src/PC/speex is compiled into both engines; the notices are the ones in those files.
+// - mtld3d (added 2026-11-18): scripts/build-d3d9metal.sh builds libd3d9metal from this project's copy of it; the text is
+//   that archive's LICENSE, which make_macos_app.py also ships beside the licences of the Rust crates it is built from.
 // - The typefaces: launcher/Resources/Fonts and their OFL files. opencod2: NOTICE.md. CoD2 Unbound: LICENSE.
 // Not listed because they are not shipped: zlib (the system's), libjpeg-turbo (not built for macOS), CoD2x
 // (a behaviour reference; no CoD2x code or files ship), and any crash-report SDK (the launcher sends reports itself).
@@ -638,6 +640,32 @@ necessary.  Here is a sample; alter the names:
   Ty Coon, President of Vice
 
 That's all there is to it!
+"""#),
+        Acknowledgement(name: "mtld3d", author: "Alexander Theissen and contributors", licence: "Zlib", role: "Draws the game with Metal.",
+                        text: #"""
+Copyright (c) 2026 Alexander Theissen
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgment in the product documentation would be
+   appreciated but is not required.
+
+2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
+
+3. This notice may not be removed or altered from any source distribution.
+
+CoD2 Unbound builds this library from its own copy of mtld3d, which carries changes that the original does not have: github.com/cod2unbound/mtld3d.
+
+It is written in Rust. The Rust crates built into it, with each one’s licence, are listed in mtld3d-crates.txt inside the app, in Contents/Resources/licenses.
 """#),
         Acknowledgement(name: "Speex", author: "Xiph.Org Foundation", licence: "BSD-3-Clause", role: "The voice codec inside the game.",
                         text: #"""
