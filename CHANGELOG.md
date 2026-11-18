@@ -1,9 +1,44 @@
 # Changelog
 
-All notable changes to CoD2 Silicon are documented here, following
-[Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+All notable changes to CoD2 Unbound are documented here, following
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Until 0.3.6 the app
+was called CoD2 Silicon, and the entries from before then still use that name.
 
 ## [Unreleased]
+
+## [0.3.6] - 2026-11-18
+
+### Changed
+
+- **CoD2 Silicon is now CoD2 Unbound.** The project is heading for Windows,
+  Linux and the browser, and "Silicon" only ever meant the Mac. The app has
+  its new name everywhere, a new icon (a gold star with a 2 cut out of it, on
+  an olive plate) and the same mark and lettering inside the launcher.
+  Nothing in the game changed.
+- **Your settings come along.** The first time CoD2 Unbound opens, the folder
+  the app keeps its files in, `~/Library/Application Support/CoD2 Silicon`,
+  is renamed to `CoD2 Unbound` in one step: settings, loadouts, configs,
+  match summaries, hosted servers and the shader files built from your game.
+  Your game data and your CD key are not touched.
+- **The download is a disk image.** `CoD2-Unbound-0.3.6-macos-arm64.dmg`:
+  open it and drag the app to Applications. It is signed and notarized like
+  the app. The ZIP is still attached to every release, because the app's own
+  Install Update downloads that.
+- The dedicated server's helper script is `scripts/server/cod2-unbound-server`,
+  and its launchd jobs are `com.cod2unbound.server` and
+  `com.cod2unbound.daemon`. A service installed under the old names keeps
+  running until you remove it with the old script.
+
+### Know before you install
+
+- **Update by hand, once.** 0.3.5 and earlier look for updates under the old
+  name. They tell you 0.3.6 exists and open its release page instead of
+  installing it. Download the disk image, drag CoD2 Unbound to Applications,
+  and delete CoD2 Silicon. Later updates install from inside the app again.
+- **macOS treats it as a new app.** It asks again for the microphone the
+  first time you use voice chat, and for notifications. Server passwords you
+  chose to remember are stored in your keychain under the old app, so each
+  is asked for once more.
 
 ## [0.3.5] - 2026-11-18
 

@@ -1,20 +1,31 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/lockup-horizontal.svg">
+    <img src="docs/brand/lockup-horizontal-light.svg" width="560"
+         alt="CoD2 Unbound: Call of Duty 2 multiplayer, on every platform">
+  </picture>
+</p>
+
 # CoD2 Unbound
 
-**Call of Duty 2 multiplayer, native on Apple silicon. CoD2x 1.4 compatible.**
+**Call of Duty 2 multiplayer, native on Apple silicon Macs today. CoD2x 1.4 compatible.**
 
 CoD2 Unbound ports the reconstructed [opencod2](https://github.com/opencod2/opencod2)
 engine to native macOS arm64. It runs directly on Apple silicon, with raw mouse
 input, native audio and an OpenGL renderer. Bring a licensed copy of Call of
-Duty 2: no game content is included.
+Duty 2: no game content is included. Windows, Linux and the browser are on
+the [roadmap](docs/ROADMAP.md), which is where the name comes from; until
+0.3.6 the app was called CoD2 Silicon.
 
-**To play:** download the app from
-[Releases](https://github.com/cod2unbound/cod2-unbound/releases), move it to
-Applications, open it, and point it at your Call of Duty 2 folder. Setup does
-the rest. A Windows 1.3 install's folder works as it is.
+**To play:** download the disk image from
+[cod2unbound.com](https://cod2unbound.com/download) or
+[Releases](https://github.com/cod2unbound/cod2-unbound/releases), drag the app
+to Applications, open it, and point it at your Call of Duty 2 folder. Setup
+does the rest. A Windows 1.3 install's folder works as it is.
 
 ## Status
 
-Version `0.3.5` is playable on original 1.3 and CoD2x 1.4 servers, with a
+Version `0.3.6` is playable on original 1.3 and CoD2x 1.4 servers, with a
 native launcher, server browser and Config Studio. Movement, firing, grenades, mounted
 turrets, HTTP mod downloads and round restarts have been tested, and every
 menu is opened by an automated sweep. The picture is compared with the
@@ -42,17 +53,25 @@ have it installed nowhere, setup can download it for you. See
 ### Prebuilt app
 
 1. Open [GitHub Releases](https://github.com/cod2unbound/cod2-unbound/releases).
-2. Download `CoD2-Unbound-0.3.5-macos-arm64.zip` and `SHA256SUMS` into the same
-   folder. Verify the archive, then unzip it:
+2. Download `CoD2-Unbound-0.3.6-macos-arm64.dmg`. To check it first, download
+   `SHA256SUMS` into the same folder and run:
 
    ```sh
-   shasum -a 256 -c SHA256SUMS
+   shasum -a 256 --ignore-missing -c SHA256SUMS
    ```
 
-3. Move **CoD2 Unbound.app** to `/Applications` and open it.
+3. Open the disk image and drag **CoD2 Unbound** to Applications, then open
+   it from there.
 
-The app is signed with a Developer ID and notarized by Apple, so it opens
-like any other downloaded app.
+The app and the disk image are signed with a Developer ID and notarized by
+Apple, so they open like any other download. The ZIP beside the disk image
+holds the same app; it is what the app's own Install Update downloads.
+
+**Coming from CoD2 Silicon:** 0.3.5 and earlier cannot install this update
+by themselves, because it has a new name. Install CoD2 Unbound as above,
+once, and delete CoD2 Silicon from Applications. Your settings, loadouts,
+configs and match summaries come along the first time CoD2 Unbound opens;
+your game data and CD key stay where they are.
 
 ### From source
 

@@ -53,6 +53,17 @@ was tested and what was not.
 The [0.3.1 verification](macos-port/release-0.3.1-verification.md) says what
 was tested and what was not.
 
+## 0.3.6 — A new name: CoD2 Unbound (released 0.3.6)
+
+- **CoD2 Silicon became CoD2 Unbound**, with a new icon, mark and lettering.
+  "Silicon" only ever meant the Mac, and the project is heading for Windows,
+  Linux and the browser. Settings, loadouts and configs come along the
+  first time the renamed app opens.
+- **The download is a disk image**, signed and notarized like the app.
+
+The [0.3.6 verification](macos-port/release-0.3.6-verification.md) says what
+was tested and what was not.
+
 ## 0.3.5 — Your Steam copy, downloaded in setup (released 0.3.5)
 
 - **Setup can download the game from Steam.** For people who own Call of
@@ -96,16 +107,24 @@ was tested and what was not.
 
 ## Next
 
-The Metal renderer, below, is the next piece of work. The rest are not in a
-fixed order.
+One platform at a time, each brought to a complete state before the next
+starts:
+
+- **0.4: the Metal renderer**, below. With it the Mac version counts as
+  complete.
+- **0.5: Windows.** The reconstructed engine has been built and run for
+  Windows and Linux in separate work that is not in this repository yet. The
+  app, its launcher and its packaging are Mac-only today.
+- **0.6: Linux.**
+- **0.7: the browser**, through WebAssembly. The upstream browser build is not
+  maintained here yet.
+- **1.0: all of it, with the single-player campaign.**
+
+Alongside these, in no fixed order:
 
 - **A whole match, played.** Every test so far was short and mostly on empty
   servers. Long sessions on busy servers, a real microphone, and CoD2x's
   services against the CoD2x project's own servers come first.
-- **Windows and Linux.** The reconstructed engine has been built and run for
-  both in separate work that is not in this repository yet. The app, its
-  launcher and its packaging are Mac-only today.
-- **WebAssembly.** The upstream browser build is not maintained here yet.
 - **Launcher and Config Studio improvements**, including the player directory.
 
 ## Metal renderer
