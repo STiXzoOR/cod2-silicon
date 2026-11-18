@@ -945,6 +945,9 @@ struct GameSettings: Codable, Sendable, Equatable {
     /// Settings › Privacy: crash reports to this project's Sentry, and CoD2x's own to CoD2x. Off until turned on.
     var sendCrashReports = false
     var sendCoD2xReports = false
+    /// The player has answered “Send crash reports?” (Setup's sixth step, or the one-time sheet for
+    /// people set up before the question existed). Until then nothing is sent and the question is owed.
+    var crashReportsAsked = false
     // MARK: - ship-settings (launcher preferences other units read; decoded below)
     /// General › Hide CoD2 Silicon while the game is running. On by default; the launcher comes back when the game quits.
     var hideWhilePlaying = true
@@ -982,6 +985,7 @@ struct GameSettings: Codable, Sendable, Equatable {
         engine = (try? c.decodeIfPresent(GameEngine.self, forKey: .engine)) ?? d.engine
         sendCrashReports = (try? c.decodeIfPresent(Bool.self, forKey: .sendCrashReports)) ?? d.sendCrashReports
         sendCoD2xReports = (try? c.decodeIfPresent(Bool.self, forKey: .sendCoD2xReports)) ?? d.sendCoD2xReports
+        crashReportsAsked = (try? c.decodeIfPresent(Bool.self, forKey: .crashReportsAsked)) ?? d.crashReportsAsked
         // ship-settings: launcher preferences; a value this version doesn't know keeps the default.
         hideWhilePlaying = (try? c.decodeIfPresent(Bool.self, forKey: .hideWhilePlaying)) ?? d.hideWhilePlaying
         appearance = (try? c.decodeIfPresent(LauncherAppearance.self, forKey: .appearance)) ?? d.appearance

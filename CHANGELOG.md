@@ -5,6 +5,29 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [Unreleased]
 
+### Added
+
+- **Setup can download your copy from Steam.** If you own Call of Duty 2 on
+  Steam and have it installed nowhere, the Game data step has a new button,
+  **Download from Steam…**. You pick a language and a place (about 3.7 GB),
+  scan a QR code with the Steam app on your phone, and the game's files come
+  straight from Steam to your Mac. No Steam name or password is typed
+  anywhere. The download is done by
+  [DepotDownloader](https://github.com/SteamRE/DepotDownloader), a free and
+  open-source tool that is not part of this app: setup fetches version 3.4.0
+  from the tool's own release page, checks it against a known checksum
+  before running it, and removes it afterwards together with the sign-in it
+  stored, whether the download finished, stopped or was cancelled. A download
+  that stops keeps its files, and the next try checks them and fetches only
+  what is missing. Steam only lets an account download games it owns.
+- **Setup asks about crash reports.** A new step, "Send crash reports?",
+  comes before the Ready summary, with what a report holds, what it never
+  holds and where it goes. Neither answer is preselected. People who set the
+  app up before this version are asked the same question once, in a sheet,
+  the next time the launcher opens; anyone who already turned the switch on
+  in Settings → Privacy is not asked. Either answer can be changed there at
+  any time.
+
 ## [0.3.4] - 2026-11-18
 
 ### Added

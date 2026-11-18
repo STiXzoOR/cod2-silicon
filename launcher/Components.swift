@@ -317,6 +317,8 @@ struct SheetAction {
     var symbol: String? = nil
     var role: Role = .standard
     var enabled = true
+    /// A default action that Return must not press: a question with no default answer.
+    var returnKey = true
     var action: () -> Void
     static func cancel(_ title: String = "Cancel", _ action: @escaping () -> Void) -> SheetAction { SheetAction(title: title, role: .cancel, action: action) }
     static func primary(_ title: String, symbol: String? = nil, enabled: Bool = true, _ action: @escaping () -> Void) -> SheetAction {
@@ -404,7 +406,7 @@ struct SheetScaffold<Content: View, Note: View>: View {
         switch action.role {
         case .primary:
             Button(action: action.action) { label }.prominentAction().actionControlSize().disabled(!action.enabled)
-                .keyboardShortcut(.defaultAction)
+                .keyboardShortcut(action.returnKey ? .defaultAction : nil)
         case .cancel:
             Button(action: action.action) { label }.glassAction().actionControlSize().disabled(!action.enabled).keyboardShortcut(.cancelAction)
         case .destructive:

@@ -33,7 +33,8 @@ rendering comparisons, fullscreen limits and measured performance.
 
 Keep the game outside this repository. The data folder must contain
 `main/iw_00.iwd` through `main/iw_15.iwd` and matching localized archives.
-Existing Windows 1.3 data works as it is. See
+Existing Windows 1.3 data works as it is. If you own the game on Steam and
+have it installed nowhere, setup can download it for you. See
 [getting your game data](docs/macos-port/game-data.md).
 
 ## Install
@@ -69,8 +70,10 @@ Gatekeeper does not block it.
 
 Open **CoD2 Silicon.app** to use Home, Servers, Library and Configs (⌘1–⌘4).
 Setup walks through your game data, CD key, shaders, name and display mode,
-then shows a Ready summary. It finds a game folder or lets you choose or drop
-one. A CD key can be skipped; servers need one. A verified key is stored in
+asks whether to send crash reports, then shows a Ready summary. It finds a
+game folder, lets you choose or drop one, or downloads your copy from Steam
+with a QR code you scan in the Steam app. A CD key can be skipped; servers
+need one. A verified key is stored in
 `~/.cod2/preferences`. Never share that file or your key.
 
 The app builds original shaders from your own game files. If that fails, you

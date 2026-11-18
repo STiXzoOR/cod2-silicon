@@ -1,18 +1,36 @@
 import AppKit
 import SwiftUI
 
-/// The six steps of setup, in order (Setup boards): the bottom bar shows one dot per step.
+/// The seven steps of setup, in order (Setup boards): the bottom bar shows one dot per step. The
+/// crash reports question is only asked by a build that has somewhere to send them (`setupSteps`).
 enum SetupStep: Int, CaseIterable, Identifiable {
-    case welcome, data, key, shaders, yours, ready
+    case welcome, data, key, shaders, yours, crash, ready
     var id: Int { rawValue }
     var title: String {
         switch self {
         case .welcome: "Welcome"; case .data: "Game data"; case .key: "CD key"
-        case .shaders: "Shaders"; case .yours: "Make it yours"; case .ready: "Ready"
+        case .shaders: "Shaders"; case .yours: "Make it yours"; case .crash: "Crash reports"; case .ready: "Ready"
         }
     }
-    var number: Int { rawValue + 1 }
-    static let count = allCases.count
+}
+
+/// What the crash reports question says, in Setup and in the one-time sheet (SetupCrash and SheetCrashAsk boards).
+enum CrashReportsQuestion {
+    static let rows: [(symbol: String, title: String, detail: String)] = [
+        ("doc.text", "What a report holds", "What failed, the app’s version, your macOS version, your Mac’s model and the report the game wrote when it stopped."),
+        ("lock", "What it never holds", "No name, no account and no CD key. Your Mac’s user name and every command line are taken out first, and where the report came from is not recorded."),
+        ("globe", "Where it goes", "To this project’s report service, Sentry, hosted in the EU. Nothing is sent unless the game crashes or freezes, and each report is sent once."),
+    ]
+    static let changeLater = "Either answer can be changed any time in Settings › Privacy."
+
+    /// What a launcher that is already set up owes the player when it opens.
+    enum Owed: Equatable { case nothing, answered, ask }
+    /// Nothing without a report service or once answered; someone who already turned the switch on
+    /// in Settings has answered; everyone else is asked, once.
+    static func owed(hasService: Bool, asked: Bool, sending: Bool) -> Owed {
+        guard hasService, !asked else { return .nothing }
+        return sending ? .answered : .ask
+    }
 }
 
 /// How the game fills the screen, as Setup › Make it yours offers it (settings.fullscreen values).
@@ -65,9 +83,21 @@ enum GameArchives {
     var hasPendingLaunch: Bool { pendingLink != nil || fastPlay }
     var setupCompletionTitle: String { pendingLink != nil ? "Join Server" : fastPlay ? "Open Game Menu" : "Open CoD2 Silicon" }
     var setupServerAddress: String? { pendingLink?.address }
+    /// The steps this build's setup has: without a report service there is nothing to ask about.
+    var setupSteps: [SetupStep] { SetupStep.allCases.filter { $0 != .crash || crashReportService != nil } }
+    var setupStepNumber: Int { (setupSteps.firstIndex(of: setupStep) ?? 0) + 1 }
+    var setupStepCount: Int { setupSteps.count }
+    private func setupStep(after step: SetupStep) -> SetupStep {
+        let steps = setupSteps
+        guard let index = steps.firstIndex(of: step), index + 1 < steps.count else { return .ready }
+        return steps[index + 1]
+    }
     var setupCanContinue: Bool {
         switch setupStep {
-        case .welcome, .ready: return true
+        case .welcome, .ready, .crash: return true
+        case .data where steam.phase == .offer: return !steamRoomShort
+        case .data where steam.phase == .done: return !dataPath.isEmpty
+        case .data where steamActive: return false
         case .data: return !dataPath.isEmpty && dataError.isEmpty
         case .key: return keyReady
         case .shaders: return !shaderBusy
@@ -79,6 +109,7 @@ enum GameArchives {
         switch setupStep {
         case .welcome: "Get Started"
         case .shaders: shaderFailed ? "Continue with Approximate Shaders" : "Continue"
+        case .crash: "Send Crash Reports"
         case .ready: setupCompletionTitle
         default: "Continue"
         }
@@ -86,8 +117,10 @@ enum GameArchives {
     /// The bottom bar's second action, or nil.
     var setupAlternateTitle: String? {
         switch setupStep {
+        case .data where steam.phase == .downloading: "Stop"
         case .key where !(keyVerified && !replacingKey) && keyCheck != .verified: "Skip for Now"
         case .yours: "Skip"
+        case .crash: "Don’t Send"
         case .ready where !hasPendingLaunch: "Find a Server"
         default: nil
         }
@@ -110,6 +143,11 @@ enum GameArchives {
     @discardableResult func chooseData(_ url: URL) -> Bool {
         guard url.isFileURL, !shaderBusy else { return false }
         attemptedDataPath = url.path
+        if Self.steamDownloadUnfinished(url.path) {
+            dataArchivesFound = 0
+            dataError = Self.steamUnfinishedMessage
+            return false
+        }
         if let valid = LauncherFindData(url.path) {
             dataPath = valid; dataError = ""; setupError = ""
             return true
@@ -161,6 +199,7 @@ enum GameArchives {
         do {
             switch setupStep {
             case .welcome: setupStep = .data
+            case .data where steam.phase == .offer: startSteam()
             case .data:
                 guard snapshot || LauncherFindData(dataPath) != nil else {
                     _ = chooseData(URL(fileURLWithPath: dataPath)); return
@@ -168,6 +207,7 @@ enum GameArchives {
                 if !snapshot { try rememberData() }
                 dataChanged = dataChanged || dataPath != confirmedDataPath
                 confirmedDataPath = dataPath
+                if steamActive { leaveSteam() }
                 setupStep = .key
             case .key:
                 if replacingKey || !keyVerified {
@@ -178,7 +218,8 @@ enum GameArchives {
             case .shaders: enterYours()
             case .yours:
                 try applyYours()
-                setupStep = .ready
+                setupStep = setupStep(after: .yours)
+            case .crash: answerCrashReports(send: true); setupStep = .ready
             case .ready: finishSetup()
             }
         } catch { setupError = error.localizedDescription }
@@ -187,8 +228,10 @@ enum GameArchives {
     func alternateSetup() {
         setupError = ""
         switch setupStep {
+        case .data: stopSteam()
         case .key: keyInput = ""; replacingKey = false; enterShaders()
-        case .yours: setupNameError = nil; setupStep = .ready
+        case .yours: setupNameError = nil; setupStep = setupStep(after: .yours)
+        case .crash: answerCrashReports(send: false); setupStep = .ready
         case .ready: finishSetup(findServer: true)
         default: break
         }
@@ -196,7 +239,34 @@ enum GameArchives {
     func backSetup() {
         guard setupStep != .welcome, !shaderBusy else { return }
         setupError = ""
-        setupStep = SetupStep(rawValue: step - 1) ?? .welcome
+        if setupStep == .data, steamActive { backFromSteam(); return }
+        let steps = setupSteps
+        let index = steps.firstIndex(of: setupStep) ?? 1
+        setupStep = index > 0 ? steps[index - 1] : .welcome
+    }
+
+    // MARK: Crash reports
+    /// Either answer to “Send crash reports?”, from Setup or the one-time sheet. It is saved with the other settings.
+    func answerCrashReports(send: Bool) {
+        settings.sendCrashReports = send
+        settings.crashReportsAsked = true
+    }
+    /// People set up before the question existed are asked once, in a sheet. Someone who already turned
+    /// the switch on in Settings has answered.
+    func askAboutCrashReportsOnce() {
+        guard !snapshot, !onboard else { return }
+        switch CrashReportsQuestion.owed(hasService: crashReportService != nil, asked: settings.crashReportsAsked, sending: settings.sendCrashReports) {
+        case .nothing: return
+        case .answered: settings.crashReportsAsked = true; return
+        case .ask: break
+        }
+        Task { [weak self] in
+            // After the window is up, and never over another sheet or a starting game.
+            try? await Task.sleep(for: .seconds(1.2))
+            guard let self, !self.onboard, self.sheet == nil, self.settingsSheet == nil, !self.gameRunning, !self.hasPendingLaunch,
+                  !self.settings.crashReportsAsked else { return }
+            self.sheet = .crashReportsQuestion
+        }
     }
     private func enterShaders() {
         setupStep = .shaders
@@ -309,6 +379,7 @@ enum GameArchives {
             setupReturnPage = page; confirmedDataPath = dataPath
         }
         keyInput = ""; replacingKey = false; setupError = ""; dataError = ""; attemptedDataPath = ""
+        if steamActive { leaveSteam() }
         setupNameError = nil; shaderFailed = approximate && !shaderBusy
         jumpPresented = false; playerCardPresented = false
         setupStep = requested; onboard = true
@@ -316,6 +387,7 @@ enum GameArchives {
     }
     func cancelSetup() {
         guard let destination = setupReturnPage else { return }
+        if steamActive { leaveSteam() }
         dataPath = confirmedDataPath; keyInput = ""; replacingKey = false
         setupError = ""; dataError = ""; attemptedDataPath = ""; setupNameError = nil
         setupReturnPage = nil; onboard = false
@@ -335,6 +407,7 @@ enum GameArchives {
         case "home-jump": page = .home; jumpPresented = true; jumpQuery = "north"
         case "home-no-favorites": page = .home; library.favorites = []
         case "home-quit-running": page = .home; gameRunning = true; confirmQuitWithGame()
+        case "sheet-crash-reports-question": page = .home; sheet = .crashReportsQuestion
         case "sheet-game-could-not-start": page = .home; launchProblem = .dataMissing("/Volumes/Games/CoD2"); sheet = .gameCouldNotStart(reason: launchProblem!.message)
         case "sheet-game-could-not-start-other": page = .home; launchProblem = .other("The game couldn’t be opened: the operation couldn’t be completed."); sheet = .gameCouldNotStart(reason: launchProblem!.message)
         default: return false
@@ -344,6 +417,7 @@ enum GameArchives {
     private func previewSetup(_ screen: String) -> Bool {
         guard screen.hasPrefix("setup-") else { return false }
         onboard = true
+        if previewSteam(screen) { return true }
         switch screen {
         case "setup-welcome": setupStep = .welcome
         case "setup-data": setupStep = .data; dataPath = ""
@@ -351,6 +425,9 @@ enum GameArchives {
         case "setup-data-error":
             setupStep = .data; dataPath = ""; attemptedDataPath = "/Users/Player/Downloads/cod2-backup"; dataArchivesFound = 4
             dataError = "This folder is missing main/iw_04.iwd and 11 more game archives. Choose the Call of Duty 2 folder itself, the one that contains “main” with iw_00.iwd through iw_15.iwd."
+        case "setup-data-unfinished":
+            setupStep = .data; dataPath = ""; attemptedDataPath = NSHomeDirectory() + "/Games/CoD2"; dataArchivesFound = 0
+            dataError = Self.steamUnfinishedMessage
         case "setup-key": setupStep = .key; keyVerified = false
         case "setup-key-ok": setupStep = .key; keyVerified = false; keyInput = KeyFormat.display(Self.previewKey)
         case "setup-key-bad": setupStep = .key; keyVerified = false; keyInput = KeyFormat.display("000000000000000086D0")
@@ -360,6 +437,8 @@ enum GameArchives {
         case "setup-shaders-done": setupStep = .shaders; shaderCount = Self.shaderTotal; approximate = false; shaderSeconds = 48
         case "setup-shaders-failed": setupStep = .shaders; approximate = true; shaderFailed = true; shaderCount = 0
         case "setup-yours": setupStep = .yours; setupName = playerName; setupDisplayMode = "borderless"; settings.resolution = "2560x1440"
+        case "setup-crash": setupStep = .crash
+        case "setup-ready-reports": setupStep = .ready; settings.resolution = "2560x1440"; settings.fullscreen = "borderless"; approximate = false; settings.sendCrashReports = true
         case "setup-ready": setupStep = .ready; settings.resolution = "2560x1440"; settings.fullscreen = "borderless"; approximate = false
         case "setup-ready-approximate": setupStep = .ready; approximate = true; keyVerified = false
         case "setup-ready-link": setupStep = .ready; pendingLink = try? LaunchLink.direct("192.0.2.10:28960")

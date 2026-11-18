@@ -27,6 +27,45 @@ root. Retain the unmodified original install.
 
 ## Download your licensed Steam content
 
+### In setup
+
+If you own the game on Steam, setup's Game data step has **Download from
+Steam…**. Choose a language and a place for the game (about 3.7 GB; the
+suggestion is `~/Games/CoD2`), then scan the QR code with the Steam app on
+your phone: tap the shield at the bottom, then **Scan a QR Code**. Your phone
+names the sign-in "DepotDownloader", after the tool that does the download.
+No Steam name or password is typed on the Mac.
+
+What setup does for you:
+
+- It fetches [DepotDownloader](https://github.com/SteamRE/DepotDownloader)
+  3.4.0 for Apple silicon (32 MB) from the tool's own release page and checks
+  it against a known SHA-256 checksum. A file that does not match is deleted
+  and never run. The tool is free and open source (GPL-2.0) and is not made
+  by Valve or by this project; it is never part of the app.
+- It runs the tool with a home folder of its own inside the launcher's
+  support folder, so whatever the tool stores about the sign-in lands there.
+- It asks for the Windows edition of app 2630, naming each depot: 2631, 2632,
+  2633 and the one for your language (English 2634, German 2636, French 2637,
+  Spanish 2638, Italian 2639).
+- When the download ends, stops or is cancelled, and when the launcher
+  quits, it deletes that home folder, which signs the tool out. When the game
+  is complete, or you leave the Steam screens, it also deletes the tool; a
+  finished download has the tool's notes (`.DepotDownloader`) removed from
+  the game folder.
+- What the tool printed in its last try is kept in the launcher's `logs`
+  folder as `steam-download.log`, without the sign-in code. It stays on your
+  Mac; crash reports never include it.
+
+If the download stops, the files stay. **Resume** shows a new code, because
+the sign-in is not kept between tries, and the tool then checks what is on
+disk and fetches only what is missing. A folder with an unfinished download
+is not accepted as game data until the download is finished.
+
+Your CD key is in Steam: right-click the game, then **Manage › CD keys**.
+
+### By hand
+
 [DepotDownloader](https://github.com/SteamRE/DepotDownloader) has a native
 macOS arm64 release. Version 3.4.0 was checked during development. Download
 that tool from its own Releases page and keep it outside this repository,

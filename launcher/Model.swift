@@ -179,6 +179,11 @@ struct MediaEntry: Identifiable {
     /// Setup › Shaders: the build failed (approximate shaders), and how long a finished build took.
     @Published var shaderFailed = false
     @Published var shaderSeconds: Int?
+    /// Setup › Game data › From Steam (ModelSteam.swift): what its screens show, and what a try keeps.
+    @Published var steam = SteamSetup()
+    var steamWork = SteamWork()
+    var steamTool = DepotTool.pinned
+    var steamTimings = SteamTimings()
     /// A join link that arrived during setup: Connect to Address opens with it when setup ends.
     var pendingJoinAddress: String?
     /// The player chose Quit Launcher Only or Quit Both, so quitting no longer asks.
@@ -365,7 +370,7 @@ struct MediaEntry: Identifiable {
         settingsReady = true
         if settings != savedSettings { scheduleSettingsSave() }
         settingsTerminationObserver = NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.flushSettings() }
+            MainActor.assumeIsolated { self?.flushSettings(); self?.steamShutdown() }
         }
         displaySubscription = studio.objectWillChange.sink { [weak self] _ in
             Task { @MainActor [weak self] in self?.refreshDisplay() }
@@ -396,7 +401,9 @@ struct MediaEntry: Identifiable {
     func boot() {
         guard !snapshot else { return }
         booted = true
+        sweepSteam()  // ship-shell: nothing of an interrupted Steam download's tool or sign-in stays
         startSettings()  // ship-settings: appearance, the last Settings pane, the daily update check
+        askAboutCrashReportsOnce()
         _ = attachExistingGame()
         startGameMonitor()
         let args = CommandLine.arguments
