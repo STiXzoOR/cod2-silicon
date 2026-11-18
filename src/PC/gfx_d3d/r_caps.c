@@ -38,7 +38,15 @@ static const DxCapsCheckBits s_capsCheckBits[36] = {
     { 0x4c, 0x0, 0x4, DX_CAPS_RESPONSE_QUIT, "doesn't support texture clamping" },
     { 0x4c, 0x0, 0x1, DX_CAPS_RESPONSE_QUIT, "doesn't support texture wrapping" },
     { 0x88, 0x0, 0xff, DX_CAPS_RESPONSE_FORBID_DX9, "doesn't support the required stencil operations" },
+#if COD2_MAC_D3D9
+    /* The Metal library draws every fixed-function operation but multiplyAdd and lerp
+     * (D3DTEXOPCAPS 0x1000000 and 0x2000000), and says so. No technique in the game's
+     * own files uses either, so they are not asked for here: without this the whole
+     * Direct3D 7 renderer was refused and r_rendererPreference dx7 drew with Direct3D 9. */
+    { 0x90, 0x0, 0x09effff, DX_CAPS_RESPONSE_FORBID_DX7, "doesn't support the required fixed-function texture blend operations" },
+#else
     { 0x90, 0x0, 0x39effff, DX_CAPS_RESPONSE_FORBID_DX7, "doesn't support the required fixed-function texture blend operations" },
+#endif
     { 0x9c, 0x0, 0x8, DX_CAPS_RESPONSE_FORBID_DX7, "doesn't support direction lights in the fixed-function pipeline" },
     { 0x9c, 0x0, 0x1, DX_CAPS_RESPONSE_FORBID_DX7, "doesn't support texture coordinate generation in the fixed-function pipeline" },
     { 0xd4, 0x0, 0x1, DX_CAPS_RESPONSE_QUIT, "doesn't support vertex stream offsets" },
