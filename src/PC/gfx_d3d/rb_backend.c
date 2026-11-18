@@ -2577,6 +2577,28 @@ static void RB_RenderDrawSurfListFxLayer(GfxDrawSurf *drawSurfs, int drawSurfCou
             RB_FxLayerEarly(drawSurfs, drawSurfCount, TECHNIQUE_EMISSIVE_FEATHERED);
         return;
     }
+    /* Soft particles off (r_zFeather 0) with dynamic shadows on: the shadows' own depth
+     * prepass has just drawn the world into the same depth texture. In frames that use
+     * the layer the models follow it, as above, and that is the scene's depth. */
+    if (techType == TECHNIQUE_DEPTH_PREPASS && RB_FxLayer_Wanted() && !R_UseZFeather()) {
+        extern int RB_FxLayer_DepthPassWanted(void);
+        extern void RB_FxLayer_SceneDepthDrawn(void);
+        RB_RenderDrawSurfList(drawSurfs, drawSurfCount, techType, order);
+        if (!RB_FxLayer_DepthPassWanted())
+            return;
+        if (!r_depthPrepassModels->current.enabled) {
+            RB_FxLayer_DepthOnly(dx.device, 1);
+            rb_fxModelsOnly = 1;
+            RB_RenderDrawSurfList(drawSurfs, drawSurfCount, techType, order);
+            rb_fxModelsOnly = 0;
+            RB_FxLayer_DepthOnly(dx.device, 0);
+        }
+        RB_FxLayer_SceneDepthDrawn();
+        rb_fxSceneDepth = 1;
+        if (order == 0)
+            RB_FxLayerEarly(drawSurfs, drawSurfCount, TECHNIQUE_EMISSIVE);
+        return;
+    }
     /* Direct3D 7: the scene's depth for the layer, drawn with the scene's own techniques
      * (r_scene.c asks for it in frames that use the layer; rb_fxlayer.c says why). The
      * last of these commands is followed by the effects, drawn into the layer early. */
@@ -2589,6 +2611,13 @@ static void RB_RenderDrawSurfListFxLayer(GfxDrawSurf *drawSurfs, int drawSurfCou
             return;
         rb_fxDepthWriters = 1;
         RB_RenderDrawSurfList(drawSurfs, drawSurfCount, techType, order);
+        if (techType == TECHNIQUE_DEPTH_PREPASS && !r_depthPrepassModels->current.enabled) {
+            /* Direct3D 9 with soft particles and dynamic shadows both off: the depth
+             * technique leaves the models out, and the layer needs them. */
+            rb_fxModelsOnly = 1;
+            RB_RenderDrawSurfList(drawSurfs, drawSurfCount, techType, order);
+            rb_fxModelsOnly = 0;
+        }
         rb_fxDepthWriters = 0;
         if (!last)
             return;

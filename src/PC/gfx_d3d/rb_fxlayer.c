@@ -53,8 +53,13 @@
  *
  * - Only blends the target can hold go into it: source ZERO, ONE or SRCALPHA
  *   against destination ZERO, ONE or INVSRCALPHA. A material that writes depth
- *   or uses the stencil buffer is drawn as it always was. Without the float-Z
- *   prepass (r_zFeather 0) there is no scene depth and the layer is not used.
+ *   or uses the stencil buffer is drawn as it always was.
+ *
+ * - With soft particles off (r_zFeather 0) there is no float-Z prepass. The scene's
+ *   depth then comes from the dynamic shadows' depth prepass, with the models added,
+ *   or, with those off as well, from a depth-only drawing of the scene made in the
+ *   frames that use the layer (rb_backend.c, r_scene.c). The Direct3D 7 renderer
+ *   gets it the second way too (RB_FxLayer_DepthPassBegin).
  *
  * - Some smoke also blends into the frame buffer's alpha, which glow reads to
  *   tell sky from everything else. Each such sprite leaves alpha as
@@ -1395,8 +1400,10 @@ int RB_FxLayer_Begin(void *device, int sceneDepthValid)
     CALL(GetDepthFn, device, DEV_GetDepthStencilSurface)(device, &s_savedDepth);
     if (s_savedColor && CALL(GetDescFn, s_savedColor, SURF_GetDesc)(s_savedColor, &desc) >= 0 && !s_early)
         s_samples = desc.MultiSampleType;
-    if (s_mode != DIRECT && sceneDepthValid && s_savedColor && s_savedDepth && desc.Width == s_sceneWidth &&
-        desc.Height == s_sceneHeight)
+    /* Drawn early, the layer may find the back buffer bound, which has no depth buffer
+     * (last frame's 2D was the last thing drawn); it needs none of the target's own. */
+    if (s_mode != DIRECT && sceneDepthValid && s_savedColor && (s_savedDepth || s_early) &&
+        desc.Width == s_sceneWidth && desc.Height == s_sceneHeight)
         s_layer = GetLayer(s_mode);
     if (!s_layer) {
         Release(&s_savedColor);

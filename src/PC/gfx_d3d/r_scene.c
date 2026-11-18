@@ -1013,6 +1013,21 @@ void R_RenderScene(const refdef_t *refdef)
             /* Windows 10024e80: float depth replaces the receiver-only prepass.
              * Both targets share its single-sample depth/stencil surface. */
             int feather = R_UseZFeather();
+#if COD2_MAC_D3D9
+            if (!feather && !dynamicShadowType) {
+                /* Soft particles and dynamic shadows both off: nothing draws the scene's
+                 * depth ahead of the scene, and the effects layer needs it (rb_fxlayer.c).
+                 * In the frames that use the layer it is drawn here, depth alone, as the
+                 * Direct3D 7 branch above does. With dynamic shadows on, their prepass
+                 * serves (rb_backend.c). */
+                extern int RB_FxLayer_DepthPassWanted(void);
+                if (RB_FxLayer_DepthPassWanted()) {
+                    R_AddCmdBeginView(scene.viewCount, &scene.def, viewParms, lodParms);
+                    R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount,
+                        (MaterialTechniqueType)(TECHNIQUE_DEPTH_PREPASS | 0x100 | 0x200));
+                }
+            }
+#endif
             if (feather || dynamicShadowType) {
                 if (!R_BeginDrawGroupSection(0)) {
                     R_AddCmdSetRenderTarget(feather ? R_RENDERTARGET_FLOAT_Z : R_RENDERTARGET_DYNAMICSHADOWS);
