@@ -978,6 +978,20 @@ void R_RenderScene(const refdef_t *refdef)
         } else if (isDx7) {
 
             R_AddCmdBeginView(scene.viewCount, &scene.def, (const GfxViewParms *)(viewParms), lodParms);
+#if COD2_MAC_D3D9
+            {
+                /* While smoke fills the screen the effects layer draws it (rb_fxlayer.c),
+                 * and the layer needs the scene's depth before the scene is drawn. This
+                 * renderer has no depth pass of its own, so in those frames the scene's
+                 * two passes are drawn once more first, depth alone (0x100), the second
+                 * marked as the last (0x200: rb_backend.c). */
+                extern int RB_FxLayer_DepthPassWanted(void);
+                if (RB_FxLayer_DepthPassWanted()) {
+                    R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount, (MaterialTechniqueType)(1 | 0x100));
+                    R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount, (MaterialTechniqueType)(6 | 0x100 | 0x200));
+                }
+            }
+#endif
             R_AddCmdSetRenderTarget((GfxRenderTargetId)0);
             R_AddClearCommandsForFrameBuffer(0);
             {

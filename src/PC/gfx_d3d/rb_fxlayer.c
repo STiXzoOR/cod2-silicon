@@ -169,6 +169,8 @@ typedef struct {
 static void *s_device;
 static int s_active;    /* effects are being drawn into the layer */
 static int s_depthOnly; /* the prepass is drawing models and sky: depth, no colour */
+static int s_depthPass; /* the Direct3D 7 depth pass is bound (RB_FxLayer_DepthPassBegin) */
+static void *s_depthPassColor, *s_depthPassDepth; /* what was bound before it */
 static void *s_sceneDepthTexture, *s_sceneDepthSurface; /* the prepass's depth, at the picture's size */
 static unsigned s_sceneWidth, s_sceneHeight;
 static Layer s_layers[LEVELS], *s_layer; /* s_layer: the one in use */
@@ -288,6 +290,9 @@ void RB_FxLayer_Release(void)
     Release(&s_redShader);
     s_alphaPass = s_alphaDrawn = 0;
     s_active = s_depthOnly = s_queryPending = s_measuring = s_farPass = s_nearPass = 0;
+    Release(&s_depthPassColor);
+    Release(&s_depthPassDepth);
+    s_depthPass = 0;
     s_fill = 0.0;
     s_mode = DIRECT;
 }
@@ -1223,6 +1228,74 @@ void RB_FxLayer_DepthOnly(void *device, int on)
         SetState(RS_COLORWRITEENABLE, s_colorWriteWanted);
     }
     s_depthOnly = on;
+}
+
+/* The Direct3D 7 renderer has no float-Z prepass: its technique sets hold no depth
+ * technique. For the layer the scene's depth is drawn there too, with the scene's own
+ * techniques and colour off, into the same depth texture, and only in frames that
+ * use the layer (RB_FxLayer_DepthPassWanted). The layer's full-size colour target
+ * stands in as the target; nothing is written to it. */
+/* Should this frame draw the scene's depth for the layer? Asked while the frame's
+ * commands are made, so it goes by how the last frame's effects were drawn. */
+int RB_FxLayer_DepthPassWanted(void)
+{
+    return Setting() != 0 && s_sceneDepthTexture != NULL && s_mode != DIRECT;
+}
+
+/* Bind the depth texture and start a pass that writes depth alone. Returns 0 when
+ * that cannot be done; RB_FxLayer_DepthPassEnd follows a 1. */
+int RB_FxLayer_DepthPassBegin(void *device)
+{
+    SurfaceDesc desc;
+    Viewport viewport;
+    Layer *layer;
+
+    if (s_depthPass)
+        return 1;
+    if (s_active || s_depthOnly || !s_sceneDepthSurface)
+        return 0;
+    s_device = device;
+    layer = GetLayer(0);
+    if (!layer)
+        return 0;
+    memset(&desc, 0, sizeof(desc));
+    s_depthPassColor = s_depthPassDepth = NULL;
+    CALL(GetSurfaceFn, device, DEV_GetRenderTarget)(device, 0, &s_depthPassColor);
+    CALL(GetDepthFn, device, DEV_GetDepthStencilSurface)(device, &s_depthPassDepth);
+    if (!s_depthPassColor || CALL(GetDescFn, s_depthPassColor, SURF_GetDesc)(s_depthPassColor, &desc) < 0 ||
+        desc.Width != s_sceneWidth || desc.Height != s_sceneHeight) {
+        Release(&s_depthPassColor);
+        Release(&s_depthPassDepth);
+        return 0;
+    }
+    /* Setting a target resets the viewport to all of it; the engine's stays. */
+    CALL(ViewportFn, device, DEV_GetViewport)(device, &viewport);
+    CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, layer->colorSurface);
+    CALL(SetDepthFn, device, DEV_SetDepthStencilSurface)(device, s_sceneDepthSurface);
+    CALL(ViewportFn, device, DEV_SetViewport)(device, &viewport);
+    CALL(ClearFn, device, DEV_Clear)(device, 0, NULL, 6, 0, 1.0f, 0); /* depth and stencil */
+    s_colorWriteWanted = GetState(RS_COLORWRITEENABLE);
+    SetState(RS_COLORWRITEENABLE, 0);
+    s_depthOnly = s_depthPass = 1;
+    return 1;
+}
+
+void RB_FxLayer_DepthPassEnd(void)
+{
+    void *device = s_device;
+    Viewport viewport;
+
+    if (!s_depthPass)
+        return;
+    s_depthOnly = s_depthPass = 0;
+    SetState(RS_COLORWRITEENABLE, s_colorWriteWanted);
+    CALL(ViewportFn, device, DEV_GetViewport)(device, &viewport);
+    CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, s_depthPassColor);
+    CALL(SetDepthFn, device, DEV_SetDepthStencilSurface)(device, s_depthPassDepth);
+    CALL(ViewportFn, device, DEV_SetViewport)(device, &viewport);
+    Release(&s_depthPassColor);
+    Release(&s_depthPassDepth);
+    s_sceneDepthDrawn = 1;
 }
 
 /* Called before the emissive pass draws its effects: decides how. */

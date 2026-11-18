@@ -558,11 +558,16 @@ int rb_postSunUsed = 1;      /* something drew with the mid-scene copy of the sc
 static int rb_postSunFromDepth; /* this frame's glow has no such copy: see RB_ScreenPass_NonSkyAlpha */
 extern int RB_FxLayer_Wanted(void);
 extern void RB_FxLayer_DepthOnly(void *device, int on);
+/* Flags on a draw command's technique: the scene's depth for the effects layer on
+ * Direct3D 7, and the last such command of the frame (r_scene.c sets them). */
+enum { RB_FX_DEPTH_PASS = 0x100, RB_FX_DEPTH_PASS_LAST = 0x200 };
 static int rb_fxAlphaOnly; /* draw only the surfaces that blend into the frame buffer's alpha */
 static GfxDrawSurf *rb_fxEarlyList; /* the run of effects drawn into the layer ahead of the scene: */
 static int rb_fxEarlyFirst, rb_fxEarlyEnd; /* its list and where it stands in it */
 static int rb_fxFramed;    /* the layer has chosen how to draw this frame's effects */
 static int rb_fxModelsOnly; /* the surface loop draws models only */
+static int rb_fxDepthWriters; /* the surface loop draws only what writes depth */
+static int rb_fxSceneDepth;  /* the Direct3D 7 depth pass has drawn this frame's scene for the layer */
 #endif
 static void RB_DrawSurfsCmd(GfxRenderCommandExecState *execState);
 static void RB_DrawSunPostEffectsCmd(GfxRenderCommandExecState *execState);
@@ -2108,6 +2113,8 @@ sort_changed:
     /* The second float-Z pass, for the effects layer: models only (rb_fxlayer.c). */
     if (rb_fxAlphaOnly && material && !(material->stateBits[0] & 0x10000000))
         goto ignore_surf;
+    if (rb_fxDepthWriters && material && !(material->stateBits[1] & 1))
+        goto ignore_surf;
     if (rb_fxModelsOnly && material &&
         !(entityIndex == 0x7ff ||
           (entityIndex <= 0x7fd && backEnd.sceneDef.entities[entityIndex].reType <= 2 &&
@@ -2482,7 +2489,7 @@ static void RB_DrawFxLayerRun(GfxDrawSurf *drawSurfs, int count, MaterialTechniq
  * if that can be done ahead of the scene (rb_fxlayer.c: RB_FxLayer_BeginEarly). It can
  * when they make one run in the list, and none of them reads the scene itself (the
  * copies that distortion draws with), which is not there yet. */
-static void RB_FxLayerEarly(GfxDrawSurf *drawSurfs, int drawSurfCount)
+static void RB_FxLayerEarly(GfxDrawSurf *drawSurfs, int drawSurfCount, MaterialTechniqueType emissive)
 {
     extern void RB_FxLayer_Frame(void *device, int skyOnlyAlpha);
     extern int RB_FxLayer_BeginEarly(void *device, int samples);
@@ -2516,14 +2523,13 @@ static void RB_FxLayerEarly(GfxDrawSurf *drawSurfs, int drawSurfCount)
         const MaterialTechnique *technique;
         int entityIndex, lightmap;
         R_DecomposeSort(drawSurfs[i].sort, &entityIndex, &material, &lightmap);
-        technique = material && material->techniqueSet
-                        ? material->techniqueSet->techniques[TECHNIQUE_EMISSIVE_FEATHERED] : NULL;
+        technique = material && material->techniqueSet ? material->techniqueSet->techniques[emissive] : NULL;
         if (technique && (technique->flags & 3))
             return;
     }
     if (!RB_FxLayer_BeginEarly(dx.device, dx.multiSampleType > 1 ? (int)dx.multiSampleType : 1))
         return;
-    RB_DrawFxLayerRun(drawSurfs + runFirst, runEnd - runFirst, TECHNIQUE_EMISSIVE_FEATHERED, (GfxDrawSurfOrder)0);
+    RB_DrawFxLayerRun(drawSurfs + runFirst, runEnd - runFirst, emissive, (GfxDrawSurfOrder)0);
     RB_FxLayer_EndEarly();
     rb_fxEarlyList = drawSurfs;
     rb_fxEarlyFirst = runFirst;
@@ -2559,7 +2565,30 @@ static void RB_RenderDrawSurfListFxLayer(GfxDrawSurf *drawSurfs, int drawSurfCou
         rb_fxModelsOnly = 0;
         RB_FxLayer_DepthOnly(dx.device, 0);
         if (order == 0)
-            RB_FxLayerEarly(drawSurfs, drawSurfCount);
+            RB_FxLayerEarly(drawSurfs, drawSurfCount, TECHNIQUE_EMISSIVE_FEATHERED);
+        return;
+    }
+    /* Direct3D 7: the scene's depth for the layer, drawn with the scene's own techniques
+     * (r_scene.c asks for it in frames that use the layer; rb_fxlayer.c says why). The
+     * last of these commands is followed by the effects, drawn into the layer early. */
+    if ((int)techType & RB_FX_DEPTH_PASS) {
+        extern int RB_FxLayer_DepthPassBegin(void *device);
+        extern void RB_FxLayer_DepthPassEnd(void);
+        int last = ((int)techType & RB_FX_DEPTH_PASS_LAST) != 0;
+        techType = (MaterialTechniqueType)((int)techType & 0xff);
+        if (!RB_FxLayer_DepthPassBegin(dx.device))
+            return;
+        rb_fxDepthWriters = 1;
+        RB_RenderDrawSurfList(drawSurfs, drawSurfCount, techType, order);
+        rb_fxDepthWriters = 0;
+        if (!last)
+            return;
+        if (tess.indexCount || tess.optimizedIndexCount)
+            RB_EndSurface();
+        RB_FxLayer_DepthPassEnd();
+        rb_fxSceneDepth = 1;
+        if (order == 0)
+            RB_FxLayerEarly(drawSurfs, drawSurfCount, TECHNIQUE_EMISSIVE);
         return;
     }
     if ((techType != TECHNIQUE_EMISSIVE && techType != TECHNIQUE_EMISSIVE_FEATHERED) || order != 0 ||
@@ -2586,7 +2615,7 @@ static void RB_RenderDrawSurfListFxLayer(GfxDrawSurf *drawSurfs, int drawSurfCou
                 RB_UpdateViewport();
             RB_FxLayer_ApplyEarly(dx.device, 1, rb_postSunFromDepth);
         } else if (inLayer) {
-            if (RB_FxLayer_Begin(dx.device, R_UseZFeather()))
+            if (RB_FxLayer_Begin(dx.device, R_UseZFeather() || rb_fxSceneDepth))
                 RB_DrawFxLayerRun(drawSurfs + first, end - first, techType, order);
             else
                 RB_RenderDrawSurfList(drawSurfs + first, end - first, techType, order);
@@ -2596,6 +2625,7 @@ static void RB_RenderDrawSurfListFxLayer(GfxDrawSurf *drawSurfs, int drawSurfCou
         }
         first = end;
     }
+    rb_fxSceneDepth = 0;
 }
 #endif
 
