@@ -304,6 +304,28 @@ void RB_DrawSun(int viewIndex)
         RB_TessSunBillboard(16.0f / (float)backend->width, 16.0f / (float)backend->height, bm_color_from_bits(0x000000ff));
         float visibility = 0.0f;
         void **table = *(void ***)query;
+#if COD2_MAC_D3D9
+        /* The original waits here until the count of two frames ago is in, which a
+         * Windows driver has by then. On Metal the count arrives when the GPU has
+         * finished that frame, so the wait tied every frame to the GPU's pace and held
+         * a clear scene near 300 frames a second. Ask without waiting: a count that is
+         * not in yet leaves the sun's visibility as it was and the query alone, and
+         * the same query is asked again two frames on. */
+        int countPending = 0;
+        if (state->sunQueryIssued[queryIndex]) {
+            unsigned int samples = 0;
+            int result = ((QueryGetDataFn)table[7])(query, &samples, 4, 0);
+            if (result == 1) {
+                countPending = 1;
+                state->error = 1;
+            } else {
+                unsigned int maxSamples = ((DxGlobals *)imp_dx)->sunSpriteSamples;
+                if (result || samples > maxSamples)
+                    state->error = 1;
+                visibility = (float)samples / (float)(int)maxSamples;
+            }
+        }
+#else
         if (state->sunQueryIssued[queryIndex]) {
             unsigned int samples = 0;
             int result;
@@ -317,6 +339,7 @@ void RB_DrawSun(int viewIndex)
                 state->error = 1;
             visibility = (float)samples / (float)(int)maxSamples;
         }
+#endif
         if (backend->tileIndex == 0)
             state->cumulVisibility = 0.0f;
         state->cumulVisibility += visibility;
@@ -327,12 +350,24 @@ void RB_DrawSun(int viewIndex)
                 state->lastVisibility = state->cumulVisibility;
             state->error = 0;
         }
+#if COD2_MAC_D3D9
+        if (countPending) {
+            /* Still counting: draw the (invisible) sprite without starting the query again. */
+            RB_EndSurface();
+        } else {
+            ((QueryIssueFn)table[6])(query, 2);
+            RB_EndSurface();
+            ((QueryIssueFn)table[6])(query, 1);
+            state->sunQueryIssued[queryIndex] = 1;
+        }
+#else
         R_LOG("occlusionQuery->Issue( (1 << 1) )\n");
         ((QueryIssueFn)table[6])(query, 2);
         RB_EndSurface();
         R_LOG("occlusionQuery->Issue( (1 << 0) )\n");
         ((QueryIssueFn)table[6])(query, 1);
         state->sunQueryIssued[queryIndex] = 1;
+#endif
         RB_PopMatrixStack();
     }
     const float *axis = backend->viewParms->axis[0];
