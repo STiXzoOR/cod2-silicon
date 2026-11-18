@@ -303,6 +303,8 @@ new performance claims for every release. Verified development results include:
 - 0.3.1 fixed two of the differences 0.3.0 listed (menu panel edges, and fog
   in the Direct3D 7 renderer) and measured a third, the near clip plane, as
   not a difference. [What was tested for 0.3.1](docs/macos-port/release-0.3.1-verification.md)
+- 0.3.6 renames the app to CoD2 Unbound and changes nothing in the game.
+  [What was tested for 0.3.6](docs/macos-port/release-0.3.6-verification.md)
 - 0.3.5 adds the Steam download and the crash reports question to setup
   and changes nothing in the game. [What was tested for 0.3.5](docs/macos-port/release-0.3.5-verification.md)
 - 0.3.4 adds the switch that sends crash reports to this project and

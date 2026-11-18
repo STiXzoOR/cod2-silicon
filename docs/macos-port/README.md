@@ -62,8 +62,8 @@ to the new ones.
 
 ## Deeper references
 
-- [Release 0.3.5 verification](release-0.3.5-verification.md) — what was tested for the current release and what was not.
-- [Release 0.3.4 verification](release-0.3.4-verification.md) — the release before it.
+- [Release 0.3.6 verification](release-0.3.6-verification.md) — what was tested for the current release and what was not.
+- [Release 0.3.5 verification](release-0.3.5-verification.md) — the release before it.
 - [Release 0.3.3 verification](release-0.3.3-verification.md) — the release before it.
 - [Release 0.3.2 verification](release-0.3.2-verification.md) — the release before it.
 - [Release 0.3.1 verification](release-0.3.1-verification.md) — the release before it.
