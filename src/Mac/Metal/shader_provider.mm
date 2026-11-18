@@ -225,10 +225,10 @@ int MacMetalShaders_Prepare(const char *sourceCache, const char *translatedCache
 int MacMetalShaders_SetupAfterExtraction(const char *sourceCache)
 {
     @autoreleasepool {
-        NSString *destination = [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Application Support/CoD2 Silicon/metal/shaders-abi1"];
+        NSString *destination = [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Application Support/CoD2 Unbound/metal/shaders-abi1"];
         int success = MacMetalShaders_Prepare(sourceCache, destination.fileSystemRepresentation);
-        if (success) fprintf(stderr, "CoD2 Silicon: prepared 417 local Metal shader libraries (ABI 1).\n");
-        else fprintf(stderr, "CoD2 Silicon: Metal shader preparation: %s\n", MacMetalShaders_LastError());
+        if (success) fprintf(stderr, "CoD2 Unbound: prepared 417 local Metal shader libraries (ABI 1).\n");
+        else fprintf(stderr, "CoD2 Unbound: Metal shader preparation: %s\n", MacMetalShaders_LastError());
         return success;
     }
 }

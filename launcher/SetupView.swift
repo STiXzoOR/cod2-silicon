@@ -12,11 +12,11 @@ import Carbon.HIToolbox
     }
 }
 
-/// Setup (the thirteen Setup boards): six steps over the dusk scene, each a heading and one card,
+/// Setup (the Setup boards): seven steps over the dusk scene, each a heading and one card,
 /// with Back, the progress dots and the step's actions in the glass bar at the bottom.
 struct SetupView: View {
     @ObservedObject var model: LauncherModel
-    @Environment(\.palette) private var palette
+    @Environment(\.palette) var palette
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     fileprivate enum Focus: Hashable { case folder, key, name, primary }
     @FocusState private var focus: Focus?
@@ -38,7 +38,7 @@ struct SetupView: View {
                 .padding(.bottom, 22).padding(.horizontal, 24)
         }
         .background { SetupBackdrop().ignoresSafeArea() }
-        .task(id: model.step * 4 + (model.replacingKey ? 1 : 0) + (model.shaderBusy ? 2 : 0)) {
+        .task(id: model.step * 8 + (model.replacingKey ? 1 : 0) + (model.shaderBusy ? 2 : 0) + (model.steamActive ? 4 : 0)) {
             // The new step must be mounted before its focus target can accept focus.
             focus = nil
             try? await Task.sleep(for: .milliseconds(250))
@@ -51,6 +51,8 @@ struct SetupView: View {
     }
     private func focusStep() {
         switch model.setupStep {
+        case .data where model.steamActive: focus = model.steam.phase == .offer || model.steam.phase == .done ? .primary : nil
+        case .crash: focus = nil  // neither answer is the default
         case .data where model.dataPath.isEmpty || !model.dataError.isEmpty: focus = .folder
         case .key where !model.keyVerified || model.replacingKey: focus = .key
         case .yours: focus = .name
@@ -61,9 +63,15 @@ struct SetupView: View {
         Group {
             switch model.setupStep {
             case .welcome: welcome
-            case .data: head(model.dataPath.isEmpty || !model.dataError.isEmpty ? "Find your game data" : "Game data found",
-                             "Choose the Call of Duty 2 folder from your own copy. CoD2 Silicon uses the files where they are; nothing is copied.")
-                dataPanel
+            case .data:
+                if model.steamActive {
+                    head(model.steamHeading.title, model.steamHeading.detail)
+                    steamPanel
+                } else {
+                    head(model.dataPath.isEmpty || !model.dataError.isEmpty ? "Find your game data" : "Game data found",
+                         "Choose the Call of Duty 2 folder from your own copy. CoD2 Unbound uses the files where they are; nothing is copied.")
+                    dataPanel
+                }
             case .key: head("Enter your CD key", "The 20-character key that came with your game. It unlocks multiplayer on official and CoD2x servers.")
                 keyPanel
             case .shaders: head(model.shaderBusy || model.shaderFailed ? "Building the original shaders" : "Original shaders are ready",
@@ -71,6 +79,8 @@ struct SetupView: View {
                 shaderPanel
             case .yours: head("Make it yours", "Two things most players set first. Skip this and you start with the game’s defaults.")
                 yoursPanel
+            case .crash: head("Send crash reports?", "If the game crashes or stops responding, CoD2 Unbound can send this project a report of what went wrong. It is how problems on Macs like yours get found and fixed. The choice is yours.")
+                crashPanel
             case .ready: head("You’re ready to play", "Your setup is saved. Review your choices below.")
                 readyPanel
             }
@@ -82,9 +92,9 @@ struct SetupView: View {
     }
 
     // MARK: Pieces
-    private func head(_ title: String, _ detail: String) -> some View {
+    func head(_ title: String, _ detail: String) -> some View {
         VStack(spacing: 12) {
-            Eyebrow(text: "Step \(model.setupStep.number) of \(SetupStep.count) · \(model.setupStep.title)")
+            Eyebrow(text: "Step \(model.setupStepNumber) of \(model.setupStepCount) · \(model.setupStep.title)")
             Text(title).font(.system(size: 30, weight: .bold)).foregroundStyle(palette.inkOnArt).multilineTextAlignment(.center)
                 .accessibilityAddTraits(.isHeader)
             Text(detail).font(.system(size: 15)).foregroundStyle(palette.inkOnArt.opacity(0.82)).multilineTextAlignment(.center)
@@ -94,19 +104,19 @@ struct SetupView: View {
     }
     /// The card under each heading (radius 22). Its default 6-point inset keeps a 16-point group or
     /// well concentric; a 28-point button in a corner sits 8 in (`cornered`).
-    private func panel<Content: View>(spacing: CGFloat = 12, padding: CGFloat = 6, @ViewBuilder _ content: () -> Content) -> some View {
+    func panel<Content: View>(spacing: CGFloat = 12, padding: CGFloat = 6, @ViewBuilder _ content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: spacing) { content() }
             .padding(padding)
             .frame(width: Self.panelWidth, alignment: .leading)
             .contentSurface(RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
-    private func group<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+    func group<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         VStack(spacing: 0) { content() }
             .background(palette.well, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(palette.wellStroke, lineWidth: 1))
             .shapeAudit(.container, .rounded(16), "setup group")
     }
-    private func symbolTile(_ name: String, negative: Bool = false) -> some View {
+    func symbolTile(_ name: String, negative: Bool = false) -> some View {
         Image(systemName: name).font(.system(size: 15, weight: .medium)).foregroundStyle(negative ? palette.negative : palette.accent)
             .frame(width: 30, height: 30)
             .background(palette.selection, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -114,13 +124,13 @@ struct SetupView: View {
     }
     /// A group row. With `control`, the row is 60 tall so its 28-point button sits 16 from the top,
     /// bottom and side, clear of the group's 16-point corner.
-    private func row<Trailing: View>(_ symbol: String, _ title: String, _ detail: String, mono: Bool = false, negative: Bool = false,
+    func row<Trailing: View>(_ symbol: String, _ title: String, _ detail: String, mono: Bool = false, negative: Bool = false,
                                      control: Bool = false, @ViewBuilder trailing: () -> Trailing) -> some View {
         HStack(spacing: 12) {
             symbolTile(symbol, negative: negative)
             VStack(alignment: .leading, spacing: 3) {
                 Text(title).font(mono ? .typewriter(14, bold: true) : .system(size: 14, weight: .semibold))
-                    .foregroundStyle(mono ? palette.address : palette.text).lineLimit(mono ? 1 : 2).truncationMode(.middle)
+                    .foregroundStyle(palette.text).lineLimit(mono ? 1 : 2).truncationMode(.middle)
                 Text(detail).font(.system(size: 12)).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
             }
             .accessibilityElement(children: .combine).accessibilityAddTraits(.isStaticText)
@@ -129,9 +139,9 @@ struct SetupView: View {
         }
         .padding(.horizontal, 16).padding(.vertical, 10).frame(minHeight: control ? 60 : 56)
     }
-    private func cornered<Content: View>(@ViewBuilder _ content: () -> Content) -> some View { content().padding(2) }
-    private func divider() -> some View { Rectangle().fill(palette.separator).frame(height: 1).padding(.leading, 58) }
-    private func note(_ text: String, symbol: String? = nil) -> some View {
+    func cornered<Content: View>(@ViewBuilder _ content: () -> Content) -> some View { content().padding(2) }
+    func divider(inset: CGFloat = 58) -> some View { Rectangle().fill(palette.separator).frame(height: 1).padding(.leading, inset) }
+    func note(_ text: String, symbol: String? = nil) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             if let symbol { Image(systemName: symbol).font(.system(size: 11)).accessibilityHidden(true) }
             Text(text).fixedSize(horizontal: false, vertical: true)
@@ -145,7 +155,7 @@ struct SetupView: View {
         VStack(spacing: 12) {
             BrandMark().frame(width: 124, height: 124).shadow(color: .black.opacity(0.35), radius: 18, y: 8)
             Eyebrow(text: "Reporting for duty").padding(.top, 14)
-            Text("Welcome to CoD2 Silicon").font(.system(size: 40, weight: .bold)).foregroundStyle(palette.inkOnArt).multilineTextAlignment(.center)
+            Text("Welcome to CoD2 Unbound").font(.system(size: 40, weight: .bold)).foregroundStyle(palette.inkOnArt).multilineTextAlignment(.center)
                 .accessibilityAddTraits(.isHeader)
             Text("Call of Duty 2, running natively on your Mac. Setup takes about two minutes and uses your own copy of the game.")
                 .font(.system(size: 15)).foregroundStyle(palette.inkOnArt.opacity(0.82)).multilineTextAlignment(.center).lineSpacing(3)
@@ -169,11 +179,15 @@ struct SetupView: View {
         if !model.dataError.isEmpty {
             panel {
                 group {
-                    row("folder", (model.attemptedDataPath as NSString).abbreviatingWithTildeInPath, "\(model.dataArchivesFound) of 16 game archives found", mono: true, negative: true, control: true) {
+                    row("folder", PathDisplay.short(model.attemptedDataPath), model.dataIsUnfinishedSteam ? "An unfinished Steam download" : "\(model.dataArchivesFound) of 16 game archives found",
+                        mono: true, negative: true, control: true) {
                         Button("Choose Folder…", action: model.pickData).glassAction().controlSize(.large).focused($focus, equals: .folder)
                     }
                 }
                 cornered { Banner(.error, symbol: "exclamationmark.triangle", message: model.dataError) }
+                if model.dataIsUnfinishedSteam {
+                    cornered { Button("Finish the Download…", action: model.finishSteamDownload).glassAction().controlSize(.large) }
+                }
             }
             .dropZone(model: model, targeted: $dropTarget)
         } else if !model.dataPath.isEmpty {
@@ -216,7 +230,19 @@ struct SetupView: View {
                         .accessibilityElement(children: .combine).accessibilityAddTraits(.isStaticText)
                     }
                 }
-                Link("Don’t have the files yet?", destination: URL(string: "https://github.com/cod2unbound/cod2-unbound#game-data")!)
+                group {
+                    if model.steamUnfinished != nil {
+                        row("arrow.down.circle", "Your Steam download isn’t finished",
+                            "What is there is kept; only the rest is fetched.", control: true) {
+                            Button("Finish the Download…", action: model.resumeSteamUnfinished).glassAction().controlSize(.large)
+                        }
+                    } else {
+                        row("arrow.down.circle", "Own it on Steam, but not installed anywhere?", "CoD2 Unbound can download your copy for you. About 3.7 GB.", control: true) {
+                            Button("Download from Steam…", action: model.offerSteam).glassAction().controlSize(.large)
+                        }
+                    }
+                }
+                Link("Other ways to get the files", destination: URL(string: "https://cod2unbound.com/guides/mac")!)
                     .font(.system(size: 13)).foregroundStyle(palette.link).frame(maxWidth: .infinity).padding(.bottom, 8)
             }
             .dropZone(model: model, targeted: $dropTarget)
@@ -375,6 +401,14 @@ struct SetupView: View {
                     }
                     divider()
                     row("person", "Player and display", model.setupPlayerSummary) { StatusLabel(.ready, "Set") }
+                    if model.crashReportService != nil {
+                        divider()
+                        if model.settings.sendCrashReports {
+                            row("ladybug", "Crash reports", "Sent to the project if the game crashes · Change in Settings › Privacy") { StatusLabel(.ready, "On") }
+                        } else {
+                            row("ladybug", "Crash reports", "Not sent · Change in Settings › Privacy") { StatusLabel(.notMeasured, "Off") }
+                        }
+                    }
                 }
             }
             if let address = model.setupServerAddress {
@@ -415,29 +449,30 @@ private struct DisplayModeCrate: View {
     }
 }
 
-/// The bottom bar: Back, one dot per step with “Step N of 6”, then Cancel (Set Up Again), the step's
+/// The bottom bar: Back, one dot per step with “Step N of 7”, then Cancel (Set Up Again), the step's
 /// second action and its default action.
 private struct SetupBar: View {
     @ObservedObject var model: LauncherModel
     var focus: FocusState<SetupView.Focus?>.Binding
     @Environment(\.palette) private var palette
     var body: some View {
-        let step = model.setupStep
+        let step = model.setupStep, steps = model.setupSteps
+        let index = steps.firstIndex(of: step) ?? 0
         HStack(spacing: 8) {
             if step != .welcome {
                 Button("Back", action: model.backSetup).glassAction().actionControlSize().disabled(model.shaderBusy)
             }
             HStack(spacing: 6) {
-                ForEach(SetupStep.allCases) { item in
+                ForEach(steps) { item in
                     Capsule().fill(item == step ? palette.accent : item.rawValue < step.rawValue ? palette.positive : palette.track)
                         .frame(width: item == step ? 26 : 14, height: 5)
                 }
             }
             .padding(.leading, 10)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Step \(step.number) of \(SetupStep.count), \(step.title)")
+            .accessibilityLabel("Step \(index + 1) of \(steps.count), \(step.title)")
             .accessibilityAddTraits(.isStaticText)
-            Text("Step \(step.number) of \(SetupStep.count)").font(.system(size: 12)).foregroundStyle(palette.secondary).padding(.leading, 8)
+            Text("Step \(index + 1) of \(steps.count)").font(.system(size: 12)).foregroundStyle(palette.secondary).padding(.leading, 8)
                 .accessibilityHidden(true)
             Spacer(minLength: 8)
             if model.canCancelSetup {
@@ -447,7 +482,7 @@ private struct SetupBar: View {
                 Button(alternate, action: model.alternateSetup).glassAction().actionControlSize()
             }
             Button(model.setupPrimaryTitle, action: model.nextSetup)
-                .prominentAction().actionControlSize().keyboardShortcut(.defaultAction)
+                .prominentAction().actionControlSize().keyboardShortcut(step == .crash ? nil : .defaultAction)
                 .disabled(!model.setupCanContinue).focused(focus, equals: .primary)
         }
         // 36-point buttons sit 10 in from every edge of the 56-point capsule.

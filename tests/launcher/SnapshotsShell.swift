@@ -6,14 +6,16 @@ import SwiftUI
 
 extension Snapshots {
     /// One screen per Setup board state (Setup, SetupData…, SetupAgain), plus the honest in-between states.
-    static let setupScreens = ["setup-welcome", "setup-data", "setup-data-found", "setup-data-error", "setup-key", "setup-key-ok", "setup-key-bad",
-                               "setup-key-stored", "setup-shaders", "setup-shaders-starting", "setup-shaders-done", "setup-shaders-failed", "setup-yours",
-                               "setup-ready", "setup-ready-approximate", "setup-ready-link", "setup-again", "setup-again-data"]
+    static let setupScreens = ["setup-welcome", "setup-data", "setup-data-found", "setup-data-error", "setup-data-unfinished",
+                               "setup-steam-unfinished", "setup-steam", "setup-steam-short", "setup-steam-starting", "setup-steam-qr", "setup-steam-not-owned", "setup-steam-downloading",
+                               "setup-steam-checking", "setup-steam-stopped", "setup-steam-stopped-details", "setup-steam-sign-in-failed", "setup-steam-done", "setup-key", "setup-key-ok", "setup-key-bad",
+                               "setup-key-stored", "setup-shaders", "setup-shaders-starting", "setup-shaders-done", "setup-shaders-failed", "setup-yours", "setup-crash",
+                               "setup-ready", "setup-ready-reports", "setup-ready-approximate", "setup-ready-link", "setup-again", "setup-again-data"]
     /// Every ship-shell screen: setup, the player card (HomePlayer), Jump to… (HomeJump), the sidebar
     /// without favourites, the status toasts, the quit alert and The game couldn't start.
     static var shellScreens: [String] {
         setupScreens + ["home-notice", "home-game-running", "home-loadout-player-card", "home-loadout-player-card-no-key", "home-jump", "home-no-favorites",
-                        "home-quit-running", "sheet-game-could-not-start", "sheet-game-could-not-start-other"]
+                        "home-quit-running", "sheet-game-could-not-start", "sheet-game-could-not-start-other", "sheet-crash-reports-question"]
     }
     /// Window-driving suites, run by `--suite NAME` (snapshots.py runs every suite `--list-suites` prints).
     static let shellSuites: [Suite] = [Suite(name: "shell-actions", run: ShellPreview.actions), Suite(name: "shell-accessibility", run: ShellPreview.accessibility)]
@@ -90,13 +92,42 @@ extension Snapshots {
             try require(model.setupName == "^1Red ^7Fox" && model.setupDisplayMode == "windowed", "Name and display choice are held until Continue (\(model.setupName), \(model.setupDisplayMode))")
             try require(model.settings.fullscreen != "windowed", "Make it yours changes nothing before Continue")
             try await click("Continue", in: window)
-            try require(model.setupStep == .ready && model.playerName == "^1Red ^7Fox" && model.settings.fullscreen == "windowed", "Continue applies the name and the display mode")
+            try require(model.setupStep == .crash && model.playerName == "^1Red ^7Fox" && model.settings.fullscreen == "windowed", "Continue applies the name and the display mode, then asks about crash reports")
+            ConfigsPreview.press(window, keyCode: 36, characters: "\r")
+            await settle()
+            try require(model.setupStep == .crash && !model.settings.crashReportsAsked, "Return answers nothing: the question has no default")
+            try await click("Don’t Send", in: window)
+            try require(model.setupStep == .ready && !model.settings.sendCrashReports && model.settings.crashReportsAsked, "Don’t Send is an answer and moves on")
+            try await click("Back", in: window)
+            try await click("Send Crash Reports", in: window)
+            try require(model.setupStep == .ready && model.settings.sendCrashReports, "Send Crash Reports turns reports on")
+            try require(AccessibilityTree.elements(of: window).contains { ($0.label + " " + $0.value).contains("Sent to the project if the game crashes") }, "Ready shows the answer")
             let summary = AccessibilityTree.elements(of: window).filter { ($0.label + " " + $0.value).contains("Fox") }
             try require(summary.contains { ($0.label + " " + $0.value).contains("Red Fox · Window at") }, "Ready summarises the real name and display: \(summary.map(\.line))")
             ConfigsPreview.press(window, keyCode: 36, characters: "\r")
             await settle()
             try require(!model.onboard && model.page == .home, "Return on Ready opens the launcher without starting a game")
-            print("PASS: six setup steps with real clicks; a stored key is kept across Back; Make it yours applies only on Continue")
+            print("PASS: seven setup steps with real clicks; a stored key is kept across Back; Make it yours applies only on Continue; the crash reports question has no default")
+
+            // Game data › Download from Steam… and back out again (nothing is fetched in the harness).
+            model.preview("setup-data")
+            await settle()
+            try await click("Download from Steam…", in: window)
+            try require(model.setupStep == .data && model.steam.phase == .offer && model.setupCanContinue, "Download from Steam… opens the offer")
+            try await click("Continue", in: window)
+            try require(model.steam.phase == .starting && !model.setupCanContinue, "Continue goes to the sign-in, where Continue waits for the phone")
+            try await click("Back", in: window)
+            try require(model.steam.phase == .offer, "Back from the sign-in is the offer")
+            try await click("Back", in: window)
+            try require(model.steam.phase == .off && model.setupStep == .data && element("Download from Steam…", in: window) != nil, "Back from the offer is the game data step")
+            model.preview("setup-steam-downloading")
+            await settle()
+            try require(element("Stop", in: window) != nil && !model.setupCanContinue, "While downloading there is Stop, and Continue waits")
+            model.preview("setup-steam-done")
+            await settle()
+            try await click("Continue", in: window)
+            try require(model.setupStep == .key && !model.steamActive, "Continue after a download goes on to the CD key")
+            print("PASS: the Steam download opens from Game data, backs out step by step, and ends at the CD key")
 
             // CD key entry: checksum as you type, Skip for Now.
             model.preview("setup-key")
@@ -347,7 +378,7 @@ extension Snapshots {
     }
 
     /// Every setup and shell screen: no unnamed control, no roleless text, the step's default action
-    /// present by its title, and setup's progress read as one “Step N of 6, …” element.
+    /// present by its title, and setup's progress read as one “Step N of 7, …” element.
     static func accessibility(output: URL) async -> Bool {
         var passed = true
         for screen in Snapshots.shellScreens {
@@ -372,7 +403,8 @@ extension Snapshots {
             if model.onboard {
                 let primary = tree.elements.contains { $0.role == "AXButton" && $0.label == model.setupPrimaryTitle }
                 let step = model.setupStep
-                let indicators = tree.elements.filter { $0.label == "Step \(step.number) of 6, \(step.title)" || $0.value == "Step \(step.number) of 6, \(step.title)" }
+                let words = "Step \(model.setupStepNumber) of \(model.setupStepCount), \(step.title)"
+                let indicators = tree.elements.filter { $0.label == words || $0.value == words }
                 ok = ok && primary && indicators.count == 1
                 detail = ", primary “\(model.setupPrimaryTitle)” \(primary), step indicator \(indicators.count)"
             }
@@ -394,8 +426,24 @@ extension Snapshots {
     }
     /// Labels a screen must expose, so an empty or unbuilt tree can't pass.
     static let labels: [String: [String]] = [
-        "setup-welcome": ["Welcome to CoD2 Silicon", "Get Started"],
-        "setup-data": ["Choose Folder…", "Don’t have the files yet?"],
+        "setup-welcome": ["Welcome to CoD2 Unbound", "Get Started"],
+        "setup-data": ["Choose Folder…", "Download from Steam…", "Other ways to get the files"],
+        "setup-data-unfinished": ["Choose Folder…", "An unfinished Steam download", "Finish the Download…"],
+        "setup-steam-unfinished": ["Your Steam download isn’t finished", "Finish the Download…", "Choose Folder…"],
+        "setup-steam": ["Download your copy from Steam", "Language", "Change…", "Signed out when it ends", "~/Games/CoD2, 212 GB free on this Mac"],
+        "setup-steam-short": ["The game needs about 4 GB", "Change…"],
+        "setup-steam-starting": ["Getting the download tool…", "Open the Steam app on your phone."],
+        "setup-steam-qr": ["QR code for the Steam app", "Waiting for you to approve on your phone…", "Open the Steam app on your phone."],
+        "setup-steam-not-owned": ["Use Another Account", "Choose Folder…", "Call of Duty 2 on Steam"],
+        "setup-steam-downloading": ["Stop", "1.42 of 3.70 GB · about 6 minutes left", "Approved on your phone", "Check every file"],
+        "setup-steam-checking": ["Checking the files…", "Downloaded"],
+        "setup-steam-stopped": ["Resume", "Choose Folder Instead…", "The download stopped at 1.42 of 3.70 GB"],
+        "setup-steam-stopped-details": ["Hide Details", "What the download tool said"],
+        "setup-steam-sign-in-failed": ["Try Again", "The sign-in didn’t go through"],
+        "setup-steam-done": ["Downloaded and checked", "3.70 GB from Steam", "Signed out of Steam."],
+        "setup-crash": ["Send crash reports?", "Don’t Send", "See What’s Sent…", "What it never holds"],
+        "setup-ready-reports": ["Crash reports", "On"],
+        "sheet-crash-reports-question": ["Send crash reports to CoD2 Unbound?", "Don’t Send", "Send Crash Reports", "See What’s Sent…"],
         "setup-data-found": ["Choose a Different Folder…", "Game data found"],
         "setup-data-error": ["Choose Folder…", "4 of 16 game archives found"],
         "setup-key": ["CD key, twenty characters", "Paste", "Skip for Now"],
@@ -403,8 +451,8 @@ extension Snapshots {
         "setup-key-stored": ["Replace…", "Verified"],
         "setup-shaders": ["Building shaders"],
         "setup-shaders-failed": ["Try Again", "Choose Mac Copy…"],
-        "setup-yours": ["In-game name", "Skip"],
-        "setup-ready": ["Find a Server", "Open CoD2 Silicon"],
+        "setup-yours": ["In-game name", "Skip for Now"],
+        "setup-ready": ["Find a Server", "Open CoD2 Unbound"],
         "setup-again": ["Cancel", "Back", "Replace…"],
         "home-loadout-player-card": ["In-game name", "Replace…", "Loadout for your next game", "Done", "Add colours…"],
         "home-loadout-player-card-no-key": ["Enter Key…", "Not entered"],

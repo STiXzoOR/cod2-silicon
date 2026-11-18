@@ -68,7 +68,7 @@ __attribute__((constructor)) static void install(void)
     NSDate *installed = [NSDate date];
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *ready = [NSHomeDirectory() stringByAppendingPathComponent:
-            @"Library/Application Support/CoD2 Silicon/.launcher-setup-complete"];
+            @"Library/Application Support/CoD2 Unbound/.launcher-setup-complete"];
         __block unsigned attempts = 0;
         NSTimer *timer = [NSTimer timerWithTimeInterval:0.1 repeats:YES block:^(NSTimer *timer) {
             NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:ready error:nil];

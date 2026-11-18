@@ -171,7 +171,7 @@ def main():
     if platform.system() != "Darwin":
         print("SKIP: headless ARB/Metal semantic tests require macOS and the Apple frameworks")
         return 0
-    candidates = [Path.home() / f"Library/Application Support/{name}/shaders" for name in ("CoD2x Native", "CoD2 Silicon")]
+    candidates = [Path.home() / f"Library/Application Support/{name}/shaders" for name in ("CoD2x Native", "CoD2 Unbound")]
     cache = args.cache or next((path for path in candidates if path.is_dir()), None)
     programs, groups = representatives(cache) if cache and cache.is_dir() else ([], {})
     if not programs and not args.self_test:

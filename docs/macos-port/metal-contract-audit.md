@@ -375,7 +375,7 @@ it. EndScene does not close it. Request/output paths must stay private.
 
 ```sh
 COD2_MAC_DRAW_TRACE=/tmp/ws24-draw-request \
-COD2_MAC_SHADER_CACHE="$HOME/Library/Application Support/CoD2 Silicon/shaders" \
+COD2_MAC_SHADER_CACHE="$HOME/Library/Application Support/CoD2 Unbound/shaders" \
   build-macos/cod2_macos +set fs_basepath "$HOME/Games/CoD2" \
   +set fs_homepath "$HOME/Library/Application Support/CoD2-native-ws24" \
   +set com_maxfps 333 +set r_aaSamples 1 +devmap mp_toujane

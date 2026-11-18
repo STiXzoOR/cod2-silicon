@@ -1,6 +1,6 @@
 # Credits
 
-CoD2 Silicon is maintained by Neoptolemos Kyriakou and contributors. It rests
+CoD2 Unbound is maintained by Neoptolemos Kyriakou and contributors. It rests
 on years of reconstruction, compatibility and tooling work by the projects
 below. A reference credit does not imply endorsement or inclusion of its code.
 [NOTICE.md](NOTICE.md) explains the license boundaries.
@@ -116,7 +116,7 @@ Reserved Font Name. All other launcher text uses the system font.
 | [Steam / SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD) | Valve | Proprietary Valve terms | Tools: owned game/depot provenance and Wine Steam-client experiments; SteamCMD documented as an alternative, not claimed run by WS5. |
 | [Ruby / Psych](https://github.com/ruby/psych) | Yukihiro Matsumoto and Ruby contributors; Aaron Patterson, SHIBATA Hiroshi and Charles Oliver Nutter / Psych | Ruby OR BSD-2-Clause; Psych MIT | Tool: installed Ruby/Psych parsed CI and issue-template YAML when PyYAML and actionlint were unavailable. |
 | [macOS signing and system utilities](https://developer.apple.com/documentation/security) | Apple and component contributors | macOS distribution/component terms | Tools: codesign, plutil, xattr, taskpolicy, shell and checksum utilities for app validation and low-priority development commands. |
-| [Icon Composer / actool / ictool](https://developer.apple.com/icon-composer/) | Apple | Apple developer-tool terms / proprietary | Tools: compile the original layered `CoD2 Silicon.icon` into `Assets.car` and the ICNS fallback, and render all six system appearances for review. |
+| [Icon Composer / actool / ictool](https://developer.apple.com/icon-composer/) | Apple | Apple developer-tool terms / proprietary | Tools: compile the original layered `CoD2 Unbound.icon` into `Assets.car` and the ICNS fallback, and render all six system appearances for review. |
 
 ## Windows baseline tools (external only)
 
@@ -128,7 +128,7 @@ Reserved Font Name. All other launcher text uses the system font.
 | [Gcenx macOS Wine builds](https://github.com/Gcenx/macOS_Wine_builds) | Gcenx; Wine contributors | Build repo: no license declared; Wine LGPL-2.1-or-later | Tool: alternative Wine 11.18 backend trials, not successful high-FPS acceptance. |
 | [DXVK / D9VK macOS / Kegworks builds](https://github.com/Gcenx/DXVK-macOS) | Philip Rebohle (doitsujin), Joshua Ashton and contributors; Gcenx / Kegworks | Zlib for DXVK | Tools: external modern/legacy D3D9 translation trials; Sikarugir D9VK supplied matched WS15 Windows views. |
 | [MoltenVK](https://github.com/KhronosGroup/MoltenVK) | Khronos Group / The Brenwill Workshop and contributors | Apache-2.0 | Library/tool in the external Wine/D9VK Vulkan baseline; failure traces were not labeled valid performance results. |
-| [Rosetta 2](https://support.apple.com/en-us/102527) | Apple | Proprietary Apple terms | Tool: external x86 Windows/Wine baseline only; native CoD2 Silicon does not require translation. |
+| [Rosetta 2](https://support.apple.com/en-us/102527) | Apple | Proprietary Apple terms | Tool: external x86 Windows/Wine baseline only; native CoD2 Unbound does not require translation. |
 | [DXMT](https://github.com/3Shain/dxmt) | Feifan He / CodeWeavers and contributors | LGPL-2.1-or-later | Downloaded Highball runtime component; its selection routed this D3D9 game through D9VK. No separate DXMT result is claimed. |
 | [D3DMetal / Game Porting Toolkit](https://developer.apple.com/games/game-porting-toolkit/) | Apple | Proprietary Apple terms | Bundled in the external runtime but not enabled; its license was not accepted in WS8. No use or benchmark result is claimed. |
 

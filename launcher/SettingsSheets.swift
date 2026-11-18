@@ -209,7 +209,7 @@ struct AcknowledgementsSheet: View {
             }
         } else {
             SheetScaffold(icon: .symbol("person.2"), title: "Acknowledgements",
-                          message: "CoD2 Silicon stands on other people’s work. Select one to read its licence.", width: 600,
+                          message: "CoD2 Unbound stands on other people’s work. Select one to read its licence.", width: 600,
                           actions: [SheetAction(title: "Copy All", role: .standard) {
                                         NSPasteboard.general.clearContents(); NSPasteboard.general.setString(Acknowledgements.plainText, forType: .string)
                                     },

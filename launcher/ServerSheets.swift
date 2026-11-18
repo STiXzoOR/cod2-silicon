@@ -188,7 +188,7 @@ struct SwitchVersionSheet: View {
         let name = server.map { QuakeColors.plain($0.name) } ?? request.link.address
         let loadout = model.usesLoadouts ? model.studio.activeProfile?.displayName : nil
         SheetScaffold(icon: .symbol("cpu"), title: "“\(name)” runs \(server.map(ServerVersion.label) ?? target.versionName)",
-                      message: "You normally play \(normal.versionName). CoD2 Silicon will start \(target.versionName) for this match and go back to \(normal.versionName) afterwards."
+                      message: "You normally play \(normal.versionName). CoD2 Unbound will start \(target.versionName) for this match and go back to \(normal.versionName) afterwards."
                         + (loadout.map { " Your \($0) loadout works on both." } ?? ""),
                       width: 480,
                       actions: [.cancel { model.dismissSheet() },

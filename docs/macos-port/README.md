@@ -1,6 +1,6 @@
 # macOS port development log
 
-CoD2 Silicon grew from an AI-orchestrated opencod2 port organized into 22
+CoD2 Unbound grew from an AI-orchestrated opencod2 port organized into 22
 workstreams. [PLAN.md](PLAN.md) is the shared development brief; `reports/WS*.md`
 record decisions, commands, observations and limits. These are historical
 records, not current player instructions. Later follow-ups and workstreams
@@ -62,7 +62,8 @@ to the new ones.
 
 ## Deeper references
 
-- [Release 0.3.4 verification](release-0.3.4-verification.md) — what was tested for the current release and what was not.
+- [Release 0.3.6 verification](release-0.3.6-verification.md) — what was tested for the current release and what was not.
+- [Release 0.3.5 verification](release-0.3.5-verification.md) — the release before it.
 - [Release 0.3.3 verification](release-0.3.3-verification.md) — the release before it.
 - [Release 0.3.2 verification](release-0.3.2-verification.md) — the release before it.
 - [Release 0.3.1 verification](release-0.3.1-verification.md) — the release before it.

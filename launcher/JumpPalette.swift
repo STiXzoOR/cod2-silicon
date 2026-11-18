@@ -22,12 +22,12 @@ struct JumpItem: Identifiable {
     /// Settings rows by their visible names (SettingsWin board), each with the pane it opens.
     /// Keep these names aligned with the actual panes; conditional rows are filtered below.
     static let settingsRows: [(title: String, pane: SettingsPane)] = [
-        ("Game version", .general), ("Hide CoD2 Silicon while the game is running", .general), ("Appearance", .general),
+        ("Game version", .general), ("Hide CoD2 Unbound while the game is running", .general), ("Appearance", .general),
         ("Refresh the server list when Servers opens", .general),
         ("Display", .display), ("Mode", .display), ("Resolution", .display), ("Vertical sync", .display), ("Texture sharpness at a distance", .display),
         ("Game data", .gameData), ("CD key", .gameData), ("Shaders", .gameData), ("Loadouts, demos and screenshots", .gameData),
         ("Game versions installed", .gameData), ("CoD2x menus and icons", .gameData), ("Set up again", .gameData),
-        ("Send crash reports to CoD2 Silicon", .privacy), ("Send CoD2x crash reports to the CoD2x project", .privacy), ("Match summaries", .privacy),
+        ("Send crash reports to CoD2 Unbound", .privacy), ("Send CoD2x crash reports to the CoD2x project", .privacy), ("Match summaries", .privacy),
         ("Check for updates automatically", .updates),
         ("Extra launch options", .advanced), ("Logs", .advanced), ("Warnings you dismissed", .advanced), ("Launcher settings", .advanced),
         ("Acknowledgements", .about), ("Release notes", .about),

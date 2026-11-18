@@ -41,7 +41,7 @@ struct GeneralPane: View {
                     FormRow("Game version", detail: model.originalAvailable
                             ? "Used when you open the game’s own menu. Joining a server always uses the version that server runs."
                             : "This copy of the app includes CoD2x only. The full release also includes Original 1.3.") { versionControl }
-                    FormRow("Hide CoD2 Silicon while the game is running", detail: "It comes back when you quit the game.", isOn: $model.settings.hideWhilePlaying)
+                    FormRow("Hide CoD2 Unbound while the game is running", detail: "It comes back when you quit the game.", isOn: $model.settings.hideWhilePlaying)
                 }
             }
             FormSection("Launcher") {
@@ -320,7 +320,7 @@ struct GameDataPane: View {
             FormSection("Your files") {
                 FormGroup {
                     FormRow("Loadouts, demos and screenshots",
-                            detail: (model.home.path as NSString).abbreviatingWithTildeInPath + (model.gameData.myFilesBytes.map { " · " + SettingsText.bytes($0) } ?? ""),
+                            detail: PathDisplay.short(model.home.path) + (model.gameData.myFilesBytes.map { " · " + SettingsText.bytes($0) } ?? ""),
                             symbol: "doc") {
                         Button("Show in Finder", action: model.showMyFilesInFinder).glassAction()
                     }
@@ -414,16 +414,16 @@ struct PrivacyPane: View {
     @Environment(\.palette) private var palette
     var body: some View {
         SettingsPaneScroll {
-            Banner(.tip, symbol: "lock", message: "CoD2 Silicon has no account and sends no reports unless you turn them on. Everything it contacts is listed below.")
+            Banner(.tip, symbol: "lock", message: "CoD2 Unbound has no account and sends no reports unless you turn them on. Everything it contacts is listed below.")
             FormSection("Sharing") {
                 FormGroup {
                     // Only a build with a report receiver offers it; without one nothing is ever sent.
                     if model.crashReportService != nil {
-                        FormRow("Send crash reports to CoD2 Silicon",
+                        FormRow("Send crash reports to CoD2 Unbound",
                                 detail: "If the game crashes or freezes: what failed, your macOS version and Mac model, and the game’s report. Never your CD key or your Mac’s user name.") {
                             Button("See What’s Sent…") { model.privacyDetailsShown = true }.quietAction()
                                 .popover(isPresented: $model.privacyDetailsShown, arrowEdge: .bottom) { CrashReportContents(model: model) }
-                            SwitchToggle("Send crash reports to CoD2 Silicon", isOn: $model.settings.sendCrashReports)
+                            SwitchToggle("Send crash reports to CoD2 Unbound", isOn: $model.settings.sendCrashReports)
                         }
                     }
                     FormRow("Send CoD2x crash reports to the CoD2x project",
@@ -447,7 +447,7 @@ struct PrivacyPane: View {
                     SettingsFeedbackLine(model: model, pane: .privacy).padding(.horizontal, -6)
                 }
             }
-            FormSection("What CoD2 Silicon contacts") {
+            FormSection("What CoD2 Unbound contacts") {
                 FormGroup {
                     ForEach(PrivacyContacts.lines, id: \.who) { line in ContactRow(who: line.who, when: line.when) }
                 }
@@ -462,7 +462,7 @@ struct PrivacyPane: View {
     }
 }
 
-/// One line of “What CoD2 Silicon contacts”: who, and when.
+/// One line of “What CoD2 Unbound contacts”: who, and when.
 private struct ContactRow: View {
     var who: String
     var when: String
@@ -563,11 +563,11 @@ struct UpdateCard: View {
     private var checked: String { model.lastUpdateCheck.map { "Last checked " + SettingsText.when($0) + "." } ?? "Not checked yet." }
     private var title: String {
         switch model.updateState {
-        case .notChecked: "CoD2 Silicon \(model.version)"
+        case .notChecked: "CoD2 Unbound \(model.version)"
         case .checking: "Checking for updates…"
-        case .upToDate: "CoD2 Silicon \(model.version) is up to date"
-        case .ready(let version, let installable): installable ? "CoD2 Silicon \(version) is ready to install" : "CoD2 Silicon \(version.isEmpty ? "update" : version) is available"
-        case .installing: "Installing CoD2 Silicon \(model.updateOffer?.version ?? "")"
+        case .upToDate: "CoD2 Unbound \(model.version) is up to date"
+        case .ready(let version, let installable): installable ? "CoD2 Unbound \(version) is ready to install" : "CoD2 Unbound \(version.isEmpty ? "update" : version) is available"
+        case .installing: "Installing CoD2 Unbound \(model.updateOffer?.version ?? "")"
         case .failed: model.updateFailedStage == .install ? "Couldn’t install the update" : "Couldn’t check for updates"
         }
     }
@@ -610,7 +610,7 @@ struct UpdateStatusView: View {
                 if model.checkingUpdates || model.installingUpdate { ProgressView().controlSize(.small).accessibilityLabel(model.updateMessage) }
                 else { Image(systemName: model.updateError ? "exclamationmark.triangle" : model.releaseURL != nil ? "arrow.down.circle" : model.updateWasChecked ? "checkmark.circle" : "arrow.clockwise").foregroundStyle(model.updateError ? palette.negative : palette.secondary).accessibilityHidden(true) }
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("CoD2 Silicon \(model.version)").font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.heading)
+                    Text("CoD2 Unbound \(model.version)").font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.heading)
                     Text(model.updateMessage).font(.system(size: 13)).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -625,7 +625,7 @@ struct UpdateStatusView: View {
     @ViewBuilder private var actions: some View {
         if model.updateOffer != nil {
             Button("Install Update", action: model.installUpdate).glassAction().disabled(model.installingUpdate || model.checkingUpdates)
-                .help("Download this version, check it and replace the app. CoD2 Silicon restarts.")
+                .help("Download this version, check it and replace the app. CoD2 Unbound restarts.")
         } else {
             Button(model.checkingUpdates ? "Checking…" : "Check for Updates…", action: model.checkUpdates).glassAction().disabled(model.checkingUpdates)
         }
@@ -735,8 +735,8 @@ struct AboutPane: View {
             HStack(alignment: .center, spacing: 22) {
                 BrandMark().frame(width: 112, height: 112).shadow(color: .black.opacity(palette.dark ? 0.45 : 0.18), radius: 16, y: 8).accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("COD2 SILICON").font(.stencil(50)).tracking(1).lineLimit(1).minimumScaleFactor(0.6).foregroundStyle(palette.heading)
-                        .accessibilityLabel("CoD2 Silicon").accessibilityAddTraits(.isHeader)
+                    Text("COD2 UNBOUND").font(.stencil(50)).tracking(1).lineLimit(1).minimumScaleFactor(0.6).foregroundStyle(palette.heading)
+                        .accessibilityLabel("CoD2 Unbound").accessibilityAddTraits(.isHeader)
                     HStack(spacing: 8) {
                         HStack(spacing: 6) {
                             Text("Version \(model.version)").font(.system(size: 14)).foregroundStyle(palette.secondary)
@@ -770,7 +770,7 @@ struct AboutPane: View {
                     ForEach(AboutCredits.rows, id: \.name) { row in CreditRow(name: row.name, what: row.what, licence: row.licence) }
                 }
             }
-            Text("Call of Duty is a registered trademark of Activision Publishing, Inc. CoD2 Silicon is a community project and is not affiliated with or endorsed by Activision. No game content is included.")
+            Text("Call of Duty is a registered trademark of Activision Publishing, Inc. CoD2 Unbound is a community project and is not affiliated with or endorsed by Activision. No game content is included.")
                 .font(.system(size: 12)).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true).padding(.horizontal, 6)
         }
     }

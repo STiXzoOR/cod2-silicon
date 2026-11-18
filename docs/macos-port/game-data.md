@@ -1,6 +1,6 @@
 # Getting your Call of Duty 2 data
 
-CoD2 Silicon needs data from a copy of Call of Duty 2 that you legally own,
+CoD2 Unbound needs data from a copy of Call of Duty 2 that you legally own,
 plus your own CD key. Nothing in this repository supplies the game. Steam's
 [game is app 2630](https://store.steampowered.com/app/2630/Call_of_Duty_2/).
 Keep downloads, Steam credentials and manifests outside the source checkout.
@@ -26,6 +26,48 @@ parent data folder or copy the complete `main/` directory to a separate data
 root. Retain the unmodified original install.
 
 ## Download your licensed Steam content
+
+### In setup
+
+If you own the game on Steam, setup's Game data step has **Download from
+Steam…**. Choose a language and a place for the game (about 3.7 GB; the
+suggestion is `~/Games/CoD2`), then scan the QR code with the Steam app on
+your phone: tap the shield at the bottom, then **Scan a QR Code**. Your phone
+names the sign-in "DepotDownloader", after the tool that does the download.
+No Steam name or password is typed on the Mac.
+
+What setup does for you:
+
+- It fetches [DepotDownloader](https://github.com/SteamRE/DepotDownloader)
+  3.4.0 for Apple silicon (32 MB) from the tool's own release page and checks
+  it against a known SHA-256 checksum. A file that does not match is deleted
+  and never run. The tool is free and open source (GPL-2.0) and is not made
+  by Valve or by this project; it is never part of the app.
+- It runs the tool with a home folder of its own inside the launcher's
+  support folder, so whatever the tool stores about the sign-in lands there.
+- It asks for the Windows edition of app 2630, naming each depot: 2631, 2632,
+  2633 and the one for your language (English 2634, German 2636, French 2637,
+  Spanish 2638, Italian 2639).
+- When the download ends, stops or is cancelled, and when the launcher
+  quits, it deletes that home folder, which signs the tool out. When the game
+  is complete, or you leave the Steam screens, it also deletes the tool; a
+  finished download has the tool's notes (`.DepotDownloader`) removed from
+  the game folder.
+- What the tool printed in its last try is kept in the launcher's `logs`
+  folder as `steam-download.log`, without the sign-in code. It stays on your
+  Mac; crash reports never include it.
+
+If the download stops, the files stay. **Resume** shows a new code, because
+the sign-in is not kept between tries, and the tool then checks what is on
+disk and fetches only what is missing. A folder with an unfinished download
+is not accepted as game data until the download is finished. Closing the
+launcher mid-download stops the tool and signs it out; the next time, the
+Game data step shows **Finish the Download…** for the same folder and
+language.
+
+Your CD key is in Steam: right-click the game, then **Manage › CD keys**.
+
+### By hand
 
 [DepotDownloader](https://github.com/SteamRE/DepotDownloader) has a native
 macOS arm64 release. Version 3.4.0 was checked during development. Download
@@ -61,7 +103,7 @@ not prove that the executable runs on arm64 or supports old 32-bit programs.
 ## Original shaders
 
 The Windows game compiles its shaders from HLSL sources in `main/iw_07.iwd`
-(`materials/shaders/*.hlsl`) each time it starts. CoD2 Silicon does the same
+(`materials/shaders/*.hlsl`) each time it starts. CoD2 Unbound does the same
 work once, at setup, with the bundled `cod2-shadergen`:
 
 1. It reads the 242 HLSL files from your game's `.iwd` archives.
@@ -113,7 +155,7 @@ full-STABS 1.3 reference. See [typed-data generation](../../tools/datagen/README
 The app finds your game folder or asks for it, and asks for a CD key if none
 is stored. The key lives in `~/.cod2/preferences`; configs, logs, demos,
 screenshots and the shader cache live in
-`~/Library/Application Support/CoD2 Silicon`. The key prompt checks the key's
+`~/Library/Application Support/CoD2 Unbound`. The key prompt checks the key's
 checksum before saving it with owner-only permissions. Data from an earlier
 `CoD2x Native` install is migrated once.
 
@@ -124,7 +166,7 @@ data read-only and use a separate writable home for development/parity runs:
 ```sh
 ./build-macos-codx/cod2_macos \
   +set fs_basepath "$HOME/Games/CoD2" \
-  +set fs_homepath "$HOME/Library/Application Support/CoD2 Silicon"
+  +set fs_homepath "$HOME/Library/Application Support/CoD2 Unbound"
 ```
 
 Never post your CD key, Steam login, credentials, HWID, key digest, demos or

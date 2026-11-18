@@ -699,7 +699,7 @@ final class Watchdog: @unchecked Sendable {
     /// contrast numbers are kept. The text boxes are where Home sets its eyebrow, title, meta and hint.
     @MainActor static func contrastReport(data: String, output: URL) -> Bool {
         let maps = MapCatalog.stockKeys.map { "mp_" + $0 }
-        let store = MapArtworkStore(home: URL(fileURLWithPath: "/Preview/CoD2 Silicon"))
+        let store = MapArtworkStore(home: URL(fileURLWithPath: "/Preview/CoD2 Unbound"))
         store.loadPrivatePreviewSynchronously(dataPath: data, maps: maps)
         let leading: CGFloat = 232
         // (name, window rect, ink index in HeroInk)

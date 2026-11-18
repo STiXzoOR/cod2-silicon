@@ -100,7 +100,7 @@ private struct LinkStep: View {
     var body: some View {
         let empty = text.trimmingCharacters(in: .whitespaces).isEmpty
         SheetScaffold(icon: .symbol("link"), title: "Add a config from a link",
-                      message: "CoD2 Silicon reads the link as plain text and shows you every line before anything changes.",
+                      message: "CoD2 Unbound reads the link as plain text and shows you every line before anything changes.",
                       actions: [.cancel { discover.closeImport() }, .primary("Review", enabled: !empty, submit)]) {
             VStack(alignment: .leading, spacing: 12) {
                 LauncherTextField("Config link", text: $text, prompt: "https://", shape: .capsule, invalid: problem != nil, autofocus: true)
@@ -187,7 +187,7 @@ private struct WindowsStep: View {
     var body: some View {
         let found = !(finder.discovery?.profiles.isEmpty ?? true)
         SheetScaffold(icon: .symbol("pc"), title: "Bring in your Windows setup",
-                      message: "CoD2 Silicon looks for Call of Duty 2 player profiles in the usual install folders on drives connected to this Mac. Each profile you import becomes a new loadout, and your Windows files are never changed.",
+                      message: "CoD2 Unbound looks for Call of Duty 2 player profiles in the usual install folders on drives connected to this Mac. Each profile you import becomes a new loadout, and your Windows files are never changed.",
                       width: 560,
                       actions: [SheetAction(title: "Choose Folder…", role: .leading) { finder.chooseFolder() },
                                 .cancel { discover.closeImport() }, .primary("Review", enabled: choice != nil) { review() }]) {

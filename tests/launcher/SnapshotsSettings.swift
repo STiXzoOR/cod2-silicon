@@ -27,16 +27,16 @@ extension Snapshots {
         "settings-legacy-custom": ["Custom frame cap, 0 to 1000 frames per second", "Game volume"],
         "settings-save-error": ["Problem: Your changes couldn’t be saved", "Try Again"],
         "settings": ["General", "Display", "Game Data", "Privacy", "Updates", "Advanced", "About", "Game version",
-                     "Hide CoD2 Silicon while the game is running", "Appearance", "Refresh the server list when Servers opens", "Open Configs"],
+                     "Hide CoD2 Unbound while the game is running", "Appearance", "Refresh the server list when Servers opens", "Open Configs"],
         "settings-legacy-display-adjusted": ["Resolution changed from 6016 × 3384 to 5120 × 2880", "Larger sizes are sharper and slower"],
         "settings-display": ["Preview: the game fills the display", "Mode", "Resolution, vertical sync and picture quality belong to each loadout", "Open Configs", "Restore Defaults"],
         "settings-game-data": ["Show in Finder", "Change…", "Replace…", "Rebuild", "Set Up Again…", "Game versions installed"],
-        "settings-privacy": ["Send crash reports to CoD2 Silicon", "See What’s Sent…", "Send CoD2x crash reports to the CoD2x project",
+        "settings-privacy": ["Send crash reports to CoD2 Unbound", "See What’s Sent…", "Send CoD2x crash reports to the CoD2x project",
                              "Match summaries", "Delete Summaries…", "Master servers"],
-        "settings-updates": ["CoD2 Silicon \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "") is up to date", "Check Now", "Check for updates automatically", "Release notes for every version"],
+        "settings-updates": ["CoD2 Unbound \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "") is up to date", "Check Now", "Check for updates automatically", "Release notes for every version"],
         "settings-advanced": ["Extra launch options, one per line", "Show in Finder", "Copy Last Game Log", "Reset Warnings", "Reset Settings…"],
         "about-footer": ["Call of Duty is a registered trademark"],
-        "about": ["CoD2 Silicon", "Copy Version Info", "Release Notes", "Website", "Report a Problem…", "Acknowledgements", "Check for Updates…"],
+        "about": ["CoD2 Unbound", "Copy Version Info", "Release Notes", "Website", "Report a Problem…", "Acknowledgements", "Check for Updates…"],
     ]
 }
 

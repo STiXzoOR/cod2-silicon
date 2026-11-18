@@ -17,7 +17,7 @@ taskpolicy -b nice -n 19 clang++ -std=c++17 -Wall -Wextra -Werror \
     src/Mac/Metal/shader_setup.mm src/Mac/Metal/shader_archive.mm \
     src/Mac/Metal/shader_fixed.cpp src/Mac/Metal/arb_to_msl.cpp \
     -framework Foundation -framework Metal -o "$build/provider-test"
-cache=${1:-${COD2_MAC_SHADER_CACHE:-"$HOME/Library/Application Support/CoD2 Silicon/shaders"}}
+cache=${1:-${COD2_MAC_SHADER_CACHE:-"$HOME/Library/Application Support/CoD2 Unbound/shaders"}}
 destination=${2:-"$HOME/Library/Application Support/CoD2-native-ws32/provider"}
 set +e
 "$build/provider-test" "$cache" "$destination"

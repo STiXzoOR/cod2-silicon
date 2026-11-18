@@ -47,8 +47,8 @@ import Network
         require(!merged.contains("scr_friendlyfire") && !merged.contains("sv_pure"), "public-only settings stay out of a zPAM config")
 
         // MARK: Launch arguments
-        let arguments = try HostingConfig.arguments(server, dataPath: "/Games/Call of Duty 2", home: "/Users/sample/Library/Application Support/CoD2 Silicon/hosting/servers/one")
-        require(arguments == ["+set", "fs_basepath", "\"/Games/Call of Duty 2\"", "+set", "fs_homepath", "\"/Users/sample/Library/Application Support/CoD2 Silicon/hosting/servers/one\"",
+        let arguments = try HostingConfig.arguments(server, dataPath: "/Games/Call of Duty 2", home: "/Users/sample/Library/Application Support/CoD2 Unbound/hosting/servers/one")
+        require(arguments == ["+set", "fs_basepath", "\"/Games/Call of Duty 2\"", "+set", "fs_homepath", "\"/Users/sample/Library/Application Support/CoD2 Unbound/hosting/servers/one\"",
                               "+set", "net_ip", "0.0.0.0", "+set", "net_port", "28960", "+set", "dedicated", "1", "+exec", "server.cfg"], "arguments: \(arguments)")
         // A CoD2x server is the released CoD2x as it is: no version setting on the command line or in the export.
         var original = server; original.engine = .original

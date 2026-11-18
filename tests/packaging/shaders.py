@@ -13,7 +13,7 @@ from extract_shaders import write_cache
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("binaries", nargs="+", type=pathlib.Path)
 args = parser.parse_args()
-with tempfile.TemporaryDirectory(prefix="cod2-silicon-shaders-") as directory:
+with tempfile.TemporaryDirectory(prefix="cod2-unbound-shaders-") as directory:
     scratch = pathlib.Path(directory)
     native = scratch / "extract"
     subprocess.run(["taskpolicy", "-b", "nice", "-n", "19", "clang", "-fobjc-arc",

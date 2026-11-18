@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a reproducible CoD2 Silicon problem.
+description: Report a reproducible CoD2 Unbound problem.
 title: "[Bug]: "
 body:
   - type: markdown
@@ -11,7 +11,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: CoD2 Silicon version or Git commit
+      label: CoD2 Unbound version or Git commit
     validations:
       required: true
   - type: input
@@ -62,5 +62,5 @@ body:
     id: log
     attributes:
       label: Redacted console.log excerpt
-      description: From your CoD2 Silicon support folder; review every line and remove keys, identifiers and credentials before pasting.
+      description: From your CoD2 Unbound support folder; review every line and remove keys, identifiers and credentials before pasting.
       render: text

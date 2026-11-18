@@ -1,9 +1,86 @@
 # Changelog
 
-All notable changes to CoD2 Silicon are documented here, following
-[Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+All notable changes to CoD2 Unbound are documented here, following
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Until 0.3.6 the app
+was called CoD2 Silicon, and the entries from before then still use that name.
 
 ## [Unreleased]
+
+## [0.3.6] - 2026-11-18
+
+### Changed
+
+- **CoD2 Silicon is now CoD2 Unbound.** The project is heading for Windows,
+  Linux and the browser, and "Silicon" only ever meant the Mac. The app has
+  its new name everywhere, a new icon (a gold star with a 2 cut out of it, on
+  an olive plate) and the same mark and lettering inside the launcher.
+  Nothing in the game changed.
+- **Your settings come along.** The first time CoD2 Unbound opens, the folder
+  the app keeps its files in, `~/Library/Application Support/CoD2 Silicon`,
+  is renamed to `CoD2 Unbound` in one step: settings, loadouts, configs,
+  match summaries, hosted servers and the shader files built from your game.
+  Your game data and your CD key are not touched.
+- **The download is a disk image.** `CoD2-Unbound-0.3.6-macos-arm64.dmg`:
+  open it and drag the app to Applications. It is signed and notarized like
+  the app. The ZIP is still attached to every release, because the app's own
+  Install Update downloads that.
+- The dedicated server's helper script is `scripts/server/cod2-unbound-server`,
+  and its launchd jobs are `com.cod2unbound.server` and
+  `com.cod2unbound.daemon`. A service installed under the old names keeps
+  running until you remove it with the old script.
+
+### Fixed
+
+- On Home, the chips under the buttons no longer slide up over Launch and
+  Find a Server in a small window. It happened when the chips needed a
+  second row, for example with the note that the display can't show a
+  loadout's resolution. Home now scrolls a little instead.
+
+### Know before you install
+
+- **Update by hand, once.** 0.3.5 and earlier look for updates under the old
+  name. They tell you 0.3.6 exists and open its release page instead of
+  installing it. Download the disk image, drag CoD2 Unbound to Applications,
+  and delete CoD2 Silicon. Later updates install from inside the app again.
+- **macOS treats it as a new app.** It asks again for the microphone the
+  first time you use voice chat, and for notifications. Server passwords you
+  chose to remember are stored in your keychain under the old app, so each
+  is asked for once more.
+
+## [0.3.5] - 2026-11-18
+
+### Added
+
+- **Setup can download your copy from Steam.** If you own Call of Duty 2 on
+  Steam and have it installed nowhere, the Game data step has a new button,
+  **Download from Steam…**. You pick a language and a place (about 3.7 GB),
+  scan a QR code with the Steam app on your phone, and the game's files come
+  straight from Steam to your Mac. No Steam name or password is typed
+  anywhere. The download is done by
+  [DepotDownloader](https://github.com/SteamRE/DepotDownloader), a free and
+  open-source tool that is not part of this app: setup fetches version 3.4.0
+  from the tool's own release page, checks it against a known checksum
+  before running it, and removes it afterwards together with the sign-in it
+  stored, whether the download finished, stopped or was cancelled. A download
+  that stops keeps its files, and the next try checks them and fetches only
+  what is missing. If the launcher is closed before the download is done, the
+  Game data step remembers it the next time and offers **Finish the
+  Download…** with the same folder and language; you scan a new code, because
+  the sign-in is never kept. Steam only lets an account download games it
+  owns.
+- **Setup asks about crash reports.** A new step, "Send crash reports?",
+  comes before the Ready summary, with what a report holds, what it never
+  holds and where it goes. Neither answer is preselected. People who set the
+  app up before this version are asked the same question once, in a sheet,
+  the next time the launcher opens; anyone who already turned the switch on
+  in Settings → Privacy is not asked. Either answer can be changed there at
+  any time.
+
+### Changed
+
+- Setup's two skip buttons read the same, **Skip for Now**.
+- Folder paths in Setup are shown in the same colour as the other row titles,
+  and a folder in your home is always shortened to `~/…`.
 
 ## [0.3.4] - 2026-11-18
 

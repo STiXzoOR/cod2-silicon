@@ -1,20 +1,31 @@
-# CoD2 Silicon
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/lockup-horizontal.svg">
+    <img src="docs/brand/lockup-horizontal-light.svg" width="560"
+         alt="CoD2 Unbound: Call of Duty 2 multiplayer, on every platform">
+  </picture>
+</p>
 
-**Call of Duty 2 multiplayer, native on Apple silicon. CoD2x 1.4 compatible.**
+# CoD2 Unbound
 
-CoD2 Silicon ports the reconstructed [opencod2](https://github.com/opencod2/opencod2)
+**Call of Duty 2 multiplayer, native on Apple silicon Macs today. CoD2x 1.4 compatible.**
+
+CoD2 Unbound ports the reconstructed [opencod2](https://github.com/opencod2/opencod2)
 engine to native macOS arm64. It runs directly on Apple silicon, with raw mouse
 input, native audio and an OpenGL renderer. Bring a licensed copy of Call of
-Duty 2: no game content is included.
+Duty 2: no game content is included. Windows, Linux and the browser are on
+the [roadmap](docs/ROADMAP.md), which is where the name comes from; until
+0.3.6 the app was called CoD2 Silicon.
 
-**To play:** download the app from
-[Releases](https://github.com/cod2unbound/cod2-unbound/releases), move it to
-Applications, open it, and point it at your Call of Duty 2 folder. Setup does
-the rest. A Windows 1.3 install's folder works as it is.
+**To play:** download the disk image from
+[cod2unbound.com](https://cod2unbound.com/download) or
+[Releases](https://github.com/cod2unbound/cod2-unbound/releases), drag the app
+to Applications, open it, and point it at your Call of Duty 2 folder. Setup
+does the rest. A Windows 1.3 install's folder works as it is.
 
 ## Status
 
-Version `0.3.4` is playable on original 1.3 and CoD2x 1.4 servers, with a
+Version `0.3.6` is playable on original 1.3 and CoD2x 1.4 servers, with a
 native launcher, server browser and Config Studio. Movement, firing, grenades, mounted
 turrets, HTTP mod downloads and round restarts have been tested, and every
 menu is opened by an automated sweep. The picture is compared with the
@@ -33,7 +44,8 @@ rendering comparisons, fullscreen limits and measured performance.
 
 Keep the game outside this repository. The data folder must contain
 `main/iw_00.iwd` through `main/iw_15.iwd` and matching localized archives.
-Existing Windows 1.3 data works as it is. See
+Existing Windows 1.3 data works as it is. If you own the game on Steam and
+have it installed nowhere, setup can download it for you. See
 [getting your game data](docs/macos-port/game-data.md).
 
 ## Install
@@ -41,17 +53,25 @@ Existing Windows 1.3 data works as it is. See
 ### Prebuilt app
 
 1. Open [GitHub Releases](https://github.com/cod2unbound/cod2-unbound/releases).
-2. Download `CoD2-Silicon-0.3.4-macos-arm64.zip` and `SHA256SUMS` into the same
-   folder. Verify the archive, then unzip it:
+2. Download `CoD2-Unbound-0.3.6-macos-arm64.dmg`. To check it first, download
+   `SHA256SUMS` into the same folder and run:
 
    ```sh
-   shasum -a 256 -c SHA256SUMS
+   shasum -a 256 --ignore-missing -c SHA256SUMS
    ```
 
-3. Move **CoD2 Silicon.app** to `/Applications` and open it.
+3. Open the disk image and drag **CoD2 Unbound** to Applications, then open
+   it from there.
 
-The app is signed with a Developer ID and notarized by Apple, so it opens
-like any other downloaded app.
+The app and the disk image are signed with a Developer ID and notarized by
+Apple, so they open like any other download. The ZIP beside the disk image
+holds the same app; it is what the app's own Install Update downloads.
+
+**Coming from CoD2 Silicon:** 0.3.5 and earlier cannot install this update
+by themselves, because it has a new name. Install CoD2 Unbound as above,
+once, and delete CoD2 Silicon from Applications. Your settings, loadouts,
+configs and match summaries come along the first time CoD2 Unbound opens;
+your game data and CD key stay where they are.
 
 ### From source
 
@@ -61,22 +81,24 @@ git clone https://github.com/cod2unbound/cod2-unbound && cd cod2-unbound && ./sc
 
 The installer needs Swift 6 (Xcode 26 or later), the Xcode Command Line Tools, CMake and Rust and explains how to
 get them. It downloads and builds the pinned SDL release and the Metal library itself,
-compiles the client and installs `~/Applications/CoD2 Silicon.app`. No original
+compiles the client and installs `~/Applications/CoD2 Unbound.app`. No original
 game binary is needed to build. A locally built app is not quarantined, so
 Gatekeeper does not block it.
 
 ## First run and playing
 
-Open **CoD2 Silicon.app** to use Home, Servers, Library and Configs (⌘1–⌘4).
+Open **CoD2 Unbound.app** to use Home, Servers, Library and Configs (⌘1–⌘4).
 Setup walks through your game data, CD key, shaders, name and display mode,
-then shows a Ready summary. It finds a game folder or lets you choose or drop
-one. A CD key can be skipped; servers need one. A verified key is stored in
+asks whether to send crash reports, then shows a Ready summary. It finds a
+game folder, lets you choose or drop one, or downloads your copy from Steam
+with a QR code you scan in the Steam app. A CD key can be skipped; servers
+need one. A verified key is stored in
 `~/.cod2/preferences`. Never share that file or your key.
 
 The app builds original shaders from your own game files. If that fails, you
 can choose a Steam Mac copy or continue with approximate shaders. Configs,
 logs, demos, screenshots and the shader cache live in
-`~/Library/Application Support/CoD2 Silicon`.
+`~/Library/Application Support/CoD2 Unbound`.
 
 **Launch** (⌘↩) rejoins the last server, or the selected server when Servers
 is showing one. **Open Game Menu** (⇧⌘↩) opens the multiplayer menu. Servers
@@ -153,7 +175,7 @@ A `cod2x://` join link opens Connect to Address for review before Launch;
 pasted `cod2://` links work too. For example:
 
 ```sh
-open -a "/Applications/CoD2 Silicon.app" 'cod2x://connect/127.0.0.1:28960'
+open -a "/Applications/CoD2 Unbound.app" 'cod2x://connect/127.0.0.1:28960'
 ```
 
 Replace the address with your server. For a source install, use the app under
@@ -175,7 +197,7 @@ all of it before you post, and the app sends nothing itself.
   are left out, and your user name is replaced in paths. A log can still hold
   server names and player names, so read what you paste.
 - The game's logs are under `logs` in
-  `~/Library/Application Support/CoD2 Silicon` (**Settings → Advanced → Logs →
+  `~/Library/Application Support/CoD2 Unbound` (**Settings → Advanced → Logs →
   Show in Finder**); a hosted server's are in its own folder (**Show in
   Finder** on its page).
 
@@ -200,6 +222,12 @@ all of it before you post, and the app sends nothing itself.
   Servers, and asks a single server when you type its address in **Connect to
   Address**. Passwords you choose to remember stay in your keychain on this Mac
   and are sent only to that server. **Settings → Privacy** lists these contacts.
+- **Downloading the game from Steam**, only if you choose it in setup: the
+  launcher fetches the download tool (DepotDownloader) from its release page
+  on GitHub, and that tool then talks to Steam's servers to sign in with the
+  QR code you approve on your phone and to download the game. The launcher
+  never sees a Steam name or password, and the tool's stored sign-in is
+  deleted when the download ends, stops or is cancelled.
 - **Configs** fetches the player setups catalogue from GitHub when its home page
   opens, and a setup's config when you look at it.
 - **A server you host** contacts nothing while it is set to My Network. Set to
@@ -210,7 +238,8 @@ all of it before you post, and the app sends nothing itself.
 - **Report a Problem** opens a prefilled issue in your browser; the app sends
   nothing itself.
 - **Crash reports** are sent only if you turn a switch on in **Settings →
-  Privacy**. There are two, both off until you turn them on. One sends
+  Privacy**. There are two, both off until you turn them on. From 0.3.5,
+  setup asks about the second one, with neither answer chosen for you. One sends
   CoD2x's own reports to the CoD2x project, as CoD2x does on Windows. The
   other, new in 0.3.4, sends the report the game wrote when it crashed or
   froze to this project's report service (Sentry, hosted in the EU): what
@@ -228,7 +257,7 @@ all of it before you post, and the app sends nothing itself.
   so players on that release for Windows and Linux can join a server you
   host. This was tested against the server's own version rules, not yet with
   a person on the released Windows CoD2x. A CoD2x server still hosted from
-  CoD2 Silicon 0.3.0 turns 0.3.1 players away until it updates. A server on
+  CoD2 Unbound 0.3.0 turns 0.3.1 players away until it updates. A server on
   the original 1.3 takes any 1.3 player.
 - Voice chat works with the original 1.3 only; CoD2x turns it off. It records
   from your microphone only while you hold the voice chat
@@ -274,6 +303,10 @@ new performance claims for every release. Verified development results include:
 - 0.3.1 fixed two of the differences 0.3.0 listed (menu panel edges, and fog
   in the Direct3D 7 renderer) and measured a third, the near clip plane, as
   not a difference. [What was tested for 0.3.1](docs/macos-port/release-0.3.1-verification.md)
+- 0.3.6 renames the app to CoD2 Unbound and changes nothing in the game.
+  [What was tested for 0.3.6](docs/macos-port/release-0.3.6-verification.md)
+- 0.3.5 adds the Steam download and the crash reports question to setup
+  and changes nothing in the game. [What was tested for 0.3.5](docs/macos-port/release-0.3.5-verification.md)
 - 0.3.4 adds the switch that sends crash reports to this project and
   changes nothing in the game. [What was tested for 0.3.4](docs/macos-port/release-0.3.4-verification.md)
 - 0.3.3 moves the project to github.com/cod2unbound and changes nothing
@@ -350,5 +383,5 @@ play. [Full credits and provenance](CREDITS.md)
 Upstream opencod2 declares no license and retains its authors' rights;
 third-party licenses remain applicable. Read [NOTICE.md](NOTICE.md) for scope.
 
-“Call of Duty” is a trademark of Activision. CoD2 Silicon is not affiliated
+“Call of Duty” is a trademark of Activision. CoD2 Unbound is not affiliated
 with Activision, Infinity Ward, Aspyr or the CoD2x project.

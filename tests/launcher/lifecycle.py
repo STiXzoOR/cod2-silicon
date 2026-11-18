@@ -20,12 +20,12 @@ launcher_binary = os.environ.get('COD2_LAUNCHER_BINARY')
 if not launcher_binary:
     subprocess.run(['taskpolicy', '-b', 'nice', '-n', '19', str(root/'scripts/build-launcher.sh'), str(out/'launcher')], check=True)
     launcher_binary = str(out/'launcher/CoD2Launcher')
-subprocess.run(['python3',str(root/'tools/cod2x/make_macos_app.py'),str(fixture),str(app),'--replace','--bundle-id','io.github.stixzoor.cod2silicon.ws25fixture','--launcher',launcher_binary,'--stock-engine',str(out/'fixture-stock'),
+subprocess.run(['python3',str(root/'tools/cod2x/make_macos_app.py'),str(fixture),str(app),'--replace','--bundle-id','com.cod2unbound.app.ws25fixture','--launcher',launcher_binary,'--stock-engine',str(out/'fixture-stock'),
                 '--sentry-dsn',f'http://lifecyclekey@127.0.0.1:{receiver.server_address[1]}/7'],check=True)
 home = out/'home';home.mkdir(exist_ok=True)
 game = home/'Games/CoD2/main';game.mkdir(parents=True,exist_ok=True)
 for i in range(16):(game/f'iw_{i:02}.iwd').touch()
-apphome = home/'Library/Application Support/CoD2 Silicon'
+apphome = home/'Library/Application Support/CoD2 Unbound'
 apphome.mkdir(parents=True, exist_ok=True)
 (apphome/'main').mkdir(exist_ok=True)
 (apphome/'main/config_mp.cfg').write_bytes(b'seta sensitivity "2"\r\n')
@@ -36,7 +36,7 @@ kept = b'synthetic CoD2x archive'
 placed = apphome/'main/iw_CoD2x_01.iwd'
 # An inherited CoD2x report switch never reaches the game unless the player turned it on.
 env = {**os.environ,'CFFIXED_USER_HOME':str(home),'HOME':str(home),'COD2_SETUP_NONINTERACTIVE':'1','COD2_SETUP_CD_KEY':'000000000000000086D3','WS25_FIXTURE_HOME':str(apphome),
-       'COD2_SILICON_COD2X_REPORTS':'1'}
+       'COD2_UNBOUND_COD2X_REPORTS':'1'}
 exitfile = apphome/'exit-fixture'
 exitfile.unlink(missing_ok=True)
 log = out/'console.log'
@@ -155,7 +155,7 @@ with log.open('w') as stream:
         time.sleep(1)
         assert len(received) == 1, received
         path, headers, body = received[0]
-        assert path == '/api/7/envelope/' and headers['X-Sentry-Auth'].startswith('Sentry sentry_version=7, sentry_client=cod2-silicon-launcher/') \
+        assert path == '/api/7/envelope/' and headers['X-Sentry-Auth'].startswith('Sentry sentry_version=7, sentry_client=cod2-unbound-launcher/') \
             and headers['X-Sentry-Auth'].endswith(', sentry_key=lifecyclekey') and headers['Content-Type'] == 'application/x-sentry-envelope', headers
         lines = body.split(b'\n')
         event = json.loads(lines[2])

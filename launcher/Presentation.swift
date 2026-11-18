@@ -122,7 +122,7 @@ struct Dispatch: Codable, Equatable, Sendable {
     /// A place in the app that a news entry opens instead of a link (NewsFeed.places).
     var open: String? = nil
     static let bundled = [
-        Dispatch(stamp: "PREVIEW", title: "CoD2 Silicon 0.3.4", summary: "A switch in Settings › Privacy sends crash reports to the project. It is off until you turn it on.",
+        Dispatch(stamp: "PREVIEW", title: "CoD2 Unbound 0.3.6", summary: "A new name and a new icon. Your settings, loadouts and game files are where you left them.",
                  link: "https://github.com/cod2unbound/cod2-unbound/releases"),
         Dispatch(stamp: "AHEAD", title: "What’s next", summary: "The Metal renderer comes next. It isn’t in this release, and the original look stays until it matches.",
                  link: "https://github.com/cod2unbound/cod2-unbound/blob/main/docs/ROADMAP.md"),
@@ -185,8 +185,10 @@ enum NewsFeed {
 /// holds one line about this version, with no date.
 enum HomeDispatches {
     static func builtIn(version: String) -> Dispatch {
-        Dispatch(stamp: "NOW", title: "CoD2 Silicon \(version)",
-                 summary: version == "0.3.4" ? "A switch in Settings › Privacy sends crash reports to the project. It is off until you turn it on."
+        Dispatch(stamp: "NOW", title: "CoD2 Unbound \(version)",
+                 summary: version == "0.3.6" ? "A new name and a new icon. Your settings, loadouts and game files are where you left them."
+                        : version == "0.3.5" ? "Setup can download your copy of the game from Steam: scan a QR code with the Steam app, and nothing about your account is typed."
+                        : version == "0.3.4" ? "A switch in Settings › Privacy sends crash reports to the project. It is off until you turn it on."
                         : version == "0.3.3" ? "The project has a new home at github.com/cod2unbound, and the app updates from there."
                         : version == "0.3.2" ? "A console you can read on 4K, 5K and 6K screens, and a launcher that shows your loadout where it showed frame rate."
                         : version == "0.3.1" ? "Friends on Windows and Linux can join a CoD2x server you host, and a log for each server start."
@@ -236,7 +238,7 @@ enum ReleaseNotes {
             let date = release.published_at.flatMap { ISO8601DateFormatter().date(from: $0) }
             if let date { stamp = StencilDate.day(date, calendar: calendar) }
             let link = release.html_url.flatMap { $0.hasPrefix("https://github.com/") ? String($0.prefix(256)) : nil }
-            dispatches.append(Dispatch(stamp: stamp, title: title.isEmpty ? "CoD2 Silicon \(version(tag))" : title,
+            dispatches.append(Dispatch(stamp: stamp, title: title.isEmpty ? "CoD2 Unbound \(version(tag))" : title,
                                        summary: summary(release.body ?? ""), link: link, date: date, version: tag.isEmpty ? nil : version(tag)))
         }
         let newest = releases.first { $0.prerelease != true }
@@ -394,7 +396,7 @@ struct ReportDetails: Equatable, Sendable {
     var shaders: String
     var display: String
     var lines: [String] {
-        ["CoD2 Silicon \(version)" + (build.isEmpty || build == version ? "" : " (\(build))"),
+        ["CoD2 Unbound \(version)" + (build.isEmpty || build == version ? "" : " (\(build))"),
          engines.joined(separator: " · "), "macOS \(macOS) · \(model)", "Shaders: \(shaders) · Display: \(display)"]
     }
     var text: String { lines.joined(separator: "\n") }
@@ -404,7 +406,7 @@ struct ReportDetails: Equatable, Sendable {
         var parts = URLComponents(string: "https://github.com/\(repository)/issues/new")
         parts?.queryItems = [
             URLQueryItem(name: "template", value: "bug_report.yml"),
-            URLQueryItem(name: "version", value: lines[0].replacingOccurrences(of: "CoD2 Silicon ", with: "")),
+            URLQueryItem(name: "version", value: lines[0].replacingOccurrences(of: "CoD2 Unbound ", with: "")),
             URLQueryItem(name: "macos", value: macOS),
             URLQueryItem(name: "model", value: model),
             URLQueryItem(name: "steps", value: "Game versions: \(lines[1])\nShaders: \(shaders)\nDisplay: \(display)\n\n1. "),
@@ -413,7 +415,7 @@ struct ReportDetails: Equatable, Sendable {
     }
 }
 
-/// Settings › Privacy › What CoD2 Silicon contacts. Each line was checked against the code that does it
+/// Settings › Privacy › What CoD2 Unbound contacts. Each line was checked against the code that does it
 /// (Network.swift, ModelSettings.swift, Core.swift's AppUpdate and CoD2xFiles, ConfigImport, the engine's
 /// cod2x_features.c update check); README.md's “What the app sends” says the same.
 enum PrivacyContacts {

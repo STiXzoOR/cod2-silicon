@@ -158,7 +158,7 @@ struct ConfigAppliedSuggestion: Identifiable {
             optimizer = try loadOptimizer()
             self.rules = rules
             if rulesetIDs.isEmpty { selectDefaultRules() }
-        } catch { loadError = "Check-up’s rules or advice data are missing or damaged. Reinstall CoD2 Silicon to restore them." }
+        } catch { loadError = "Check-up’s rules or advice data are missing or damaged. Reinstall CoD2 Unbound to restore them." }
     }
 
     private func selectDefaultRules() {
@@ -442,7 +442,7 @@ struct ConfigAppliedSuggestion: Identifiable {
         if source.sourceURL.hasPrefix("git:") {
             // Local engine citations name an object at a commit, not a web page.
             let parts = source.sourceURL.split(separator: ":", maxSplits: 2)
-            return ("CoD2 Silicon source \(parts.count == 3 ? String(parts[2]) : source.sourceURL)", nil)
+            return ("CoD2 Unbound source \(parts.count == 3 ? String(parts[2]) : source.sourceURL)", nil)
         }
         let url = URL(string: source.sourceURL)
         return (url?.host.map { "\($0) · \(Self.sourceDate(source.sourceDate))" } ?? source.sourceURL, url)

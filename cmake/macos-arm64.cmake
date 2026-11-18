@@ -199,7 +199,7 @@ if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
     set(COD2_MACOS_APP_SHADERGEN_ARGS --shadergen "$<TARGET_FILE:cod2_shadergen>" --vkd3d "${COD2_VKD3D_PREFIX}")
     set(COD2_MACOS_APP_SHADERGEN_DEPENDS cod2_shadergen)
   endif()
-  set(COD2_MACOS_APP "${CMAKE_BINARY_DIR}/CoD2 Silicon.app" CACHE PATH "Native app output path")
+  set(COD2_MACOS_APP "${CMAKE_BINARY_DIR}/CoD2 Unbound.app" CACHE PATH "Native app output path")
   file(GLOB COD2_LAUNCHER_SOURCES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/launcher/*")
   add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/launcher/CoD2Launcher"
     COMMAND "${CMAKE_SOURCE_DIR}/scripts/build-launcher.sh" "${CMAKE_BINARY_DIR}/launcher"
@@ -214,7 +214,7 @@ if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/cod2x/make_macos_app.py"
       "$<TARGET_FILE:cod2_macos>" "${COD2_MACOS_APP}" --replace --launcher "${CMAKE_BINARY_DIR}/launcher/CoD2Launcher" --version "${COD2_RELEASE_VERSION}" ${COD2_MACOS_APP_FRAMEWORK_ARGS} ${COD2_MACOS_APP_SHADERGEN_ARGS}
     DEPENDS cod2_macos cod2_launcher ${COD2_MACOS_APP_SHADERGEN_DEPENDS}
-    COMMENT "Build and ad-hoc sign CoD2 Silicon.app"
+    COMMENT "Build and ad-hoc sign CoD2 Unbound.app"
     VERBATIM)
 endif()
 target_compile_definitions(cod2_macos_ded PRIVATE DEDICATED)

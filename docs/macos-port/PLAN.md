@@ -20,7 +20,7 @@ has to beat.
 
 ## Phase 2 — Mac-first (decided 2026-10-04)
 
-CoD2 Silicon 0.1.0 is public (`github.com/cod2unbound/cod2-unbound`). The user's
+CoD2 Unbound 0.1.0 is public (`github.com/cod2unbound/cod2-unbound`). The user's
 direction for the next phase, in their words: "Mac first 100x including proper
 metal and all the latest standards and improve launcher and design", plus
 "running dedicated servers on macOS hardware". They explicitly declined using

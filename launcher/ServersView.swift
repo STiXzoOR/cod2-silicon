@@ -115,7 +115,7 @@ struct ServersEmptyState: View {
                 model.serverScope = .all
             }
         } else if model.scopedServers.isEmpty {
-            EmptyState("No contact yet", message: "Ask the public master servers who’s online. CoD2 Silicon contacts them only when you refresh.",
+            EmptyState("No contact yet", message: "Ask the public master servers who’s online. CoD2 Unbound contacts them only when you refresh.",
                        actionTitle: "Refresh Server List", action: model.refresh)
         } else {
             let query = model.search.trimmingCharacters(in: .whitespacesAndNewlines)

@@ -743,7 +743,7 @@ extension ConfigImportPresentation {
             detail?.phase = .failed(snapshot == nil ? "The player directory isn’t available." : "This player is no longer in the directory.")
             return
         }
-        guard let catalog = catalog() else { detail?.phase = .failed("The settings catalog is missing or damaged. Reinstall CoD2 Silicon to restore it."); return }
+        guard let catalog = catalog() else { detail?.phase = .failed("The settings catalog is missing or damaged. Reinstall CoD2 Unbound to restore it."); return }
         let directory = self.directory, dialect = studio.dialect, adapter = ConfigImportCatalogAdapter(catalog: catalog)
         let active = try? studio.session?.readActive()
         let platform: ConfigImportPlatform = entry.platform == .windows ? .windows : .native
@@ -796,7 +796,7 @@ extension ConfigImportPresentation {
         let review = ConfigImportReviewModel(studio: studio, displayName: displayName, provenance: provenance)
         self.review = review
         step = .review
-        guard let catalog = catalog() else { review.fail("The settings catalog is missing or damaged. Reinstall CoD2 Silicon to restore it."); return }
+        guard let catalog = catalog() else { review.fail("The settings catalog is missing or damaged. Reinstall CoD2 Unbound to restore it."); return }
         let adapter = ConfigImportCatalogAdapter(catalog: catalog), dialect = studio.dialect
         review.start(adapter: adapter, platform: platform, origin: origin) { try await load(adapter, dialect) }
     }

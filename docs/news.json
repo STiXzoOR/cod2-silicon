@@ -2,6 +2,18 @@
   "items": [
     {
       "date": "2026-11-18",
+      "title": "CoD2 Silicon is now CoD2 Unbound",
+      "summary": "0.3.6 has the new name and a new icon. From CoD2 Silicon, download it once by hand; your settings come along.",
+      "open": "updates"
+    },
+    {
+      "date": "2026-11-18",
+      "title": "Your Steam copy, downloaded in setup",
+      "summary": "0.3.5 can download Call of Duty 2 from Steam during setup: scan a QR code with the Steam app, and nothing about your account is typed.",
+      "open": "updates"
+    },
+    {
+      "date": "2026-11-18",
       "title": "Crash reports, if you want them",
       "summary": "0.3.4 adds a switch in Settings › Privacy that sends crash reports to the project. It is off until you turn it on.",
       "open": "updates"

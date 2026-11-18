@@ -45,7 +45,7 @@ has not been published. CI does not sign, deploy or publish anything.
 
 ```sh
 # Use an output directory owned by your task, outside game data.
-sh build-audit.sh /path/to/reviewed/cod2-silicon "$TASK_SCRATCH/audit"
+sh build-audit.sh /path/to/reviewed/cod2-unbound "$TASK_SCRATCH/audit"
 python3 generate.py --root . --base-url "$PUBLICATION_BASE_URL" \
   --revision "$INDEX_REVISION" --audit-binary "$TASK_SCRATCH/audit/audit"
 python3 generate.py --root . --base-url "$PUBLICATION_BASE_URL" \

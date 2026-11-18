@@ -65,7 +65,7 @@ struct RenameLoadoutSheet: View {
         let reason = current == nil ? "This loadout no longer exists."
             : LoadoutName.problem(name, existing: others, readOnly: studio.isReadOnly) ?? (unchanged ? "Type a new name." : nil)
         SheetScaffold(icon: .symbol("pencil"), title: "Rename “\(current?.displayName ?? "loadout")”",
-                      message: "The new name shows in CoD2 Silicon. The game’s own profile menu keeps showing the folder name, \(current?.id ?? "").",
+                      message: "The new name shows in CoD2 Unbound. The game’s own profile menu keeps showing the folder name, \(current?.id ?? "").",
                       actions: [.cancel { model.dismissSheet() },
                                 .primary("Rename", enabled: reason == nil) {
                                     studio.rename(name, undo: model.launcherWindow?.undoManager); model.dismissSheet()

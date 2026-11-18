@@ -87,7 +87,7 @@ struct HostingView: View {
                 }
             }
             Spacer(minLength: 8)
-            Text("A running server keeps going when you close this window. Quitting CoD2 Silicon asks before stopping it.")
+            Text("A running server keeps going when you close this window. Quitting CoD2 Unbound asks before stopping it.")
                 .font(.system(size: 11)).foregroundStyle(palette.tertiary).lineSpacing(2).fixedSize(horizontal: false, vertical: true).padding(.horizontal, 6)
         }
         .frame(maxHeight: .infinity, alignment: .top)
@@ -514,10 +514,10 @@ private struct HostingRunning: View {
                                 monospacedTitle: false) {
                             Button("Copy") { copy(hosting.localAddress(server)) }
                         }
-                        FormRow("Over the internet", detail: "Your router has to pass UDP port \(String(server.port)) to this Mac. CoD2 Silicon can’t check that from here.") {
+                        FormRow("Over the internet", detail: "Your router has to pass UDP port \(String(server.port)) to this Mac. CoD2 Unbound can’t check that from here.") {
                             Button("How To") { NSWorkspace.shared.open(HostingCatalog.portGuide) }.help("Opens the server guide on GitHub")
                         }
-                        FormRow("Invite link", detail: "Opens CoD2 Silicon on a friend’s Mac on your network. The password is not in the link.") {
+                        FormRow("Invite link", detail: "Opens CoD2 Unbound on a friend’s Mac on your network. The password is not in the link.") {
                             Button("Copy Link") { if let link = (try? LaunchLink.direct(hosting.localAddress(server)))?.url { copy(link) } }
                         }
                         if hosting.onWiFi {

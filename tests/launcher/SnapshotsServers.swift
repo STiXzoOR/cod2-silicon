@@ -21,7 +21,7 @@ extension Snapshots {
                             "Hide servers that need a password", "Reset"],
         "servers-connect": ["Connect to an address", "Server address", "Server password", "Add to Favorites", "Recent addresses", "Launch", "Cancel"],
         "servers-connect-error": ["Use a host name or IP address"],
-        "servers-password": ["“Silicon Sessions” needs a password", "Password for Silicon Sessions", "Remember for this server, on this Mac only", "Launch"],
+        "servers-password": ["“Night Sessions” needs a password", "Password for Night Sessions", "Remember for this server, on this Mac only", "Launch"],
         "servers-version": ["“Sunday Rifles · EU” runs Original 1.3", "Don’t ask again; always use the version the server runs", "Launch with Original 1.3"],
         "servers-remove-favorite": ["Remove “Desert Fox SD” from Favorites?", "Remove", "Cancel"],
         "servers-refreshing": ["Stop refreshing", "86 of 212 answered"],

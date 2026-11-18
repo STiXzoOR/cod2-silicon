@@ -28,6 +28,8 @@ jobs:
           xcodebuild -version
           test "$(sw_vers -productVersion | cut -d. -f1)" -ge 26
           test "$(xcrun --show-sdk-version | cut -d. -f1)" -ge 26
+      - name: Install the disk image builder
+        run: pipx install dmgbuild==2.0.0
       - name: Build from the committed snapshot, audit and ad-hoc sign
         env:
           DRY_RUN_VERSION: ${{ inputs.version }}
@@ -36,14 +38,14 @@ jobs:
           ./scripts/package-release.sh --version "$version"
       - name: Verify bundle and run launcher core on macOS 26
         run: |
-          python3 tests/packaging/launcher_bundle.py "build/package/release/CoD2 Silicon.app"
+          python3 tests/packaging/launcher_bundle.py "build/package/release/CoD2 Unbound.app"
           ./scripts/build-launcher.sh "$RUNNER_TEMP/launcher-core" --test
           "$RUNNER_TEMP/launcher-core/LauncherTests" tests/launcher/fixtures
           python3 tests/packaging/first_run.py
       - name: Keep verified assets as a workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cod2-silicon-dry-run
+          name: cod2-unbound-dry-run
           path: dist/
   publish:
     if: github.event_name == 'push'
@@ -54,7 +56,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: cod2-silicon-dry-run
+          name: cod2-unbound-dry-run
           path: dist
       - name: Upload assets to a draft release
         env:
@@ -65,9 +67,9 @@ jobs:
           set -euo pipefail
           if gh release view "$GITHUB_REF_NAME" --json isDraft >/dev/null 2>&1; then
             test "$(gh release view "$GITHUB_REF_NAME" --json isDraft --jq .isDraft)" = true
-            gh release upload "$GITHUB_REF_NAME" dist/*.zip dist/SHA256SUMS --clobber
+            gh release upload "$GITHUB_REF_NAME" dist/*.dmg dist/*.zip dist/SHA256SUMS --clobber
           else
-            gh release create "$GITHUB_REF_NAME" dist/*.zip dist/SHA256SUMS --draft \
-              --title "CoD2 Silicon ${GITHUB_REF_NAME#v}" \
+            gh release create "$GITHUB_REF_NAME" dist/*.dmg dist/*.zip dist/SHA256SUMS --draft \
+              --title "CoD2 Unbound ${GITHUB_REF_NAME#v}" \
               --notes 'Apple silicon, macOS 26+. Ad-hoc signed and not notarized. See the README for game data and Gatekeeper instructions.'
           fi

@@ -1,4 +1,4 @@
-# CoD2 Silicon dedicated server
+# CoD2 Unbound dedicated server
 
 `cod2_macos_ded` is the native arm64 dedicated server. Built as shown below it
 is the stock CoD2 1.3 server; built with the CoD2x flag it is a CoD2x 1.4.6.8
@@ -9,16 +9,16 @@ limits and the checks still required before release.
 
 ## From the launcher
 
-Servers › Hosting in CoD2 Silicon runs this server for you. New Server asks for
+Servers › Hosting in CoD2 Unbound runs this server for you. New Server asks for
 a name, the game version (CoD2x or the original 1.3), who can join, the rules
 and the maps; Start Server runs it, and the page then shows who is on it, the
 address to share, and its log. Next Map and Kick go through the server's own
-admin channel on this Mac. Quitting CoD2 Silicon asks first, then stops the
+admin channel on this Mac. Quitting CoD2 Unbound asks first, then stops the
 servers it started.
 
 - The app carries both servers, `cod2_macos_ded` (CoD2x) and
   `cod2_macos_ded_stock` (original 1.3), inside its game app.
-- Each server has its own folder, `hosting/servers/<id>` in CoD2 Silicon's
+- Each server has its own folder, `hosting/servers/<id>` in CoD2 Unbound's
   Application Support folder: `main/server.cfg`, which the launcher writes on
   every start, the game's own logs, and one log per start,
   `logs/server-<time>-<id>.log`. The newest ten are kept, 4 MB each at most,
@@ -27,7 +27,7 @@ servers it started.
 - **Who can join a CoD2x server.** A CoD2x server takes players on its own
   version or a newer one, never an older one. This app's CoD2x game and
   server run as CoD2x's latest stable release, 1.4.6.8, so players on that
-  release for Windows and Linux can join, and so can CoD2 Silicon players.
+  release for Windows and Linux can join, and so can CoD2 Unbound players.
   There is nothing to set. (0.3.0 ran as CoD2x's unreleased source instead,
   which turned those players away; a 0.3.1 player cannot join a server still
   hosted from 0.3.0.) A server on the original 1.3 takes any 1.3 player. This
@@ -46,7 +46,7 @@ servers it started.
 ### Competitive rules: zPAM
 
 zPAM is the match mod competitive CoD2 servers run, by the author of CoD2x. It
-is not part of CoD2 Silicon and is not bundled. Choosing Competitive · zPAM
+is not part of CoD2 Unbound and is not bundled. Choosing Competitive · zPAM
 offers to download it from the
 [zPAM project's releases](https://github.com/eyza-cod2/zpam3/releases): zPAM 4
 for a CoD2x server, zPAM 3.36 for the original 1.3. The download is checked
@@ -68,7 +68,7 @@ them. Every packet in that moment waits, however strong the signal, and an
 ordinary once-a-second ping does not show it. The
 [OpenIW2](https://github.com/skowronmateusz/OpenIW2) project measured it on
 one Mac: pings to the router every 20 ms peaked at 96 ms with those features
-on and at 14 ms with them off. It has not been measured for CoD2 Silicon.
+on and at 14 ms with them off. It has not been measured for CoD2 Unbound.
 
 The Hosting page says when this Mac is on Wi-Fi. In order of effect:
 
@@ -90,9 +90,9 @@ changed it) to this Mac:
 1. In your router's settings, add a port forward (sometimes "virtual server")
    for UDP 28960 to this Mac's address on your network, the one the Hosting
    page shows under "On your network".
-2. When macOS asks whether CoD2 Silicon's server may accept incoming
+2. When macOS asks whether CoD2 Unbound's server may accept incoming
    connections, allow it.
-3. Give players your public address and the port. CoD2 Silicon can't see from
+3. Give players your public address and the port. CoD2 Unbound can't see from
    inside your network whether the forward works; ask a friend to try, or use
    "The Internet" so the server shows in the public list.
 
@@ -114,7 +114,7 @@ package contain no game data. Keep the data separate from writable server files:
 
 ```text
 /Users/you/Games/CoD2/main/iw_00.iwd ... iw_15.iwd   owned data, read-only
-~/Library/Application Support/CoD2 Silicon Server/
+~/Library/Application Support/CoD2 Unbound Server/
   main/server.cfg                                 private configuration
   main/games_mp.log                               game log
   logs/console.log                                launchd stdout/stderr
@@ -126,7 +126,7 @@ A foreground example, with quoted path values retained for the engine parser:
 ```sh
 build-macos/cod2_macos_ded \
   +set fs_basepath '"/Users/you/Games/CoD2"' \
-  +set fs_homepath '"/Users/you/Library/Application Support/CoD2 Silicon Server"' \
+  +set fs_homepath '"/Users/you/Library/Application Support/CoD2 Unbound Server"' \
   +set net_ip 127.0.0.1 +set net_port 28960 +set dedicated 1 \
   +exec server.cfg +map mp_toujane
 ```
@@ -144,14 +144,14 @@ session to exist. Locking the screen is supported. Logging out ends that agent's
 session. Installation writes definitions but does not start the server.
 
 ```sh
-scripts/server/cod2-silicon-server install \
+scripts/server/cod2-unbound-server install \
   --binary "$PWD/build-macos/cod2_macos_ded" \
   --data "$HOME/Games/CoD2" --bind 0.0.0.0 --port 28960
-# Edit ~/Library/Application Support/CoD2 Silicon Server/main/server.cfg
-scripts/server/cod2-silicon-server start
-scripts/server/cod2-silicon-server status
-scripts/server/cod2-silicon-server logs
-scripts/server/cod2-silicon-server stop
+# Edit ~/Library/Application Support/CoD2 Unbound Server/main/server.cfg
+scripts/server/cod2-unbound-server start
+scripts/server/cod2-unbound-server status
+scripts/server/cod2-unbound-server logs
+scripts/server/cod2-unbound-server stop
 ```
 
 The helper creates private files (`umask 077`), preserves an existing config,
@@ -171,7 +171,7 @@ concurrent with copy/truncate can be lost, and logs can exceed the threshold
 between hourly runs. `rotate` performs the same check immediately.
 
 For a Mac cloud host or startup without user login, the separate
-`scripts/server/io.github.stixzoor.cod2silicon.daemon.plist` is an administrator
+`scripts/server/com.cod2unbound.daemon.plist` is an administrator
 edited template. Substitute every placeholder, create owned writable directories,
 set `UserName` to a dedicated non-root account, retain literal quotes around
 engine path values containing spaces, and install a root-owned,

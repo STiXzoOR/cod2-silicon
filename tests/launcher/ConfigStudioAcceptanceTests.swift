@@ -366,7 +366,7 @@ enum ConfigStudioAcceptanceTests {
         guarded(view, "player", "server")
         guarded(delay, "player", "server")
         guarded(catalogOwned, "player", "server")
-        guarded(launcher, "player", "CoD2 Silicon sets")
+        guarded(launcher, "player", "CoD2 Unbound sets")
         require(model.takeTheirsBlock(speed) == nil)
         model.takeTheirs(speed)
         require(model.state(speed).raw == "3.2" && session.history.first?.summary == "Took Mouse speed from [Player 1]", "ordinary settings stay writable")

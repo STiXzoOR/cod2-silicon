@@ -91,7 +91,7 @@ def lower(source):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--cache", type=Path, default=Path.home() / "Library/Application Support/CoD2 Silicon/shaders")
+    parser.add_argument("--cache", type=Path, default=Path.home() / "Library/Application Support/CoD2 Unbound/shaders")
     parser.add_argument("--evidence", type=Path, default=Path.home() / "Library/Application Support/CoD2-native-ws32/invalid")
     parser.add_argument("--translator", type=Path, default=semantic.ROOT / "build-macos/metal/arb_to_msl")
     args = parser.parse_args()

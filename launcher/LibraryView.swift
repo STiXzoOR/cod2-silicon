@@ -143,7 +143,7 @@ private struct LibraryTabContent: View {
         switch tab {
         case .matches: "How your recent matches ran: ping and connection."
         case .demos: "Recorded matches play back in the game, from any point."
-        case .screenshots: "Screenshots you take in a match, kept in your CoD2 Silicon folder."
+        case .screenshots: "Screenshots you take in a match, kept in your CoD2 Unbound folder."
         }
     }
 
@@ -182,7 +182,7 @@ private struct LibraryTabContent: View {
                        actionTitle: "Turn On in Settings…", prominent: false) { model.openSettings(.privacy) }
                 .padding(.top, 130)
         } else if case .failed = checkup.matchState {
-            EmptyState("Matches unavailable", message: "Your match summaries couldn’t be read. Check that your CoD2 Silicon folder is readable, then try again.",
+            EmptyState("Matches unavailable", message: "Your match summaries couldn’t be read. Check that your CoD2 Unbound folder is readable, then try again.",
                        actionTitle: "Try Again", prominent: false, action: model.refreshLibraryMatches)
                 .padding(.top, 130)
         } else if model.storedMatches.isEmpty {

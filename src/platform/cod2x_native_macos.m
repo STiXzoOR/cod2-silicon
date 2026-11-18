@@ -20,7 +20,7 @@ static char pendingURL[512];
     (void)reply;
     NSString *url = [event paramDescriptorForKeyword:keyDirectObject].stringValue;
     if (!Cod2xNativeURL_Queue(url.UTF8String))
-        fprintf(stderr, "CoD2 Silicon: rejected launch link; only connect and password are accepted.\n");
+        fprintf(stderr, "CoD2 Unbound: rejected launch link; only connect and password are accepted.\n");
 }
 @end
 

@@ -285,7 +285,7 @@ void MacPlatform_SelectMonitor(int monitor)
             break;
         }
     }
-    fprintf(stderr, "CoD2 Silicon display %d: render-size limit %dx%d (%s)\n", selectedDisplay,
+    fprintf(stderr, "CoD2 Unbound display %d: render-size limit %dx%d (%s)\n", selectedDisplay,
             nativeWidth, nativeHeight, foundNative ? "native pixels" : "desktop fallback; no native mode");
 #endif
 }
@@ -384,7 +384,11 @@ static int SetWindowMode(void)
             SDL_SetWindowFullscreen(sdl_gl_window, SDL_WINDOW_FULLSCREEN) != 0)
 #endif
         {
+#if defined(COD2_X64)
+            fprintf(stderr, "CoD2 Unbound exclusive fullscreen unavailable: %s; using desktop fullscreen\n", SDL_GetError());
+#else
             fprintf(stderr, "CoD2 Silicon exclusive fullscreen unavailable: %s; using desktop fullscreen\n", SDL_GetError());
+#endif
 #if defined(__APPLE__) && defined(COD2_X64)
             windowMode = MAC_BORDERLESS;
             SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
@@ -441,7 +445,7 @@ static int SetSurfaceSize(int width, int height)
     if (error == kCGLNoError)
         error = CGLEnable(context, kCGLCESurfaceBackingSize);
     if (error != kCGLNoError)
-        fprintf(stderr, "CoD2 Silicon fixed OpenGL backing unavailable: %s\n", CGLErrorString(error));
+        fprintf(stderr, "CoD2 Unbound fixed OpenGL backing unavailable: %s\n", CGLErrorString(error));
     return error == kCGLNoError ? 0 : -1;
 }
 #endif
@@ -526,7 +530,7 @@ static void CreateMultisampleBuffer(MacContext *ctx)
         glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
         glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
         if (glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) != GL_FRAMEBUFFER_COMPLETE_EXT) {
-            fprintf(stderr, "CoD2 Silicon %dx multisampling unavailable; rendering without it\n", ctx->samples);
+            fprintf(stderr, "CoD2 Unbound %dx multisampling unavailable; rendering without it\n", ctx->samples);
             DestroyMultisampleBuffer(ctx);
             ctx->samples = 0;
         }
@@ -627,7 +631,7 @@ static void CreateMetalPresentation(MacContext *ctx)
         return;
     ctx->metal = MacMetal_Create(sdl_gl_window, ctx->width, ctx->height, metalEDR);
     if (!ctx->metal) {
-        fprintf(stderr, "CoD2 Silicon Metal unavailable; retaining OpenGL presentation\n");
+        fprintf(stderr, "CoD2 Unbound Metal unavailable; retaining OpenGL presentation\n");
         return;
     }
     MetalNextRenderTarget(ctx);
@@ -635,7 +639,7 @@ static void CreateMetalPresentation(MacContext *ctx)
         MacMetal_Destroy(ctx->metal);
         ctx->metal = NULL;
         glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, ctx->color[0]);
-        fprintf(stderr, "CoD2 Silicon IOSurface FBO unavailable; retaining OpenGL presentation\n");
+        fprintf(stderr, "CoD2 Unbound IOSurface FBO unavailable; retaining OpenGL presentation\n");
         return;
     }
     /* No default-buffer rendering or swap in Metal mode. Retain the SDL GL
@@ -760,7 +764,7 @@ void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
 #endif
 #else
 #if defined(COD2_X64)
-            sdl_gl_window = SDL_CreateWindow("CoD2 Silicon", SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay), SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay),
+            sdl_gl_window = SDL_CreateWindow("CoD2 Unbound", SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay), SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay),
 #else
             sdl_gl_window = SDL_CreateWindow("CoD2 Silicon", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 #endif
@@ -775,7 +779,7 @@ void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
         if (SetWindowMode() || !MacMetalBackend_Start(sdl_gl_window, native->width, native->height, metalEDR)) {
             free(native);
             SDL_DestroyWindow(sdl_gl_window); sdl_gl_window = NULL;
-            fprintf(stderr, "CoD2 Silicon Metal 4 unavailable; select GL before scene creation\n");
+            fprintf(stderr, "CoD2 Unbound Metal 4 unavailable; select GL before scene creation\n");
             MacShim_SelectRenderer(0);
             return NULL;
         }
@@ -808,7 +812,7 @@ void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
 #endif
 #else
 #if defined(COD2_X64)
-        sdl_gl_window = SDL_CreateWindow("CoD2 Silicon", SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay), SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay),
+        sdl_gl_window = SDL_CreateWindow("CoD2 Unbound", SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay), SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay),
 #else
         sdl_gl_window = SDL_CreateWindow("CoD2 Silicon", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 #endif
@@ -863,7 +867,11 @@ void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
 #endif
     if (!strstr((const char *)glGetString(GL_EXTENSIONS), "GL_EXT_framebuffer_blit") ||
         CreateRenderBuffer(ctx, depth, stencil) != 0) {
+#if defined(COD2_X64)
+        fprintf(stderr, "CoD2 Unbound render framebuffer unavailable\n");
+#else
         fprintf(stderr, "CoD2 Silicon render framebuffer unavailable\n");
+#endif
         MacDisplay_ReleaseContext((void **)&ctx);
         return NULL;
     }

@@ -69,7 +69,7 @@ extension ConfigHistorySource {
     var title: String {
         switch self {
         case .you: "You"; case .import: "Import"; case .checkup: "Check-up"; case .gameSession: "Game session"
-        case .restore: "Restore"; case .migration: "CoD2 Silicon"
+        case .restore: "Restore"; case .migration: "CoD2 Unbound"
         }
     }
 }
@@ -90,7 +90,7 @@ struct ConfigSettingSpec: Identifiable {
     func title(forChoice choice: String) -> String { choiceTitles[choice.lowercased()] ?? choice }
     /// The registered default as config text; nil when the default is dynamic.
     let defaultText: String?
-    /// CoD2 Silicon sets this at every launch from Settings, so a loadout can't own it.
+    /// CoD2 Unbound sets this at every launch from Settings, so a loadout can't own it.
     let launcherOwned: Bool
     /// The catalog's names for particular values, in value order.
     let valueLabels: [ConfigValueLabel]
@@ -624,7 +624,7 @@ struct ConfigStudioFailure: Identifiable {
         guard catalog == nil else { return }
         switch result {
         case .success(let value): install(value)
-        case .failure: catalogError = "The settings catalog is missing or damaged. Reinstall CoD2 Silicon to restore it."
+        case .failure: catalogError = "The settings catalog is missing or damaged. Reinstall CoD2 Unbound to restore it."
         }
     }
     private func install(_ catalog: ConfigCatalog) {
@@ -890,7 +890,7 @@ struct ConfigStudioFailure: Identifiable {
     /// the rules chosen in Check-up keep the person's own value.
     func takeTheirsBlock(_ spec: ConfigSettingSpec) -> String? {
         if isReadOnly { return "Configs are read-only while Call of Duty 2 is running." }
-        if spec.launcherOwned { return "CoD2 Silicon sets this from Settings each time the game starts." }
+        if spec.launcherOwned { return "CoD2 Unbound sets this from Settings each time the game starts." }
         if state(spec).locked { return "Locked, so it stays yours." }
         if spec.setting.variant(for: mode)?.serverControlled == true { return "The server sets this when you join, so it stays yours." }
         if let rules = checkup.rules, rules.isServerOwned(spec.name, rulesetIDs: checkup.rulesetIDs) {

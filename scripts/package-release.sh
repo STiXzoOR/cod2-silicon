@@ -28,7 +28,7 @@ if [[ -n $profile && $identity != "Developer ID Application:"* ]]; then
 fi
 mkdir -p "$build" "$root/dist"
 build=$(cd "$build" && pwd -P)
-app="$build/CoD2 Silicon.app"
+app="$build/CoD2 Unbound.app"
 COD2_SIGN_IDENTITY=$identity build_app "$root" "$build" "$app" "$version" "$mac_binary" "$stabs_binary"
 signing="ad-hoc signed, not notarized"
 [[ $identity == "-" ]] || signing="signed by $identity, not notarized"
@@ -42,7 +42,20 @@ if [[ -n $profile ]]; then
     /usr/sbin/spctl --assess --type execute --verbose=2 "$app"
     signing="signed by $identity, notarized and stapled"
 fi
-archive="CoD2-Silicon-$version-macos-arm64.zip"
+# Two downloads of the same app. The disk image is the one people are sent to; the ZIP is what the
+# app's own Install Update fetches, by this exact name. SHA256SUMS lists both.
+archive="CoD2-Unbound-$version-macos-arm64.zip"
+image="CoD2-Unbound-$version-macos-arm64.dmg"
 /usr/bin/ditto -c -k --keepParent "$app" "$root/dist/$archive"
-(cd "$root/dist" && /usr/bin/shasum -a 256 "$archive" > SHA256SUMS)
-printf 'Created dist/%s and dist/SHA256SUMS (%s).\n' "$archive" "$signing"
+"$root/scripts/make-dmg.sh" "$app" "$root/dist/$image"
+if [[ $identity != "-" ]]; then
+    /usr/bin/codesign --sign "$identity" --timestamp "$root/dist/$image"
+fi
+if [[ -n $profile ]]; then
+    /usr/bin/xcrun notarytool submit "$root/dist/$image" --keychain-profile "$profile" --wait
+    /usr/bin/xcrun stapler staple "$root/dist/$image"
+    /usr/bin/xcrun stapler validate "$root/dist/$image"
+    /usr/sbin/spctl --assess --type open --context context:primary-signature --verbose=2 "$root/dist/$image"
+fi
+(cd "$root/dist" && /usr/bin/shasum -a 256 "$archive" "$image" > SHA256SUMS)
+printf 'Created dist/%s, dist/%s and dist/SHA256SUMS (%s).\n' "$image" "$archive" "$signing"

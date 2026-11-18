@@ -10,7 +10,7 @@ documents = {item['CFBundleTypeName']: item for item in info['CFBundleDocumentTy
 assert documents['Call of Duty 2 demo']['LSHandlerRank'] == 'Default'
 assert documents['Call of Duty 2 config']['LSHandlerRank'] == 'Alternate'
 types = {item['UTTypeIdentifier']: item['UTTypeTagSpecification']['public.filename-extension'] for item in info['UTImportedTypeDeclarations']}
-assert types == {'io.github.stixzoor.cod2silicon.demo': ['dm_1'], 'io.github.stixzoor.cod2silicon.config': ['cfg']}, types
+assert types == {'com.cod2unbound.app.demo': ['dm_1'], 'com.cod2unbound.app.config': ['cfg']}, types
 game = app / 'Contents/Helpers/CoD2 Game.app'
 engine = plistlib.loads((game / 'Contents/Info.plist').read_bytes())
 assert engine['CFBundleExecutable'] == 'cod2_macos'
@@ -21,10 +21,10 @@ assert not {'CFBundleURLTypes', 'CFBundleDocumentTypes', 'UTImportedTypeDeclarat
 assert 'CoD2GameDirectory' not in info
 for contents, plist in [(app / 'Contents', info), (game / 'Contents', engine)]:
     assert plist['LSMinimumSystemVersion'] == '26.0', plist['LSMinimumSystemVersion']
-    assert plist['CFBundleIconFile'] == 'CoD2 Silicon', plist.get('CFBundleIconFile')
-    assert (contents / 'Resources/CoD2 Silicon.icns').is_file()
+    assert plist['CFBundleIconFile'] == 'CoD2 Unbound', plist.get('CFBundleIconFile')
+    assert (contents / 'Resources/CoD2 Unbound.icns').is_file()
     if 'CFBundleIconName' in plist:  # layered Icon Composer build (Xcode actool)
-        assert plist['CFBundleIconName'] == 'CoD2 Silicon'
+        assert plist['CFBundleIconName'] == 'CoD2 Unbound'
         assert (contents / 'Resources/Assets.car').is_file()
         assert plist['NSAccentColorName'] == 'AccentColor'
 assert info['ATSApplicationFontsPath'] == 'Fonts'
@@ -79,4 +79,4 @@ for path in app.rglob('*'):
     assert path.suffix not in {'.iwd', '.py', '.dm_1', '.dm_2'}, path
     assert path.name not in {'preferences', 'manifest.json', 'data-path.txt'}, path
 subprocess.run(['codesign', '--verify', '--deep', '--strict', str(app)], check=True)
-print('PASS: launcher + isolated Game Mode helper with CoD2x and original 1.3 engines, one URL owner, each also drawing with Metal, both dedicated servers, twelve arm64/macOS26 Mach-Os, portable links, deep signature, no game content, icon G in both apps, OFL fonts with licences')
+print('PASS: launcher + isolated Game Mode helper with CoD2x and original 1.3 engines, one URL owner, each also drawing with Metal, both dedicated servers, twelve arm64/macOS26 Mach-Os, portable links, deep signature, no game content, the app icon in both apps, OFL fonts with licences')

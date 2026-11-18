@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Start every engine in a packaged app once: both games load a map, both servers answer.
 
-    release_smoke.py "<CoD2 Silicon.app>" --game <game folder> --output <new folder>
+    release_smoke.py "<CoD2 Unbound.app>" --game <game folder> --output <new folder>
 
 For each game (CoD2x and the original 1.3): start it from the packaged app with
 an empty private home, wait for the menu, load mp_toujane, wait until the map is

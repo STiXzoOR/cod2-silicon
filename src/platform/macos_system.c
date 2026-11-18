@@ -1,5 +1,6 @@
 #if defined(__APPLE__) && defined(COD2_X64)
 #include "macos_system.h"
+#include "macos_home_adopt.h"
 
 #include <dlfcn.h>
 #include <execinfo.h>
@@ -81,7 +82,8 @@ static void MacSystem_InitHome(void)
     }
     if (!home || !home[0])
         return;
-    length = snprintf(homePath, sizeof(homePath), "%s/Library/Application Support/CoD2 Silicon", home);
+    MacHome_AdoptOldName(home);
+    length = snprintf(homePath, sizeof(homePath), "%s/Library/Application Support/CoD2 Unbound", home);
     if (length < 0 || length >= (int)sizeof(homePath))
         homePath[0] = '\0';
 }

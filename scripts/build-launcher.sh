@@ -32,7 +32,7 @@ elif [[ ${2:-} == --snapshots ]]; then
     sources+=("${views[@]}" "$root"/tests/launcher/Snapshots*.swift "$root/tests/launcher/DirectoryFixture.swift")
     name=LauncherSnapshots
     /usr/bin/plutil -create xml1 "$out/Info.plist"
-    /usr/bin/plutil -insert CFBundleIdentifier -string io.github.stixzoor.cod2silicon.snapshots "$out/Info.plist"
+    /usr/bin/plutil -insert CFBundleIdentifier -string com.cod2unbound.app.snapshots "$out/Info.plist"
     if "$root/scripts/compile-launcher-icon.sh" "$out/assets" >/dev/null; then
         cp "$out/assets/Assets.car" "$out/Assets.car"
         /usr/bin/plutil -insert NSAccentColorName -string AccentColor "$out/Info.plist"

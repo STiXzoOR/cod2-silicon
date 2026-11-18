@@ -67,7 +67,7 @@ struct ConfigHistoryView: View {
     }
 
     private var footnote: some View {
-        Text("CoD2 Silicon keeps the last \(ConfigHistory.retention) snapshots of each loadout. This one has \(session.history.count) of \(ConfigHistory.retention). Older ones are removed on their own.")
+        Text("CoD2 Unbound keeps the last \(ConfigHistory.retention) snapshots of each loadout. This one has \(session.history.count) of \(ConfigHistory.retention). Older ones are removed on their own.")
             .font(StudioTypography.help).foregroundStyle(palette.tertiary).padding(.horizontal, 6).fixedSize(horizontal: false, vertical: true)
     }
 }

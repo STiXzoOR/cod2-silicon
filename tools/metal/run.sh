@@ -23,7 +23,7 @@ taskpolicy -b nice -n 19 clang++ -std=c++17 -Wall -Wextra -Werror \
     -framework Foundation -framework Metal -o "$build/prepare_shaders"
 cache=${1:-${COD2_MAC_SHADER_CACHE:-"$HOME/Library/Application Support/CoD2x Native/shaders"}}
 if [ ! -d "$cache" ] && [ "$#" -eq 0 ]; then
-    cache="$HOME/Library/Application Support/CoD2 Silicon/shaders"
+    cache="$HOME/Library/Application Support/CoD2 Unbound/shaders"
 fi
 destination=${2:-"$HOME/Library/Application Support/CoD2-native-ws24/evidence/translated"}
 set +e

@@ -41,7 +41,7 @@ out.mkdir(parents=True, exist_ok=False)
 # own identity so Cocoa activation cannot select that existing application.
 test_app = out / 'Handoff.app'
 shutil.copytree(app, test_app)
-identifier = f'io.github.stixzoor.cod2silicon.handoff{os.getpid()}'
+identifier = f'com.cod2unbound.app.handoff{os.getpid()}'
 for bundle, bundle_id in ((test_app, identifier),
                           (test_app / 'Contents/Helpers/CoD2 Game.app', identifier + '.game')):
     plist = bundle / 'Contents/Info.plist'

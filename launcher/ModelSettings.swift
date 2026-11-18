@@ -146,7 +146,7 @@ extension KeyStore {
             try PrivateFile.write(JSONEncoder().encode(settings), to: home.appendingPathComponent("launcher-settings.json"))
             savedSettings = settings; settingsSaveError = nil
             studio.checkup.matchSummariesEnabled = settings.matchSummariesEnabled
-        } catch { settingsSaveError = "Your changes couldn’t be saved. Check that your CoD2 Silicon folder is writable, then try again." }
+        } catch { settingsSaveError = "Your changes couldn’t be saved. Check that your CoD2 Unbound folder is writable, then try again." }
     }
 
     // MARK: Start-up (boot calls this once)
@@ -159,7 +159,7 @@ extension KeyStore {
         applyAppearance()
         scheduleAutomaticUpdateCheck()
     }
-    static let settingsPaneKey = "CoD2SiliconSettingsPane"
+    static let settingsPaneKey = "CoD2UnboundSettingsPane"
     /// The Settings window remembers its pane between launches.
     func rememberSettingsPane() {
         guard !snapshot else { return }
@@ -422,7 +422,7 @@ extension KeyStore {
         let facts = snapshot ? CrashReporting.Facts(release: version, macOS: "27.0", model: "Mac16,7") : CrashReporting.Facts.current(release: version)
         return [("What failed", "The report’s first reason line, such as the signal that stopped the game"),
                 ("When", "The time the report was written"),
-                ("CoD2 Silicon", facts.release),
+                ("CoD2 Unbound", facts.release),
                 ("Game version", "CoD2x or Original 1.3, whichever crashed"),
                 ("macOS", facts.macOS),
                 ("Mac model", facts.model),
@@ -447,7 +447,7 @@ extension KeyStore {
         do {
             if FileManager.default.fileExists(atPath: file.path) { try FileManager.default.removeItem(at: file) }
             settingsFeedback = .init(pane: .privacy, text: "Match summaries deleted.")
-        } catch { settingsFeedback = .init(pane: .privacy, text: "The match summaries couldn’t be deleted. Check that your CoD2 Silicon folder is writable.", failed: true) }
+        } catch { settingsFeedback = .init(pane: .privacy, text: "The match summaries couldn’t be deleted. Check that your CoD2 Unbound folder is writable.", failed: true) }
         studio.checkup.refreshMatches(home: home)
         if !settingsInFront, let feedback = settingsFeedback { notice = feedback.text }
     }
@@ -537,7 +537,7 @@ extension KeyStore {
             defer { checkingUpdates = false; if !automatic { studio.announce(updateMessage) } }
             do {
                 var request = URLRequest(url: URL(string: "https://api.github.com/repos/cod2unbound/cod2-unbound/releases?per_page=10")!)
-                request.timeoutInterval = 15; request.setValue("CoD2-Silicon-Launcher", forHTTPHeaderField: "User-Agent")
+                request.timeoutInterval = 15; request.setValue("CoD2-Unbound-Launcher", forHTTPHeaderField: "User-Agent")
                 request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
                 let (data, response) = try await URLSession.shared.data(for: request)
                 guard let response = response as? HTTPURLResponse, response.statusCode == 200 else { throw LauncherError(message: "Release service is unavailable. Try again later.") }
@@ -569,7 +569,7 @@ extension KeyStore {
     nonisolated static func fetchNews() async -> NewsFeed.Feed? {
         var request = URLRequest(url: NewsFeed.url)
         request.timeoutInterval = 15; request.cachePolicy = .reloadIgnoringLocalCacheData
-        request.setValue("CoD2-Silicon-Launcher", forHTTPHeaderField: "User-Agent")
+        request.setValue("CoD2-Unbound-Launcher", forHTTPHeaderField: "User-Agent")
         guard let (data, response) = try? await URLSession.shared.data(for: request), let code = (response as? HTTPURLResponse)?.statusCode else { return nil }
         if code == 404 { return NewsFeed.Feed() }
         return code == 200 ? try? NewsFeed.parse(data) : nil
@@ -596,7 +596,7 @@ extension KeyStore {
             }
         }
     }
-    static let automaticCheckKey = "CoD2SiliconLastAutomaticUpdateCheck"
+    static let automaticCheckKey = "CoD2UnboundLastAutomaticUpdateCheck"
     /// Install and Relaunch: only on the player's click; refused while a game runs or where the app can't replace
     /// itself (then the Releases page opens). Cancel stops it until the new app is about to take this one's place.
     func installUpdate() {
@@ -648,9 +648,9 @@ extension KeyStore {
         let helper = Process()
         helper.executableURL = URL(fileURLWithPath: "/bin/sh")
         helper.arguments = ["-c", "while /bin/kill -0 \"$1\" 2>/dev/null; do /bin/sleep 0.2; done; /usr/bin/open \"$2\"",
-                            "cod2-silicon-update", String(getpid()), app.path]
+                            "cod2-unbound-update", String(getpid()), app.path]
         do { try helper.run() } catch {
-            installingUpdate = false; updateMessage = "Version \(updateOffer?.version ?? "") is installed. Quit and open CoD2 Silicon to use it."; return
+            installingUpdate = false; updateMessage = "Version \(updateOffer?.version ?? "") is installed. Quit and open CoD2 Unbound to use it."; return
         }
         NSApp.terminate(nil)
     }
@@ -781,7 +781,7 @@ extension KeyStore {
         case "settings-legacy": settingsPane = .display
         case "settings-legacy-custom": settingsPane = .display; settings.fps = 144
         case "settings-invalid": settingsPane = .advanced; editAdvancedOptions("name invalid;quit")
-        case "settings-save-error": settingsPane = .general; settingsSaveError = "Your changes couldn’t be saved. Check that your CoD2 Silicon folder is writable, then try again."
+        case "settings-save-error": settingsPane = .general; settingsSaveError = "Your changes couldn’t be saved. Check that your CoD2 Unbound folder is writable, then try again."
         case "settings-original": settingsPane = .general; settings.engine = .original; savedSettings = settings
         case "settings-original-missing": settingsPane = .general; installedEngines = [.cod2x]
         case "settings-cod2x-installed": settingsPane = .gameData; cod2xFilesInstalled = true; cod2xFilesMessage = CoD2xFiles.Message.installed

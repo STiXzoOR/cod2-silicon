@@ -4,10 +4,16 @@
 #include "../src/platform/cod2x_native_setup.h"
 #include "../src/PC/qcommon/cod2x_url.h"
 
-NSString *LauncherHome(void) { return Cod2xAppHome(); }
+NSString *LauncherHome(void)
+{
+    /* The first thing the launcher asks for, before anything can make the folder. */
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{ Cod2xAdoptOldName(); });
+    return Cod2xAppHome();
+}
 void LauncherMigrate(void)
 {
-    [NSFileManager.defaultManager createDirectoryAtPath:Cod2xAppHome() withIntermediateDirectories:YES attributes:nil error:nil];
+    [NSFileManager.defaultManager createDirectoryAtPath:LauncherHome() withIntermediateDirectories:YES attributes:nil error:nil];
     Cod2xMigrate();
 }
 NSString *LauncherFindData(NSString *selected)

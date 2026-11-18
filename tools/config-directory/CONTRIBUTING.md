@@ -2,7 +2,7 @@
 
 How a setup is added, corrected or removed in
 [cod2unbound/cod2-configs](https://github.com/cod2unbound/cod2-configs). The tools
-are in the CoD2 Silicon repository under `tools/config-directory`; the
+are in the CoD2 Unbound repository under `tools/config-directory`; the
 commands below are run from a checkout of it, with `CATALOGUE` set to a
 checkout of cod2-configs and `SCRATCH` to an empty folder outside both.
 

@@ -50,7 +50,7 @@ For capture smoke on the current clear-only engine:
 ```sh
 python3 tests/metal/goldens.py capture build-macos/cod2_macos \
   --base "$HOME/Games/CoD2" \
-  --cache "$HOME/Library/Application Support/CoD2 Silicon/shaders" \
+  --cache "$HOME/Library/Application Support/CoD2 Unbound/shaders" \
   --output "$HOME/Library/Application Support/CoD2-native-ws34/camera-smoke" \
   --smoke-only
 ```
@@ -69,7 +69,7 @@ chosen by the operator, **not** a verified Toujane frame:
 ```sh
 python3 tests/metal/goldens.py capture build-macos/cod2_macos \
   --base "$HOME/Games/CoD2" \
-  --cache "$HOME/Library/Application Support/CoD2 Silicon/shaders" \
+  --cache "$HOME/Library/Application Support/CoD2 Unbound/shaders" \
   --output "$HOME/Library/Application Support/CoD2-native-ws34/camera-parity" \
   --scene-time-ms 10000
 ```
