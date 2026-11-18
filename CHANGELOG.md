@@ -19,7 +19,11 @@ All notable changes to CoD2 Silicon are documented here, following
   before running it, and removes it afterwards together with the sign-in it
   stored, whether the download finished, stopped or was cancelled. A download
   that stops keeps its files, and the next try checks them and fetches only
-  what is missing. Steam only lets an account download games it owns.
+  what is missing. If the launcher is closed before the download is done, the
+  Game data step remembers it the next time and offers **Finish the
+  Download…** with the same folder and language; you scan a new code, because
+  the sign-in is never kept. Steam only lets an account download games it
+  owns.
 - **Setup asks about crash reports.** A new step, "Send crash reports?",
   comes before the Ready summary, with what a report holds, what it never
   holds and where it goes. Neither answer is preselected. People who set the
@@ -27,6 +31,12 @@ All notable changes to CoD2 Silicon are documented here, following
   the next time the launcher opens; anyone who already turned the switch on
   in Settings → Privacy is not asked. Either answer can be changed there at
   any time.
+
+### Changed
+
+- Setup's two skip buttons read the same, **Skip for Now**.
+- Folder paths in Setup are shown in the same colour as the other row titles,
+  and a folder in your home is always shortened to `~/…`.
 
 ## [0.3.4] - 2026-11-18
 

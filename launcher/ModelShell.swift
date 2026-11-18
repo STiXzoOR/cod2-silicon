@@ -23,7 +23,7 @@ enum LaunchProblem: Equatable, Identifiable {
         }
     }
     /// The path to show under the message, when there is one.
-    var path: String? { if case .dataMissing(let path) = self { (path as NSString).abbreviatingWithTildeInPath } else { nil } }
+    var path: String? { if case .dataMissing(let path) = self { PathDisplay.short(path) } else { nil } }
     var fixTitle: String {
         switch self { case .dataMissing: "Choose Folder…"; case .helperMissing: "Open Releases Page"; case .other: "Try Again" }
     }

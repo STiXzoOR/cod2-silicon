@@ -315,7 +315,7 @@ struct GameDataPane: View {
             FormSection("Your files") {
                 FormGroup {
                     FormRow("Loadouts, demos and screenshots",
-                            detail: (model.home.path as NSString).abbreviatingWithTildeInPath + (model.gameData.myFilesBytes.map { " · " + SettingsText.bytes($0) } ?? ""),
+                            detail: PathDisplay.short(model.home.path) + (model.gameData.myFilesBytes.map { " · " + SettingsText.bytes($0) } ?? ""),
                             symbol: "doc") {
                         Button("Show in Finder", action: model.showMyFilesInFinder).glassAction()
                     }

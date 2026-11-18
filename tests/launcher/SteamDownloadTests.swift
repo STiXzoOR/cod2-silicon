@@ -93,6 +93,12 @@ import Foundation
                 "every depot is named, the code sign-in is asked for and nothing else: \(arguments)")
         require(!arguments.contains("-username") && !arguments.contains("-password") && !arguments.contains("-remember-password"), "no name or password ever reaches the tool")
         require(Set(SteamLanguage.allCases.map(\.depot)) == [2634, 2636, 2637, 2638, 2639], "one depot per language")
+        let homes: [String?] = ["/private/test/home", "/Users/player"]
+        require(PathDisplay.short("/Users/player/Downloads/cod2", homes: homes) == "~/Downloads/cod2", "a folder in the account's home is ~/… even when the launcher's home is elsewhere")
+        require(PathDisplay.short("/private/test/home/Games/CoD2", homes: homes) == "~/Games/CoD2" && PathDisplay.short("/Users/player", homes: homes) == "~", "and so is one in the launcher's home")
+        require(PathDisplay.short("/Users/playerother/x", homes: homes) == "/Users/playerother/x" && PathDisplay.short("/Volumes/Games/CoD2", homes: homes) == "/Volumes/Games/CoD2",
+                "a folder that only starts like a home, or is on another disk, is shown whole")
+        require(PathDisplay.accountHome?.hasPrefix("/") == true, "the system knows the account's home")
         require(SteamGame.gigabytes(SteamGame.bytes(.english)) == "3.70" && SteamGame.gigabytes(1_420_000_000) == "1.42", "sizes as the boards say them")
     }
 
@@ -230,6 +236,7 @@ import Foundation
         require(model.steam.stoppedTitle == "The download couldn’t start" && model.steam.stoppedDetail.contains("checksum") && model.steam.retryTitle == "Try Again",
                 "a tool that fails its check is said so: \(model.steam.stoppedDetail)")
         require(recorded("ok.args").isEmpty, "and is never run")
+        require(model.steamUnfinished == nil, "a download that never began is not an unfinished one")
 
         // 2. The code is never approved.
         model.steamTool = try archive("unapproved", in: scratch, body: "sleep 30")
@@ -263,6 +270,18 @@ import Foundation
         require(files.fileExists(atPath: target.appendingPathComponent("main/iw_15.iwd").path) && sessions().isEmpty, "the files stay, the sign-in goes")
         require(recorded("stall.home").hasPrefix(scratchTool.path + "/session-"), "the tool's home was the try's own folder")
         require(!files.fileExists(atPath: recorded("stall.home").trimmingCharacters(in: .newlines)), "and that folder, with the sign-in in it, is gone")
+
+        // A launcher that is closed here and opened again knows about the download and offers to finish it.
+        require(model.steamUnfinished == SteamUnfinished(folder: target.path, language: "german"), "the unfinished download is remembered: \(String(describing: model.steamUnfinished))")
+        let reopened = LauncherModel()
+        require(reopened.steamUnfinished == SteamUnfinished(folder: target.path, language: "german") && reopened.dataPath.isEmpty,
+                "a launcher opened again finds it, and does not take the folder for a finished game")
+        reopened.onboard = true; reopened.setupStep = .data
+        reopened.resumeSteamUnfinished()
+        require(reopened.steam.phase == .offer && reopened.steam.folder == target.path && reopened.steam.language == .german,
+                "Finish the Download… opens the offer with the same folder and language")
+        reopened.backSetup()
+        require(reopened.steam.phase == .off && reopened.steamUnfinished != nil, "backing out keeps the offer to finish")
 
         // The folder now looks complete to a plain check: sixteen archives, none finished.
         require(LauncherFindData(target.path) != nil && LauncherModel.steamDownloadUnfinished(target.path), "an unfinished download has every archive on disk")
@@ -310,6 +329,7 @@ import Foundation
         require(model.steam.downloadedBytes == 17 * 4 && model.steam.doneBytes == model.steam.totalBytes, "what is in the folder is counted")
         require(!files.fileExists(atPath: scratchTool.path), "the tool and every sign-in are gone")
         require(!files.fileExists(atPath: target.appendingPathComponent(".DepotDownloader").path), "the tool's own notes are out of the game folder")
+        require(model.steamUnfinished == nil && LauncherModel().steamUnfinished == nil, "a finished download is no longer offered for finishing")
         let arguments = recorded("ok.args").split(separator: "\n").map(String.init)
         require(Array(arguments.prefix(7)) == ["-app", "2630", "-depot", "2631", "2632", "2633", "2636"] && arguments.contains("-qr")
                 && arguments.firstIndex(of: "-dir").map { arguments[$0 + 1] } == target.path, "the tool was asked for German, by code, into the chosen folder: \(arguments)")

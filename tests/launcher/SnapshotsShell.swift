@@ -7,7 +7,7 @@ import SwiftUI
 extension Snapshots {
     /// One screen per Setup board state (Setup, SetupData…, SetupAgain), plus the honest in-between states.
     static let setupScreens = ["setup-welcome", "setup-data", "setup-data-found", "setup-data-error", "setup-data-unfinished",
-                               "setup-steam", "setup-steam-short", "setup-steam-starting", "setup-steam-qr", "setup-steam-not-owned", "setup-steam-downloading",
+                               "setup-steam-unfinished", "setup-steam", "setup-steam-short", "setup-steam-starting", "setup-steam-qr", "setup-steam-not-owned", "setup-steam-downloading",
                                "setup-steam-checking", "setup-steam-stopped", "setup-steam-stopped-details", "setup-steam-sign-in-failed", "setup-steam-done", "setup-key", "setup-key-ok", "setup-key-bad",
                                "setup-key-stored", "setup-shaders", "setup-shaders-starting", "setup-shaders-done", "setup-shaders-failed", "setup-yours", "setup-crash",
                                "setup-ready", "setup-ready-reports", "setup-ready-approximate", "setup-ready-link", "setup-again", "setup-again-data"]
@@ -429,6 +429,7 @@ extension Snapshots {
         "setup-welcome": ["Welcome to CoD2 Silicon", "Get Started"],
         "setup-data": ["Choose Folder…", "Download from Steam…", "Other ways to get the files"],
         "setup-data-unfinished": ["Choose Folder…", "An unfinished Steam download", "Finish the Download…"],
+        "setup-steam-unfinished": ["Your Steam download isn’t finished", "Finish the Download…", "Choose Folder…"],
         "setup-steam": ["Download your copy from Steam", "Language", "Change…", "Signed out when it ends", "~/Games/CoD2, 212 GB free on this Mac"],
         "setup-steam-short": ["The game needs about 4 GB", "Change…"],
         "setup-steam-starting": ["Getting the download tool…", "Open the Steam app on your phone."],
@@ -450,7 +451,7 @@ extension Snapshots {
         "setup-key-stored": ["Replace…", "Verified"],
         "setup-shaders": ["Building shaders"],
         "setup-shaders-failed": ["Try Again", "Choose Mac Copy…"],
-        "setup-yours": ["In-game name", "Skip"],
+        "setup-yours": ["In-game name", "Skip for Now"],
         "setup-ready": ["Find a Server", "Open CoD2 Silicon"],
         "setup-again": ["Cancel", "Back", "Replace…"],
         "home-loadout-player-card": ["In-game name", "Replace…", "Loadout for your next game", "Done", "Add colours…"],

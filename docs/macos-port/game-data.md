@@ -60,7 +60,10 @@ What setup does for you:
 If the download stops, the files stay. **Resume** shows a new code, because
 the sign-in is not kept between tries, and the tool then checks what is on
 disk and fetches only what is missing. A folder with an unfinished download
-is not accepted as game data until the download is finished.
+is not accepted as game data until the download is finished. Closing the
+launcher mid-download stops the tool and signs it out; the next time, the
+Game data step shows **Finish the Download…** for the same folder and
+language.
 
 Your CD key is in Steam: right-click the game, then **Manage › CD keys**.
 

@@ -130,7 +130,7 @@ struct SetupView: View {
             symbolTile(symbol, negative: negative)
             VStack(alignment: .leading, spacing: 3) {
                 Text(title).font(mono ? .typewriter(14, bold: true) : .system(size: 14, weight: .semibold))
-                    .foregroundStyle(mono ? palette.address : palette.text).lineLimit(mono ? 1 : 2).truncationMode(.middle)
+                    .foregroundStyle(palette.text).lineLimit(mono ? 1 : 2).truncationMode(.middle)
                 Text(detail).font(.system(size: 12)).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
             }
             .accessibilityElement(children: .combine).accessibilityAddTraits(.isStaticText)
@@ -179,7 +179,7 @@ struct SetupView: View {
         if !model.dataError.isEmpty {
             panel {
                 group {
-                    row("folder", (model.attemptedDataPath as NSString).abbreviatingWithTildeInPath, model.dataIsUnfinishedSteam ? "An unfinished Steam download" : "\(model.dataArchivesFound) of 16 game archives found",
+                    row("folder", PathDisplay.short(model.attemptedDataPath), model.dataIsUnfinishedSteam ? "An unfinished Steam download" : "\(model.dataArchivesFound) of 16 game archives found",
                         mono: true, negative: true, control: true) {
                         Button("Choose Folder…", action: model.pickData).glassAction().controlSize(.large).focused($focus, equals: .folder)
                     }
@@ -231,8 +231,15 @@ struct SetupView: View {
                     }
                 }
                 group {
-                    row("arrow.down.circle", "Own it on Steam, but not installed anywhere?", "CoD2 Silicon can download your copy for you. About 3.7 GB.", control: true) {
-                        Button("Download from Steam…", action: model.offerSteam).glassAction().controlSize(.large)
+                    if model.steamUnfinished != nil {
+                        row("arrow.down.circle", "Your Steam download isn’t finished",
+                            "What is there is kept; only the rest is fetched.", control: true) {
+                            Button("Finish the Download…", action: model.resumeSteamUnfinished).glassAction().controlSize(.large)
+                        }
+                    } else {
+                        row("arrow.down.circle", "Own it on Steam, but not installed anywhere?", "CoD2 Silicon can download your copy for you. About 3.7 GB.", control: true) {
+                            Button("Download from Steam…", action: model.offerSteam).glassAction().controlSize(.large)
+                        }
                     }
                 }
                 Link("Other ways to get the files", destination: URL(string: "https://cod2unbound.com/guides/mac")!)

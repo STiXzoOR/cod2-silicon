@@ -292,6 +292,23 @@ struct EngineRequest: Identifiable, Sendable {
 
 /// The reports either engine writes into the app home (its fs_homepath) when it crashes
 /// (`cod2_crash_<pid>.txt`) or its main thread stalls (`cod2_freeze_<pid>.txt`).
+/// Folder paths as the launcher shows them: “~/Games/CoD2”.
+enum PathDisplay {
+    /// The account's home folder as the system records it. The launcher's own idea of home can point
+    /// somewhere else (a test run, a redirected home), and a folder in the real one is still “~/…”.
+    static let accountHome: String? = {
+        guard let record = getpwuid(getuid()), let folder = record.pointee.pw_dir else { return nil }
+        return String(cString: folder)
+    }()
+    static func short(_ path: String, homes: [String?] = [NSHomeDirectory(), accountHome]) -> String {
+        for home in homes.compactMap({ $0 }) where home.count > 1 {
+            if path == home { return "~" }
+            if path.hasPrefix(home.hasSuffix("/") ? home : home + "/") { return "~/" + path.dropFirst(home.count).drop { $0 == "/" } }
+        }
+        return path
+    }
+}
+
 enum CrashReports {
     /// The newest report written since `since`.
     static func latest(in home: URL, since: Date) -> URL? {

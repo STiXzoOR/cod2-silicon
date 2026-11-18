@@ -33,6 +33,13 @@ struct SteamSetup: Equatable {
     var downloadedBytes: Int64 = 0
 }
 
+/// Where a Steam download was started and in which language: kept in the launcher's folder until the
+/// game is complete, so a launcher that was closed mid-download can offer to finish it.
+struct SteamUnfinished: Codable, Equatable {
+    var folder: String
+    var language: String
+}
+
 /// How long the flow waits before it gives up, in seconds. Tests shorten these.
 struct SteamTimings: Sendable {
     /// From the first code to the phone's approval.
@@ -80,7 +87,7 @@ struct SteamWork {
     var steamActive: Bool { steam.phase != .off }
     /// Everything the download needs on this Mac while it runs: the tool, and each try's sign-in.
     var steamScratch: URL { home.appendingPathComponent("steam", isDirectory: true) }
-    var steamFolderDisplay: String { (steam.folder as NSString).abbreviatingWithTildeInPath }
+    var steamFolderDisplay: String { PathDisplay.short(steam.folder) }
     var steamRoomShort: Bool {
         guard let free = steam.freeBytes else { return false }
         return free < SteamGame.roomNeeded(steam.language)
@@ -109,6 +116,39 @@ struct SteamWork {
     }
 
     // MARK: A download left unfinished
+    private var steamUnfinishedFile: URL { home.appendingPathComponent("steam-download.json") }
+    /// Reads the note a started download left. It only counts while its folder still holds the
+    /// download tool's own notes: a finished, moved or deleted download is forgotten.
+    func refreshSteamUnfinished() {
+        guard !snapshot else { return }
+        guard let data = try? Data(contentsOf: steamUnfinishedFile), let note = try? JSONDecoder().decode(SteamUnfinished.self, from: data) else {
+            steamUnfinished = nil
+            return
+        }
+        if Self.steamDownloadUnfinished(note.folder) {
+            steamUnfinished = note
+        } else {
+            steamUnfinished = nil
+            // Before the sign-in nothing is in the folder yet: the note stays while a try is under way.
+            if steamWork.run == nil, steamWork.task == nil { try? FileManager.default.removeItem(at: steamUnfinishedFile) }
+        }
+    }
+    private func rememberSteamUnfinished() {
+        guard !snapshot, let data = try? JSONEncoder().encode(SteamUnfinished(folder: steam.folder, language: steam.language.rawValue)) else { return }
+        try? data.write(to: steamUnfinishedFile, options: .atomic)
+    }
+    private func forgetSteamUnfinished() {
+        steamUnfinished = nil
+        if !snapshot { try? FileManager.default.removeItem(at: steamUnfinishedFile) }
+    }
+    /// Game data › Finish the Download…, for a download a closed launcher left behind: the offer,
+    /// with that folder and language already chosen.
+    func resumeSteamUnfinished() {
+        guard let note = steamUnfinished else { return }
+        steam.folder = note.folder
+        steam.language = SteamLanguage(rawValue: note.language) ?? steam.language
+        offerSteam()
+    }
     static let steamUnfinishedMessage = "This folder holds a Steam download that didn’t finish. Finish the download, or pick another folder."
     var dataIsUnfinishedSteam: Bool { dataError == Self.steamUnfinishedMessage }
     /// Game data › Finish the Download…: the offer, pointed at the folder that was refused.
@@ -180,6 +220,7 @@ struct SteamWork {
         steam.totalBytes = SteamGame.bytes(steam.language)
         steam.phase = .starting
         if snapshot { return }
+        rememberSteamUnfinished()
         let generation = steamWork.generation + 1
         steamWork = SteamWork(generation: generation, progress: SteamProgress(depots: SteamGame.depots(steam.language)))
         let folder = URL(fileURLWithPath: steam.folder), language = steam.language, tool = steamTool, scratch = steamScratch
@@ -205,6 +246,7 @@ struct SteamWork {
                 guard let self, self.steamWork.generation == generation, !(error is CancellationError) else { return }
                 self.steamWork.task = nil
                 self.removeSteamSession()
+                self.refreshSteamUnfinished()
                 let message = (error as? DepotToolError)?.message ?? "The download couldn’t start: \(error.localizedDescription)"
                 self.steamStopped(title: "The download couldn’t start", detail: message, retry: "Try Again")
             }
@@ -310,6 +352,7 @@ struct SteamWork {
         steamWork.ticker?.cancel(); steamWork.ticker = nil
         steamWork.run = nil
         removeSteamSession()
+        refreshSteamUnfinished()
         let kept = "What is downloaded is kept in \(steamFolderDisplay)."
         if work.notOwned {
             steam.qr = nil
@@ -352,6 +395,7 @@ struct SteamWork {
             if ended, let valid {
                 try? FileManager.default.removeItem(at: URL(fileURLWithPath: folder).appendingPathComponent(".DepotDownloader"))
                 try? FileManager.default.removeItem(at: self.steamScratch)
+                self.forgetSteamUnfinished()
                 self.steamWork.progress.finish()
                 self.steam.doneBytes = self.steam.totalBytes
                 self.steam.downloadedBytes = bytes
@@ -441,6 +485,7 @@ struct SteamWork {
         let scratch = steamScratch
         if !snapshot { Task.detached(priority: .utility) { try? FileManager.default.removeItem(at: scratch) } }
         steam = SteamSetup(language: steam.language, folder: steam.folder)
+        refreshSteamUnfinished()
     }
     /// Choose Folder… from a Steam screen: back to the game data step with the folder panel open.
     func chooseFolderInsteadOfSteam() {
@@ -467,6 +512,7 @@ struct SteamWork {
         steam.folder = NSHomeDirectory() + "/Games/CoD2"; steam.freeBytes = 212_000_000_000
         steam.totalBytes = SteamGame.bytes(.english)
         switch screen {
+        case "setup-steam-unfinished": steamUnfinished = SteamUnfinished(folder: steam.folder, language: "english")
         case "setup-steam": steam.phase = .offer
         case "setup-steam-short": steam.phase = .offer; steam.freeBytes = 2_100_000_000
         case "setup-steam-starting": steam.phase = .starting

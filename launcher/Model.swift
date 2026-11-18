@@ -181,6 +181,8 @@ struct MediaEntry: Identifiable {
     @Published var shaderSeconds: Int?
     /// Setup › Game data › From Steam (ModelSteam.swift): what its screens show, and what a try keeps.
     @Published var steam = SteamSetup()
+    /// A Steam download that was started and never finished, remembered across launches.
+    @Published var steamUnfinished: SteamUnfinished?
     var steamWork = SteamWork()
     var steamTool = DepotTool.pinned
     var steamTimings = SteamTimings()
@@ -379,6 +381,7 @@ struct MediaEntry: Identifiable {
         studio.checkup.matchSummariesEnabled = settings.matchSummariesEnabled
         if let data = try? Data(contentsOf: home.appendingPathComponent("launcher-library.json")), let value = try? JSONDecoder().decode(LauncherLibrary.self, from: data) { library = value; servers = value.cache }
         dataPath = LauncherFindData(nil) ?? ""
+        refreshSteamUnfinished()
         refreshCoD2xFiles()
         keyVerified = KeyStore.hasValidKey(at: preferences)
         approximate = !LauncherVerifyShaders()
@@ -397,7 +400,7 @@ struct MediaEntry: Identifiable {
     var crashReportService: SentryDSN? {
         snapshot ? SentryDSN("https://preview@sentry.invalid/1") : SentryDSN(Bundle.main.object(forInfoDictionaryKey: CrashReporting.infoKey) as? String ?? "")
     }
-    var dataPathDisplay: String { (dataPath as NSString).abbreviatingWithTildeInPath }
+    var dataPathDisplay: String { PathDisplay.short(dataPath) }
     func boot() {
         guard !snapshot else { return }
         booted = true

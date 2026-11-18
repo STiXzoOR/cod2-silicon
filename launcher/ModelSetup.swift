@@ -119,7 +119,7 @@ enum GameArchives {
         switch setupStep {
         case .data where steam.phase == .downloading: "Stop"
         case .key where !(keyVerified && !replacingKey) && keyCheck != .verified: "Skip for Now"
-        case .yours: "Skip"
+        case .yours: "Skip for Now"
         case .crash: "Don’t Send"
         case .ready where !hasPendingLaunch: "Find a Server"
         default: nil
@@ -224,7 +224,7 @@ enum GameArchives {
             }
         } catch { setupError = error.localizedDescription }
     }
-    /// The bottom bar's second action: Skip for Now (CD key), Skip (Make it yours), Find a Server (Ready).
+    /// The bottom bar's second action: Skip for Now (CD key, Make it yours), Don’t Send (Crash reports), Find a Server (Ready).
     func alternateSetup() {
         setupError = ""
         switch setupStep {
