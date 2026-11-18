@@ -11,6 +11,7 @@ struct HomeView: View {
     @Environment(\.palette) private var palette
     @State private var origin = CGPoint.zero
     @State private var heroHeight: CGFloat = 290
+    @State private var chipsHeight: CGFloat = 40
     init(model: LauncherModel) { self.model = model; artwork = model.artwork; checkup = model.studio.checkup }
 
     var body: some View {
@@ -30,7 +31,8 @@ struct HomeView: View {
             // One row of cards at every size, so Home never needs scrolling at the minimum window. A window too
             // narrow for three cards keeps two, and What's New becomes a chip that opens it as a dialog.
             let cards = cardHeight
-            let bottom = 40 + 32 + cards + 28
+            // The chips take a second row when one row is too wide for the window, so their height is measured.
+            let bottom = chipsHeight + 32 + cards + 28
             let content = max(height, heroTop + heroHeight + 24 + bottom)
             ScrollView {
                 ZStack(alignment: .topLeading) {
@@ -39,6 +41,7 @@ struct HomeView: View {
                         .padding(.top, heroTop)
                     VStack(alignment: .leading, spacing: 32) {
                         HomeChips(model: model, news: stacked)
+                            .onGeometryChange(for: CGFloat.self, of: { $0.size.height }) { chipsHeight = $0 }
                         HomeCards(model: model, stacked: stacked, cardHeight: cardHeight, returning: !model.library.recent.isEmpty)
                     }
                     .padding(.bottom, 28)

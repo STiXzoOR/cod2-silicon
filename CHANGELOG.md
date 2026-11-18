@@ -29,6 +29,13 @@ was called CoD2 Silicon, and the entries from before then still use that name.
   `com.cod2unbound.daemon`. A service installed under the old names keeps
   running until you remove it with the old script.
 
+### Fixed
+
+- On Home, the chips under the buttons no longer slide up over Launch and
+  Find a Server in a small window. It happened when the chips needed a
+  second row, for example with the note that the display can't show a
+  loadout's resolution. Home now scrolls a little instead.
+
 ### Know before you install
 
 - **Update by hand, once.** 0.3.5 and earlier look for updates under the old
