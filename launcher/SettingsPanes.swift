@@ -105,6 +105,11 @@ struct DisplayPane: View {
                     FormRow("Mode", detail: LauncherModel.displayModeDetail(model.settings.fullscreen)) {
                         PopUpButton("Mode", selection: $model.settings.fullscreen, options: LauncherModel.displayModes)
                     }
+                    if model.offersRenderers {
+                        FormRow("Graphics", detail: "Metal is how macOS draws today. OpenGL is the older way, kept in case something looks wrong.") {
+                            ScopeSwitch("Graphics", selection: $model.settings.renderer, options: [(.metal, "Metal"), (.openGL, "OpenGL")])
+                        }
+                    }
                     if legacy {
                         VStack(alignment: .leading, spacing: 6) {
                             FormRow("Resolution") {
@@ -116,7 +121,7 @@ struct DisplayPane: View {
                     }
                 }
                 if !legacy {
-                    Text("The game has no control for these two, so they are set here and apply to every loadout.")
+                    Text("The game has no control for these \(model.offersRenderers ? "three" : "two"), so they are set here and apply to every loadout.")
                         .font(.system(size: 12)).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true).padding(.leading, 6)
                 }
                 }
@@ -164,7 +169,7 @@ struct DisplayPane: View {
     }
     private var atDefaults: Bool {
         let d = model.defaultSettings, s = model.settings
-        let display = s.fullscreen == d.fullscreen && (!legacy || (s.resolution == d.resolution && s.vsync == d.vsync && s.anisotropy == d.anisotropy))
+        let display = s.fullscreen == d.fullscreen && s.renderer == d.renderer && (!legacy || (s.resolution == d.resolution && s.vsync == d.vsync && s.anisotropy == d.anisotropy))
         return display && (!legacy || (s.fps == d.fps && s.rawMouse == d.rawMouse && s.sensitivity == d.sensitivity && s.dpi == d.dpi && s.volume == d.volume))
     }
     private func restore() {
@@ -175,7 +180,7 @@ struct DisplayPane: View {
     private func undoRestore() {
         guard let previous = beforeRestore else { model.settingsFeedback = nil; return }
         var settings = model.settings
-        settings.fullscreen = previous.fullscreen
+        settings.fullscreen = previous.fullscreen; settings.renderer = previous.renderer
         if legacy { settings.resolution = previous.resolution; settings.vsync = previous.vsync; settings.anisotropy = previous.anisotropy; settings.fps = previous.fps; settings.rawMouse = previous.rawMouse; settings.sensitivity = previous.sensitivity; settings.dpi = previous.dpi; settings.volume = previous.volume }
         model.settings = settings
         customFPS = !FrameCap.isPreset(settings.fps)

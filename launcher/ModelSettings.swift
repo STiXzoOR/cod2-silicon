@@ -244,11 +244,13 @@ extension KeyStore {
         return defaults
     }
     /// Display › Restore Defaults: everything the Display pane shows. Returns what it replaced, for Undo.
+    /// Settings › Display offers Metal or OpenGL only when this app carries a Metal engine.
+    var offersRenderers: Bool { snapshot || GameEngine.allCases.contains { $0.renderer(.metal, in: gameBundle) == .metal } }
     @discardableResult func restoreDisplayDefaults() -> GameSettings {
         let previous = settings, defaults = defaultSettings
         resolutionAdjustment = nil
         var restored = settings
-        restored.fullscreen = defaults.fullscreen
+        restored.fullscreen = defaults.fullscreen; restored.renderer = defaults.renderer
         if !usesLoadouts {
             restored.resolution = defaults.resolution; restored.vsync = defaults.vsync; restored.anisotropy = defaults.anisotropy
             restored.fps = defaults.fps; restored.rawMouse = defaults.rawMouse; restored.sensitivity = defaults.sensitivity
