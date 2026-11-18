@@ -6,6 +6,17 @@ was called CoD2 Silicon, and the entries from before then still use that name.
 
 ## [Unreleased]
 
+### Added
+
+- **The game draws with Metal.** Both game versions, CoD2x and the original
+  1.3, now draw through Metal, the graphics system macOS uses today, where
+  they drew through OpenGL before. The app carries each game twice, once for
+  each, and Settings › Display has a Graphics row to choose: Metal, or OpenGL
+  if something looks wrong. Metal is the choice a new setup starts with.
+- About says which of the two the next game draws with, and credits mtld3d,
+  the library the Metal engines draw through. Its licence and the licences
+  of what it is built from are in Acknowledgements and inside the app.
+
 ## [0.3.6] - 2026-11-18
 
 ### Changed
