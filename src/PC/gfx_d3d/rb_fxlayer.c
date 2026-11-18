@@ -136,8 +136,8 @@ enum {
     RS_SCISSORTESTENABLE = 174, RS_TWOSIDEDSTENCILMODE = 185, RS_SLOPESCALEDEPTHBIAS = 175, RS_DEPTHBIAS = 195, RS_SEPARATEALPHABLENDENABLE = 206, RS_SRCBLENDALPHA = 207,
     RS_DESTBLENDALPHA = 208, RS_BLENDOPALPHA = 209,
 };
-enum { BLEND_ZERO = 1, BLEND_ONE = 2, BLEND_SRCALPHA = 5, BLEND_INVSRCALPHA = 6 };
-enum { CMP_LESS = 2, CMP_EQUAL = 3, CMP_GREATER = 5, CMP_ALWAYS = 8, OP_KEEP = 1, OP_ZERO = 2, OP_REPLACE = 3 };
+enum { BLEND_ZERO = 1, BLEND_ONE = 2, BLEND_SRCALPHA = 5, BLEND_INVSRCALPHA = 6, BLEND_DESTALPHA = 7 };
+enum { CMP_LESS = 2, CMP_EQUAL = 3, CMP_GREATER = 5, CMP_NOTEQUAL = 6, CMP_ALWAYS = 8, OP_KEEP = 1, OP_ZERO = 2, OP_REPLACE = 3 };
 enum { FORMAT_A8R8G8B8 = 21, FORMAT_A16B16G16R16 = 36, FORMAT_INTZ = 0x5A544E49 };
 enum { USAGE_RENDERTARGET = 1, USAGE_DEPTHSTENCIL = 2, QUERY_OCCLUSION = 9, ISSUE_END = 1, ISSUE_BEGIN = 2 };
 /* Stencil bits of a sample the layer cannot stand for: it lies beyond, or in front of,
@@ -171,6 +171,9 @@ typedef struct {
     /* A smaller layer: the scene's float-Z at this size, for the effects that feather (CopyFloatZ). */
     void *floatZTexture, *floatZSurface, *floatZShader;
     int floatZFailed;
+    /* A smaller layer: the far part of a run, drawn behind the gate (RB_FxLayer_GateBegin). */
+    void *gateTexture, *gateSurface;
+    int gateFailed;
     int failed;
 } Layer;
 
@@ -212,6 +215,12 @@ static double s_nearOffFill; /* the fill at which it stopped being affordable */
 static double s_frameMs;     /* the time between frames, smoothed */
 static uint64_t s_frameAt;
 static DWORD s_zFuncWanted, s_zEnableWanted; /* the engine's, while that pass has its own */
+static int s_gate;           /* the far part of the run is being drawn behind the gate */
+static void *s_gateShader;   /* keeps the texels the near part has left nothing to show through */
+/* The stencil states the gate tests with, while the engine's own values wait. */
+static const DWORD gateStates[] = { RS_STENCILENABLE, RS_STENCILFAIL, RS_STENCILZFAIL, RS_STENCILPASS, RS_STENCILFUNC,
+    RS_STENCILREF, RS_STENCILMASK, RS_STENCILWRITEMASK, RS_TWOSIDEDSTENCILMODE };
+static DWORD s_gateWanted[COUNT(gateStates)];
 static int s_early;          /* the layer is being drawn ahead of the scene (RB_FxLayer_BeginEarly) */
 static int s_earlyPending;   /* and waits to be put over the frame buffer */
 static int s_mode = DIRECT;             /* how the effects are drawn this frame: DIRECT or a level */
@@ -284,6 +293,8 @@ static void ReleaseLayers(void)
         Release(&layer->floatZSurface);
         Release(&layer->floatZTexture);
         Release(&layer->floatZShader);
+        Release(&layer->gateSurface);
+        Release(&layer->gateTexture);
         memset(layer, 0, sizeof(*layer));
     }
 }
@@ -301,7 +312,8 @@ void RB_FxLayer_Release(void)
     Release(&s_filmShader[2]);
     s_filmValued = s_sceneDepthDrawn = 0;
     Release(&s_redShader);
-    s_alphaPass = s_alphaDrawn = 0;
+    Release(&s_gateShader);
+    s_alphaPass = s_alphaDrawn = s_gate = 0;
     s_active = s_depthOnly = s_queryPending = s_measuring = s_farPass = s_nearPass = 0;
     Release(&s_depthPassColor);
     Release(&s_depthPassDepth);
@@ -515,7 +527,11 @@ static void *FixShader(const Layer *layer, int nearer, int level)
  * `pick` chooses the pixel's depth: the prepass's depth of the pixel itself (0), or
  * the nearest (1) or farthest (2) of the pixels around it, for the samples that
  * anti-aliasing puts on the surface next door. Nothing is given to the view weapon,
- * which is drawn in a depth range of its own (WEAPON_DEPTH).
+ * which is drawn in a depth range of its own (WEAPON_DEPTH). (One case is lost by
+ * that: with soft particles off, or under Direct3D 7, a sprite that cuts the near
+ * plane veils the weapon when drawn straight onto the frame buffer, and a smaller
+ * layer leaves the weapon clear. Giving the weapon the texels tested against it was
+ * tried and left dark blocks on the sleeve at a half.)
  *
  * Sampler 0 is the layer's depth, 1 the layer, 2 the prepass's depth, 3 the depth the
  * layer's effects reach, 4 and 5 the layer's second depth and picture. */
@@ -1528,6 +1544,143 @@ int RB_FxLayer_FarBegin(void)
     return 1;
 }
 
+/* The gate.
+ *
+ * Standing in smoke, most of what is drawn cannot be seen: the nearest sprites already
+ * leave nothing of what lies behind them, and the farther ones are blended in all the
+ * same. A run is drawn back to front, so the sprites that hide come last, too late to
+ * spare the ones they hide.
+ *
+ * So a long run in a smaller layer is drawn in two parts, and the near part first, on
+ * its own. Then the texels where it lets less than a quarter of one step of an 8-bit
+ * picture through are marked in the layer's stencil buffer, the far part is drawn
+ * into a second target everywhere else, and that target is put under the near part:
+ * its colour times what the near part lets through, and the two shares of the scene
+ * multiplied. That is the same sum the run makes drawn in order, and the marked
+ * texels are spared the far part. What they lose is at most that quarter step, and it
+ * shows as the scene, never as thinner smoke than the game draws by more than that.
+ *
+ * `count` surfaces make the run. Returns the number that form the far part, or 0 when
+ * the run is to be drawn in one go. */
+int RB_FxLayer_GateSplit(int count)
+{
+    Layer *layer = s_layer;
+    void *device = s_device;
+    int share = Dvar_GetInt("r_fxLayerGate"), near;
+
+    if (!s_active || !s_level || s_nearPass || s_alphaPass || s_farPass || s_gate || share <= 0 || share >= 100 ||
+        count < 6 || layer->gateFailed)
+        return 0;
+    if (!s_gateShader) {
+        char source[256];
+        snprintf(source, sizeof source,
+                 "sampler map : register(s0);\n"
+                 "float4 main(float2 uv : TEXCOORD0) : COLOR0 { clip(%.9g - tex2D(map, uv).a); return 0; }\n",
+                 0.25 / 255.0);
+        s_gateShader = CompileShader("fxlayer_gate", source);
+    }
+    if (s_gateShader && !layer->gateSurface) {
+        SurfaceDesc desc;
+        memset(&desc, 0, sizeof(desc));
+        CALL(GetDescFn, layer->colorSurface, SURF_GetDesc)(layer->colorSurface, &desc);
+        if (CALL(CreateTextureFn, device, DEV_CreateTexture)(device, layer->width, layer->height, 1, USAGE_RENDERTARGET,
+                                                             desc.Format, 0, &layer->gateTexture, NULL) >= 0)
+            CALL(GetSurfaceFn, layer->gateTexture, TEX_GetSurfaceLevel)(layer->gateTexture, 0, &layer->gateSurface);
+    }
+    if (!s_gateShader || !layer->gateSurface) {
+        layer->gateFailed = 1;
+        return 0;
+    }
+    near = count * share / 100;
+    if (near < 1)
+        near = 1;
+    return count - near;
+}
+
+/* The near part of the run is in the layer. Mark what it hides and bind the target
+ * the far part is drawn into; RB_FxLayer_GateEnd follows. */
+void RB_FxLayer_GateBegin(void)
+{
+    void *device = s_device;
+    Layer *layer = s_layer;
+    Viewport scaled;
+    Saved saved;
+    unsigned i;
+
+    CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, layer->gateSurface);
+    ScaleViewport(&s_viewport, &scaled);
+    CALL(ViewportFn, device, DEV_SetViewport)(device, &scaled);
+    /* black, all of the scene showing through, and no texel marked */
+    CALL(ClearFn, device, DEV_Clear)(device, 0, NULL, 1 | 4, 0xff000000u, 1.0f, 0);
+    PassBegin(&saved);
+    SetState(RS_ZENABLE, 0);
+    SetState(RS_ALPHABLENDENABLE, 0);
+    SetState(RS_COLORWRITEENABLE, 0);
+    SetState(RS_STENCILENABLE, 1);
+    SetState(RS_STENCILFUNC, CMP_ALWAYS);
+    SetState(RS_STENCILREF, 1);
+    SetState(RS_STENCILMASK, 0xff);
+    SetState(RS_STENCILWRITEMASK, 0xff);
+    SetState(RS_STENCILPASS, OP_REPLACE);
+    CALL(SetObjectFn, device, DEV_SetPixelShader)(device, s_gateShader);
+    PassTexture(0, layer->colorTexture, 1);
+    PassDraw(0.0f, 0.0f, (float)layer->width, (float)layer->height, 0.0f, 0.0f, 1.0f, 1.0f);
+    PassEnd(&saved);
+    for (i = 0; i < COUNT(gateStates); i++)
+        s_gateWanted[i] = GetState(gateStates[i]);
+    SetState(RS_TWOSIDEDSTENCILMODE, 0);
+    SetState(RS_STENCILFAIL, OP_KEEP);
+    SetState(RS_STENCILZFAIL, OP_KEEP);
+    SetState(RS_STENCILPASS, OP_KEEP);
+    SetState(RS_STENCILFUNC, CMP_NOTEQUAL);
+    SetState(RS_STENCILREF, 1);
+    SetState(RS_STENCILMASK, 0xff);
+    SetState(RS_STENCILWRITEMASK, 0);
+    SetState(RS_STENCILENABLE, 1);
+    s_gate = 1;
+}
+
+/* The far part is drawn. Put it under the near part, which is bound again. */
+void RB_FxLayer_GateEnd(void)
+{
+    static const DWORD values[] = { 2, 2, 2, 2, 1, 1 }; /* select the texture; second stage off */
+    void *device = s_device;
+    Layer *layer = s_layer;
+    DWORD sourceAlpha = GetState(RS_SRCBLENDALPHA), destAlpha = GetState(RS_DESTBLENDALPHA),
+          opAlpha = GetState(RS_BLENDOPALPHA);
+    Viewport scaled;
+    Saved saved;
+    unsigned i;
+
+    if (!s_gate)
+        return;
+    s_gate = 0;
+    for (i = 0; i < COUNT(gateStates); i++)
+        SetState(gateStates[i], s_gateWanted[i]);
+    CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, layer->colorSurface);
+    PassBegin(&saved);
+    SetState(RS_ZENABLE, 0);
+    SetState(RS_ALPHABLENDENABLE, 1);
+    SetState(RS_COLORWRITEENABLE, 0xf);
+    SetState(RS_SRCBLEND, BLEND_DESTALPHA);
+    SetState(RS_DESTBLEND, BLEND_ONE);
+    SetState(RS_SEPARATEALPHABLENDENABLE, 1);
+    SetState(RS_BLENDOPALPHA, 1);
+    SetState(RS_SRCBLENDALPHA, BLEND_ZERO);
+    SetState(RS_DESTBLENDALPHA, BLEND_SRCALPHA);
+    CALL(SetObjectFn, device, DEV_SetPixelShader)(device, NULL);
+    for (i = 0; i < COUNT(passStages); i++)
+        CALL(SetStageFn, device, DEV_SetTextureStageState)(device, passStages[i][0], passStages[i][1], values[i]);
+    PassTexture(0, layer->gateTexture, 1);
+    PassDraw(0.0f, 0.0f, (float)layer->width, (float)layer->height, 0.0f, 0.0f, 1.0f, 1.0f);
+    PassEnd(&saved);
+    SetState(RS_BLENDOPALPHA, opAlpha);
+    SetState(RS_SRCBLENDALPHA, sourceAlpha);
+    SetState(RS_DESTBLENDALPHA, destAlpha);
+    ScaleViewport(&s_viewport, &scaled);
+    CALL(ViewportFn, device, DEV_SetViewport)(device, &scaled);
+}
+
 /* Called for every render state the engine sets while the layer is in use.
  * Returns 1 when the engine's value must not reach the device now. */
 int RB_FxLayer_RenderState(DWORD state, DWORD value)
@@ -1539,6 +1692,12 @@ int RB_FxLayer_RenderState(DWORD state, DWORD value)
         s_colorWriteWanted = value;
         return 1;
     }
+    if (s_gate)
+        for (i = 0; i < COUNT(gateStates); i++)
+            if (gateStates[i] == state) {
+                s_gateWanted[i] = value;
+                return 1;
+            }
     if (s_farPass && (state == RS_ZFUNC || state == RS_ZENABLE)) {
         *(state == RS_ZFUNC ? &s_zFuncWanted : &s_zEnableWanted) = value;
         return 1;

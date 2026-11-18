@@ -2464,9 +2464,21 @@ static void RB_DrawFxLayerRun(GfxDrawSurf *drawSurfs, int count, MaterialTechniq
     extern void RB_FxLayer_AlphaBegin(void);
     extern int RB_FxLayer_FarBegin(void);
     extern int RB_FxLayer_NearBegin(void);
-    int i, blendsAlpha = 0;
+    extern int RB_FxLayer_GateSplit(int count);
+    extern void RB_FxLayer_GateBegin(void);
+    extern void RB_FxLayer_GateEnd(void);
+    int i, blendsAlpha = 0, far = RB_FxLayer_GateSplit(count);
 
-    RB_RenderDrawSurfList(drawSurfs, count, techType, order);
+    if (far) {
+        /* The nearest part first, then the rest only where that leaves something to
+         * show through (rb_fxlayer.c: the gate). The list runs from far to near. */
+        RB_RenderDrawSurfList(drawSurfs + far, count - far, techType, order);
+        RB_FxLayer_GateBegin();
+        RB_RenderDrawSurfList(drawSurfs, far, techType, order);
+        RB_FxLayer_GateEnd();
+    } else {
+        RB_RenderDrawSurfList(drawSurfs, count, techType, order);
+    }
     for (i = 0; i < count && !blendsAlpha; i++) {
         const Material *material;
         int entityIndex, lightmap;

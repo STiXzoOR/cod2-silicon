@@ -461,6 +461,11 @@ void R_RegisterDvars(void)
      * bush inside the smoke keeps the smoke that belongs in front of it (rb_fxlayer.c:
      * BlendShader). 0 draws it once. */
     ri.Dvar_RegisterInt("r_fxLayerTwice", 1, 0, 1, 0);
+    /* The share of a long run of effects, in percent and counted from the nearest, that
+     * a smaller layer draws first; the rest is then left out wherever that share already
+     * hides it (rb_fxlayer.c: the gate). 0 draws a run in one go. Measured in four smokes
+     * at 4K: the layer takes 1.10 ms without it, 0.75 at 35, 0.52 at 20, 0.58 at 12. */
+    ri.Dvar_RegisterInt("r_fxLayerGate", 20, 0, 99, 0);
     /* With anti-aliasing on, draw the scene into a multisampled target of its own and
      * everything after it onto the resolved picture (rb_scenetarget.c). 0 draws all of
      * it into a multisampled back buffer, as Direct3D 9 does. Takes a vid_restart. */
