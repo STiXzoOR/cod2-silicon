@@ -750,7 +750,7 @@ struct AboutPane: View {
                         .help("Copy the version, game versions, macOS, Mac model, shaders and display, as Report a Problem shows them")
                         .task(id: copied) { if copied { try? await Task.sleep(for: .seconds(2)); copied = false } }
                     }
-                    Text("Call of Duty 2, running natively on Apple silicon. Free and open source. You bring your own copy of the game.")
+                    Text("Call of Duty 2 multiplayer, on every platform. Free and open source. You bring your own copy of the game.")
                         .font(.system(size: 13)).foregroundStyle(palette.secondary).frame(maxWidth: 520, alignment: .leading).fixedSize(horizontal: false, vertical: true)
                 }
             }
