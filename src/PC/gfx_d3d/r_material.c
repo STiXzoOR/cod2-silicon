@@ -1400,7 +1400,7 @@ const stream_dest_info_t s_streamDestInfo[12] = { { 0, 0 }, { 3, 0 }, { 10, 0 },
 #if defined(_MSC_VER)
 COD2_ALT("declEnd", "declEnd_131795")
 const unsigned char declEnd_131795[20] = {
-#elif defined(__APPLE__) && defined(COD2_X64)
+#elif (defined(__APPLE__) && defined(COD2_X64)) || (COD2_WINDOWS_NATIVE && defined(__i386__))
 const unsigned char declEnd_131795[20] __asm__("_declEnd") = {
 #else
 const unsigned char declEnd_131795[20] __asm__("declEnd") = {

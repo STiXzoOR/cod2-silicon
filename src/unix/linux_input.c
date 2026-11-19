@@ -6,7 +6,7 @@
 #define __m128 __m128_cod2
 #include "common_types.h"
 #undef __m128
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
 #include "imports.h"
 #endif
 
@@ -79,13 +79,13 @@ extern int Linux_PollInputEvent(LinuxInputEvent *event);
 #define K_KP_STAR    0xc6
 #define K_KP_EQUALS  0xc7
 #define K_MOUSE1     0xc8
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
 #define K_MWHEELDOWN 0xcd
 #define K_MWHEELUP   0xce
 #endif
 
 
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
 #include "platform/macos_rawmouse.h"
 #include "platform/macos_input_policy.h"
 #include "platform/macos_text.h"
@@ -97,6 +97,24 @@ extern void CL_MouseEvent(int dx, int dy);
 static int mac_relative;
 static int mac_use_raw;
 static float mac_wheel_remainder;
+
+#if COD2_WINDOWS_NATIVE && defined(COD2_X64)
+/* The Windows build reads typed text as code points; the Mac goes through MacText_EncodeUTF8. */
+static unsigned int MacInput_DecodeUTF8(const unsigned char **cursor)
+{
+    const unsigned char *p = *cursor;
+    unsigned int value = *p++;
+    int trailing = value < 0x80 ? 0 : ((value & 0xe0) == 0xc0 ? 1 : ((value & 0xf0) == 0xe0 ? 2 : ((value & 0xf8) == 0xf0 ? 3 : -1)));
+    if (trailing < 0) { *cursor = p; return 0; }
+    value &= trailing == 0 ? 0x7f : ((1u << (6 - trailing)) - 1);
+    for (int i = 0; i < trailing; ++i) {
+        if ((*p & 0xc0) != 0x80) { *cursor = p; return 0; }
+        value = (value << 6) | (*p++ & 0x3f);
+    }
+    *cursor = p;
+    return value;
+}
+#endif
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "platform/cod2x_native_mouse.h"
 #include "platform/macos_system.h"
@@ -334,7 +352,7 @@ int SDL_PumpInputEvents(void)
     }
 #endif
 
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
     if (!SDL_IsTextInputActive()) {
 #else
     if (!textInputStarted && !SDL_IsTextInputActive()) {
@@ -343,7 +361,7 @@ int SDL_PumpInputEvents(void)
         textInputStarted = 1;
     }
 
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
     /* Com_EventLoop also runs during the frame-cap wait. Pump Cocoa at most
      * once per millisecond; peeping the queue never enters SDL's wait path. */
     static Uint32 lastPump;
@@ -367,7 +385,7 @@ int SDL_PumpInputEvents(void)
         if (!eventTime) eventTime = 1;
 #endif
         switch (ev.type) {
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
         case SDL_QUIT:
             { extern void Cbuf_AddText(const char *text); Cbuf_AddText("quit\n"); }
             break;
@@ -390,7 +408,7 @@ int SDL_PumpInputEvents(void)
             break;
 #endif
         case SDL_MOUSEMOTION: {
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
             if (mac_relative) {
                 if (!mac_use_raw)
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
@@ -433,7 +451,7 @@ int SDL_PumpInputEvents(void)
             break;
         }
         case SDL_MOUSEWHEEL: {
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
             /* Cocoa already applies the user's scrolling direction, as Carbon
              * did. Undoing FLIPPED discards natural scrolling. */
             float motion = ev.wheel.preciseY != 0.0f ? ev.wheel.preciseY : (float)ev.wheel.y;
@@ -467,7 +485,7 @@ int SDL_PumpInputEvents(void)
                 control = ev.key.keysym.sym - SDLK_a + 1;
 #endif
             if (control) {
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
                 Sys_QueEvent(eventTime, SE_CHAR, control, 0, 0, NULL);
 #else
                 CCallOfDutyEngine_DoTextInput(get_engine(), 8);
@@ -497,6 +515,14 @@ int SDL_PumpInputEvents(void)
                         }
                     }
                     free(bytes);
+                }
+            }
+#elif COD2_WINDOWS_NATIVE && defined(COD2_X64)
+            for (const unsigned char *p = (const unsigned char *)ev.text.text; *p;) {
+                unsigned int character = MacInput_DecodeUTF8(&p);
+                if (character >= 0x20 && character != 0x7f) {
+                    Sys_QueEvent(0, SE_CHAR, (int)character, 0, 0, NULL);
+                    ++inputEventCount;
                 }
             }
 #else
@@ -536,7 +562,7 @@ void MacInput_WaitIfMinimized(void)
 
 void IN_Frame(void)
 {
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
     extern SDL_Window *sdl_gl_window;
     clientActive_t *client = imp_cl ? *(clientActive_t **)imp_cl : NULL;
     extern int MacDisplay_WindowVisible(void);

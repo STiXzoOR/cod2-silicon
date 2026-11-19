@@ -380,9 +380,14 @@ static void cr_atexit_diag(void)
 /* A CRT secure-function failure (e.g. a buffer size wrong on x64) invokes the invalid-parameter
    handler, which by default __fastfails -- terminating abruptly with no SEH report. Trap it so it
    logs and CONTINUES (returns an error to the caller) instead of killing the process. */
+#if defined(__MINGW32__) && defined(COD2_X64)
+#include <stdlib.h>
+static void __cdecl cr_inv_param(const wchar_t *e, const wchar_t *f, const wchar_t *fl, unsigned int line, uintptr_t r)
+#else
 typedef void(__cdecl *cr_invh_t)(const void *, const void *, const void *, unsigned int, void *);
 extern cr_invh_t __cdecl _set_invalid_parameter_handler(cr_invh_t);
 static void __cdecl cr_inv_param(const void *e, const void *f, const void *fl, unsigned int line, void *r)
+#endif
 {
     /* Safety net: a CRT secure-function invalid parameter would otherwise __fastfail (abrupt exit,
        no SEH report). Swallow it and continue so the caller just gets an error return. */
@@ -472,6 +477,9 @@ static void cr_heapdiag_init(void)
 
 #endif
 
+#if defined(_WIN32) && defined(__GNUC__) && defined(COD2_X64)
+__attribute__((stdcall))
+#endif
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 #if defined(COD2_X64)
@@ -776,7 +784,7 @@ Bool Sys_HasInfoChanged(void)
 
     cpuCurrent = (double)sys_cpuGHz->current.value;
 
-#if defined(COD2_X64) && defined(__APPLE__)
+#if defined(COD2_X64) && (defined(__APPLE__) || defined(__linux__) || COD2_WINDOWS_NATIVE)
     if (cpuCurrent > sys_info.cpuGHz * (double)1.1f || cpuCurrent < sys_info.cpuGHz * (double)0.9f) {
 #else
     if (cpuCurrent > sys_info.cpuGHz * 1.1 || cpuCurrent < sys_info.cpuGHz * 0.9) {

@@ -897,7 +897,7 @@ void Sys_CrashFreezeReport(void *context)
 #        endif
 #    endif
 
-#    if defined(__linux__)
+#    if defined(__linux__) && !defined(DEDICATED)
 #        include <X11/Xlib.h>
 #        include <X11/keysym.h>
 
@@ -1016,7 +1016,7 @@ static void cr_posix_popup(const char *path, const char *desc)
                "--width=1000", "--height=680", "--font=monospace 9", (char *)NULL);
         execlp("kdialog", "kdialog", "--title", title, "--textbox", path, "1000", "680", (char *)NULL);
         execlp("xmessage", "xmessage", "-center", "-file", path, (char *)NULL);
-#    if defined(__linux__)
+#    if defined(__linux__) && !defined(DEDICATED)
         cr_x11_fallback(path);
 #    endif
         _exit(127);

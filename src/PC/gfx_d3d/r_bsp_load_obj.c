@@ -50,7 +50,7 @@ typedef struct dcell_ondisk_s {
     int reflectionProbeCount;
 } dcell_ondisk_t;
 
-#if COD2_APPLE_SDK
+#if COD2_APPLE_SDK || defined(COD2_X64)
 static int R_FinishLoadingAabbTrees_r(GfxAabbTree *tree, int totalTreesUsed);
 #else
 static int R_FinishLoadingAabbTrees_r(byte *tree, int totalTreesUsed);

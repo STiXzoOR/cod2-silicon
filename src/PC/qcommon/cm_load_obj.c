@@ -1276,7 +1276,7 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
         {
             byte *tempTop = (byte *)TempMalloc(0);
             int totalBytes = (int)(tempTop - (byte *)cmLocal->leafbrushNodes);
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 
             nodeCount = totalBytes / (int)sizeof(cLeafBrushNode_t);
 #else
@@ -1297,7 +1297,7 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
 
             {
                 int copySize;
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
                 copySize = nodeCount * (int)sizeof(cLeafBrushNode_t);
 #else
                 int t2 = nodeCount;

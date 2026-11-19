@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || defined(__linux__) || defined(_WIN32)) && defined(COD2_X64)
 #ifdef __cplusplus
 extern "C" {
 #endif

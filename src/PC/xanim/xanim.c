@@ -1874,7 +1874,11 @@ static void XAnimCalcAccumulateFullQuatLocal(DObjAnimMat *mat, const XAnimPartQu
 
 #if !defined(COD2_X64)
         if ((unsigned)quat->size > 4096u ||
+#if defined(COD2_X64)
+            COD2_POINTER_LOOKS_TRUNCATED(frames) ||
+#else
             (uintptr_t)frames + 0x100000000ULL < 0x200000000ULL ||
+#endif
             (uintptr_t)frames >= 0x800000000000ULL)
             return; /* x64 TODO: corrupt anim frame data (see XAnimCalcAccumulateTransLocal) */
 #endif
@@ -1912,7 +1916,11 @@ static void XAnimCalcAccumulateSimpleQuatLocal(DObjAnimMat *mat, const XAnimPart
 
 #if !defined(COD2_X64)
         if ((unsigned)quat->size > 4096u ||
+#if defined(COD2_X64)
+            COD2_POINTER_LOOKS_TRUNCATED(frames) ||
+#else
             (uintptr_t)frames + 0x100000000ULL < 0x200000000ULL ||
+#endif
             (uintptr_t)frames >= 0x800000000000ULL)
             return; /* x64 TODO: corrupt anim frame data (see XAnimCalcAccumulateTransLocal) */
 #endif
@@ -1951,7 +1959,11 @@ static void XAnimCalcAccumulateTransLocal(DObjAnimMat *mat, const XAnimPartTrans
                x64-correct, so the corruption is post-load (anim tree/DObj bone path).
                Skip this bone's trans accumulation to avoid dereferencing bad data. */
             if ((unsigned)trans->size > 4096u ||
+#if defined(COD2_X64)
+                COD2_POINTER_LOOKS_TRUNCATED(frames) ||
+#else
                 (uintptr_t)frames + 0x100000000ULL < 0x200000000ULL ||
+#endif
                 (uintptr_t)frames >= 0x800000000000ULL) {
                 mat->transWeight += weightScale;
                 return;

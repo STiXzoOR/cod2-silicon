@@ -1,8 +1,24 @@
 #include "macos_audio.h"
 
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) && defined(COD2_X64)) || COD2_WINDOWS_NATIVE
+#if defined(__APPLE__)
 #include <AudioToolbox/AudioToolbox.h>
 #include <CoreAudio/CoreAudio.h>
+#else
+/* Windows has the same mixer. SDL plays it and reads WAV; minimp3 reads MP3. */
+#include <SDL.h>
+#define MINIMP3_IMPLEMENTATION
+#define MINIMP3_FLOAT_OUTPUT
+#define MINIMP3_ONLY_MP3
+#include "third_party/minimp3/minimp3.h"
+typedef int OSStatus;
+enum {
+    kAudio_ParamError = -50,
+    kAudioFileUnsupportedDataFormatError = 1,
+    kAudioFileUnsupportedFileTypeError = 2,
+    kAudioFileFileNotFoundError = 3
+};
+#endif
 #include <errno.h>
 #include <limits.h>
 #include <math.h>
@@ -71,7 +87,11 @@ typedef struct {
 } MacAudioFile;
 
 static pthread_mutex_t audio_mutex = PTHREAD_MUTEX_INITIALIZER;
+#if defined(__APPLE__)
 static AudioUnit output_unit;
+#else
+static SDL_AudioDeviceID output_device;
+#endif
 static MacAudioSample samples[AUDIO_SAMPLES];
 /* Guarded by audio_mutex and retained across shutdown to reject stale decodes. */
 static uint64_t sample_generation;
@@ -247,6 +267,7 @@ static void ResetSample(MacAudioSample *sample)
     sample->max_distance = 100000.0f;
 }
 
+#if defined(__APPLE__)
 static OSStatus FileRead(void *client, SInt64 position, UInt32 count, void *buffer, UInt32 *actual)
 {
     MacAudioFile *file = client;
@@ -343,6 +364,99 @@ static int DecodeFile(const void *data, size_t size, float **pcm, size_t *frames
     *rate = (int)output.mSampleRate;
     return 1;
 }
+#else
+static int DecodeWave(const void *data, size_t size, float **pcm, size_t *frames, int *channels, int *rate)
+{
+    SDL_AudioSpec spec;
+    Uint8 *wave;
+    Uint32 bytes;
+    if (size > AUDIO_MAX_BYTES || !SDL_LoadWAV_RW(SDL_RWFromConstMem(data, (int)size), 1, &spec, &wave, &bytes)) {
+        snprintf(last_error, sizeof(last_error), "SDL_LoadWAV: %s", SDL_GetError());
+        return 0;
+    }
+    SDL_AudioCVT convert;
+    int error = spec.channels < 1 || spec.channels > 2
+        || SDL_BuildAudioCVT(&convert, spec.format, spec.channels, spec.freq, AUDIO_F32SYS, spec.channels, spec.freq) < 0;
+    if (!error) {
+        convert.len = (int)bytes;
+        convert.buf = malloc(bytes ? (size_t)bytes * convert.len_mult : 1);
+        error = !convert.buf;
+    }
+    if (!error) {
+        memcpy(convert.buf, wave, bytes);
+        error = bytes && SDL_ConvertAudio(&convert) < 0;
+        if (error)
+            free(convert.buf);
+    }
+    SDL_FreeWAV(wave);
+    if (error)
+        return AudioError("WAV conversion", kAudioFileUnsupportedDataFormatError);
+    *pcm = (float *)convert.buf;
+    *frames = bytes ? (size_t)convert.len_cvt / (spec.channels * sizeof(float)) : 0;
+    *channels = spec.channels;
+    *rate = spec.freq;
+    return 1;
+}
+
+static int DecodeMp3(const unsigned char *data, size_t size, float **pcm, size_t *frames, int *channels, int *rate)
+{
+    mp3dec_t decoder;
+    float frame[MINIMP3_MAX_SAMPLES_PER_FRAME];
+    float *result = NULL;
+    size_t used = 0, capacity = 0;
+    int out_channels = 0, out_rate = 0;
+    /* minimp3 trusts a frame once later frames agree with it, and a trailing ID3v1 tag
+       stops that check on a short file such as ambient/silentsong.mp3. */
+    if (size >= 128 && !memcmp(data + size - 128, "TAG", 3))
+        size -= 128;
+    mp3dec_init(&decoder);
+    while (size) {
+        mp3dec_frame_info_t info;
+        int count = mp3dec_decode_frame(&decoder, data, size > INT_MAX ? INT_MAX : (int)size, frame, &info);
+        if (!info.frame_bytes)
+            break;
+        data += info.frame_bytes;
+        size -= (size_t)info.frame_bytes;
+        if (!count)
+            continue;
+        if (!out_channels) {
+            out_channels = info.channels;
+            out_rate = info.hz;
+        }
+        if (info.channels != out_channels || info.hz != out_rate)
+            continue;
+        if (used + (size_t)count > capacity) {
+            size_t new_capacity = capacity ? capacity * 2 : 65536;
+            float *resized = new_capacity <= AUDIO_MAX_BYTES / sizeof(float) / (size_t)out_channels
+                ? realloc(result, new_capacity * (size_t)out_channels * sizeof(float)) : NULL;
+            if (!resized) {
+                free(result);
+                return AudioError("MP3 allocation", -ENOMEM);
+            }
+            result = resized;
+            capacity = new_capacity;
+        }
+        memcpy(result + used * (size_t)out_channels, frame, (size_t)count * (size_t)out_channels * sizeof(float));
+        used += (size_t)count;
+    }
+    if (!used || out_channels < 1 || out_channels > 2) {
+        free(result);
+        return AudioError("Unsupported or empty MP3", kAudioFileUnsupportedDataFormatError);
+    }
+    *pcm = result;
+    *frames = used;
+    *channels = out_channels;
+    *rate = out_rate;
+    return 1;
+}
+
+static int DecodeFile(const void *data, size_t size, float **pcm, size_t *frames, int *channels, int *rate)
+{
+    if (size >= 12 && !memcmp(data, "RIFF", 4) && !memcmp((const char *)data + 8, "WAVE", 4))
+        return DecodeWave(data, size, pcm, frames, channels, rate);
+    return DecodeMp3(data, size, pcm, frames, channels, rate);
+}
+#endif
 
 static int DecodeInfo(const MacAudioSoundInfo *info, float **pcm, size_t *frames, int *channels, int *rate)
 {
@@ -646,6 +760,7 @@ void MacAudio_Mix(float *stereo, size_t frames)
     pthread_mutex_unlock(&audio_mutex);
 }
 
+#if defined(__APPLE__)
 static OSStatus Render(void *refcon, AudioUnitRenderActionFlags *flags, const AudioTimeStamp *timestamp, UInt32 bus, UInt32 frames, AudioBufferList *buffers)
 {
     (void)refcon; (void)timestamp; (void)bus;
@@ -678,6 +793,33 @@ static OSStatus Render(void *refcon, AudioUnitRenderActionFlags *flags, const Au
         *flags |= kAudioUnitRenderAction_OutputIsSilence;
     return noErr;
 }
+#else
+static void SDLCALL Render(void *userdata, Uint8 *stream, int bytes)
+{
+    (void)userdata;
+    size_t frames = (size_t)bytes / (2 * sizeof(float));
+    float *pcm = (float *)stream;
+    atomic_fetch_add_explicit(&output_callbacks, 1, memory_order_relaxed);
+    atomic_fetch_add_explicit(&output_frames, frames, memory_order_relaxed);
+    if (pthread_mutex_trylock(&audio_mutex)) {
+        atomic_fetch_add_explicit(&lock_misses, 1, memory_order_relaxed);
+        memset(stream, 0, (size_t)bytes);
+        return;
+    }
+    MixLocked(pcm, frames);
+    pthread_mutex_unlock(&audio_mutex);
+    float peak = 0;
+    uint64_t audible = 0;
+    for (size_t i = 0; i < frames; ++i) {
+        float value = fmaxf(fabsf(pcm[i * 2]), fabsf(pcm[i * 2 + 1]));
+        peak = fmaxf(peak, value);
+        audible += value > 0.00001f;
+    }
+    atomic_fetch_add_explicit(&audible_frames, audible, memory_order_relaxed);
+    if (peak > atomic_load_explicit(&output_peak, memory_order_relaxed))
+        atomic_store_explicit(&output_peak, peak, memory_order_relaxed);
+}
+#endif
 
 void MacAudio_GetStats(MacAudioStats *stats)
 {
@@ -702,6 +844,7 @@ void *AIL_open_digital_driver(int frequency, int bits, int channels, int flags)
         AudioError("Invalid digital driver format", kAudio_ParamError);
         return NULL;
     }
+#if defined(__APPLE__)
     if (output_unit)
         return AUDIO_DRIVER;
     driver_rate = frequency;
@@ -743,16 +886,36 @@ void *AIL_open_digital_driver(int frequency, int bits, int channels, int flags)
         return NULL;
     }
     return AUDIO_DRIVER;
+#else
+    driver_rate = frequency;
+    if (output_device)
+        return AUDIO_DRIVER;
+    SDL_AudioSpec want = { .freq = AUDIO_RATE, .format = AUDIO_F32SYS, .channels = 2, .samples = 1024, .callback = Render };
+    if (SDL_InitSubSystem(SDL_INIT_AUDIO) || !(output_device = SDL_OpenAudioDevice(NULL, 0, &want, NULL, 0))) {
+        snprintf(last_error, sizeof(last_error), "SDL audio: %s", SDL_GetError());
+        return NULL;
+    }
+    SDL_PauseAudioDevice(output_device, 0);
+    return AUDIO_DRIVER;
+#endif
 }
 
 void AIL_shutdown(void)
 {
+#if defined(__APPLE__)
     if (output_unit) {
         AudioOutputUnitStop(output_unit);
         AudioUnitUninitialize(output_unit);
         AudioComponentInstanceDispose(output_unit);
         output_unit = NULL;
     }
+#else
+    if (output_device) {
+        SDL_CloseAudioDevice(output_device);
+        SDL_QuitSubSystem(SDL_INIT_AUDIO);
+        output_device = 0;
+    }
+#endif
     for (int i = 0; i < AUDIO_SAMPLES; ++i) CloseStream(&samples[i]);
     pthread_mutex_lock(&audio_mutex);
     for (int i = 0; i < AUDIO_SAMPLES; ++i) {
@@ -778,11 +941,15 @@ void AIL_set_redist_directory(const char *directory) { (void)directory; }
 int AIL_digital_CPU_percent(void *driver)
 {
     (void)driver;
+#if defined(__APPLE__)
     Float32 load = 0;
     UInt32 size = sizeof(load);
     if (output_unit)
         AudioUnitGetProperty(output_unit, kAudioUnitProperty_CPULoad, kAudioUnitScope_Global, 0, &load, &size);
     return (int)(Clamp(load, 0, 1) * 100);
+#else
+    return 0;
+#endif
 }
 
 void *AIL_allocate_sample_handle(void *driver)

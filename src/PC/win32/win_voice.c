@@ -141,12 +141,23 @@ Bool Voice_Init(void)
         if (!Sound_Init(0))
             return 0;
     } else
+#elif COD2_WINDOWS_NATIVE
+    {
+        /* DirectSound binds to the game window. */
+        extern void *Win_GameWindow(void);
+        void *window = Win_GameWindow();
+        if (!Record_Init(0, window))
+            return 0;
+        Sound_Init((const unsigned char *)window);
+    }
 #else
     if (!Record_Init(0, 0))
         return 0;
 #endif
 
+#if !COD2_WINDOWS_NATIVE
     Sound_Init(0);
+#endif
     Encode_Init(*freq);
     Decode_Init(*freq);
 

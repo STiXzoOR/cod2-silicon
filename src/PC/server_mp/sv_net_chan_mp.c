@@ -114,7 +114,7 @@ Bool SV_Netchan_Transmit(client_t *client, int length, byte *data)
     byte *encodeData;
     int i;
     netchan_t *netchan;
-#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__) || COD2_WINDOWS_NATIVE
     static int x64TraceCount;
     byte beforeTrace[16];
     int beforeTraceLen;
@@ -130,7 +130,7 @@ Bool SV_Netchan_Transmit(client_t *client, int length, byte *data)
     key ^= (byte)outgoingSequence;
 
     index = 0;
-#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__) || COD2_WINDOWS_NATIVE
     beforeTraceLen = dataSize < (int)sizeof(beforeTrace) ? dataSize : (int)sizeof(beforeTrace);
     for (i = 0; i < beforeTraceLen; ++i) {
         beforeTrace[i] = encodeData[i];
@@ -152,7 +152,7 @@ Bool SV_Netchan_Transmit(client_t *client, int length, byte *data)
         encodeData[i] ^= key;
     }
 
-#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__) || COD2_WINDOWS_NATIVE
 #if defined(COD2_X64)
     if (COD2_NATIVE_TRACE_ENABLED() && x64TraceCount < 12) {
 #else

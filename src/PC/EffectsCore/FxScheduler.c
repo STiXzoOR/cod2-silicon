@@ -415,7 +415,7 @@ void FxScheduler_PlayEffect(const FxScheduler *_this, const EffectTemplate *fx, 
 #if defined(COD2_X64)
     /* x64: guard a corrupt/truncated fx (bullet impacts reach here via
        CG_BulletHitEvent) before iterating fx->mPrimitives. */
-    if ((uintptr_t)fx + 0x100000000ULL < 0x200000000ULL ||
+    if (COD2_POINTER_LOOKS_TRUNCATED(fx) ||
         (uintptr_t)fx >= 0x800000000000ULL ||
         (unsigned)fx->mPrimitiveCount > sizeof(fx->mPrimitives) / sizeof(fx->mPrimitives[0]))
         return;

@@ -1,7 +1,7 @@
 #include "common_types.h"
 #include <errno.h>
 #include <stdlib.h>
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || defined(__linux__) || defined(_WIN32)) && defined(COD2_X64)
 #include "macos_exception_bridge.h"
 #endif
 
@@ -12,7 +12,7 @@ static void *threadVtable[] = { (void *)ZN7CThreadD1Ev, (void *)ZN7CThreadD0Ev, 
 
 void CMutex_CMutex(const CMutex *object)
 {
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || defined(__linux__) || defined(_WIN32)) && defined(COD2_X64)
     CMutex *self = (CMutex *)object;
     pthread_mutexattr_t attr;
     int status = pthread_mutexattr_init(&attr);

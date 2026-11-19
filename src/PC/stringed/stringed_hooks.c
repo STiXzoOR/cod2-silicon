@@ -224,7 +224,7 @@ static qboolean SEH_StringEd_SetLanguageStrings(int iLanguage)
             return 0;
         }
     }
-#elif defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#elif defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 
     if (com_developer && com_developer->current.enabled) {
         return 0;

@@ -5,13 +5,13 @@
 #include <sys/time.h>
 #include <math.h>
 #include <stdio.h>
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || defined(__linux__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
 #include "platform/macos_system.h"
 #include <errno.h>
 #include <time.h>
 #endif
 
-#if !(defined(__APPLE__) && defined(COD2_X64) && defined(DEDICATED))
+#if !((defined(__APPLE__) || defined(__linux__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64) && defined(DEDICATED))
 #if !defined(_WIN32) || defined(W32_CLIENT)
 #    include <SDL2/SDL.h>
 #    ifdef __EMSCRIPTEN__
@@ -50,7 +50,12 @@ int ___maskrune(int c, unsigned long f)
     return rt[(unsigned char)c] & f;
 }
 
-#if !defined(_WIN32) && !(defined(__APPLE__) && defined(COD2_X64))
+#if defined(__linux__) && defined(COD2_X64)
+int pthread_main_np(void)
+{
+    return gettid() == getpid();
+}
+#elif !defined(_WIN32) && !(defined(__APPLE__) && defined(COD2_X64))
 int pthread_main_np(void)
 {
     return 1;
@@ -70,7 +75,7 @@ typedef struct {
 #endif
 AbsoluteTime UpTime(void)
 {
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || defined(__linux__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
     uint64_t nanos = MacSystem_Nanoseconds();
     AbsoluteTime t = { .hi = (unsigned int)(nanos >> 32), .lo = (unsigned int)nanos };
 #else
@@ -80,7 +85,7 @@ AbsoluteTime UpTime(void)
 }
 AbsoluteTime AddDurationToAbsolute(int duration, AbsoluteTime absTime)
 {
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || defined(__linux__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
     uint64_t nanos = ((uint64_t)absTime.hi << 32) | absTime.lo;
     nanos += duration >= 0 ? (uint64_t)duration * 1000000 : (uint64_t)-(int64_t)duration * 1000;
     absTime.hi = (unsigned int)(nanos >> 32);
@@ -90,7 +95,7 @@ AbsoluteTime AddDurationToAbsolute(int duration, AbsoluteTime absTime)
 }
 int MPDelayUntil(AbsoluteTime *expiration)
 {
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || defined(__linux__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
     uint64_t deadline = ((uint64_t)expiration->hi << 32) | expiration->lo;
     uint64_t now = MacSystem_Nanoseconds();
     if (deadline > now) {
@@ -103,7 +108,7 @@ int MPDelayUntil(AbsoluteTime *expiration)
 }
 void Microseconds(long long *us)
 {
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || defined(__linux__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
     *us = (long long)(MacSystem_Nanoseconds() / 1000);
 #else
     struct timeval tv;
@@ -196,7 +201,7 @@ __attribute__((constructor)) static void init_rune_locale(void)
         rt[i] = 0x2000 | 0x0800 | 0x40000 | 0x10;
 }
 
-#if !(defined(__APPLE__) && defined(COD2_X64))
+#if !((defined(__APPLE__) || defined(__linux__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64))
 extern void *sDisplayList[3];   /* matches the real def (void*[3]); was [12] (x86 4-byte slots) */
 extern int sInWindowMode;
 
@@ -266,7 +271,7 @@ __attribute__((constructor)) static void init_display_list(void)
 }
 
 /* The dedicated Apple target has no SDL window or GL context. */
-#if !(defined(__APPLE__) && defined(COD2_X64) && defined(DEDICATED))
+#if !((defined(__APPLE__) || defined(__linux__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64) && defined(DEDICATED))
 #if !defined(_WIN32) || defined(W32_CLIENT)
 SDL_Window *sdl_gl_window = NULL;
 int sdl_gl_width = 640;

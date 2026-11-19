@@ -208,7 +208,7 @@ static unsigned int __attribute_regparm__(3)
         int *value = (int *)GetVariableValueAddress(valueId);
         int type = GetVarType(valueId);
 
-#    if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#    if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
         char *codePtr = (char *)SCR_CODEPOS_PTR((unsigned int)*value);
 #    else
         char *codePtr = (char *)(intptr_t)*value;
@@ -5534,7 +5534,7 @@ emit_switch_table:
 #else
         *(unsigned int *)TempMallocAlign(4) = caseStatement->name;
 #endif
-#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__) || COD2_WINDOWS_NATIVE
         /* store a program-buffer offset: the runtime (VM_CandidateHandleSwitch) decodes the
            case codepos with SCR_CODEPOS_PTR. A truncated raw pointer would jump to garbage. */
 #if defined(COD2_X64)

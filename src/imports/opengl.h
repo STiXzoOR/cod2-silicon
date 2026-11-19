@@ -7,6 +7,27 @@
 #include <OpenGL/glext.h>
 #include <OpenGL/glu.h>
 
+#elif defined(__linux__) && defined(COD2_X64)
+
+#define GL_GLEXT_PROTOTYPES 1
+#include <GL/gl.h>
+#include <GL/glext.h>
+
+#elif COD2_WINDOWS_NATIVE
+
+/* src/win32/gl_loader.c defines the entry points with the C calling convention.
+ * An explicit APIENTRY keeps SDL_opengl.h from pulling in windows.h, whose types
+ * the engine headers declare themselves. */
+#define GL_NO_STDCALL 1
+#ifndef APIENTRY
+#define APIENTRY
+#endif
+#define GL_GLEXT_PROTOTYPES 1
+#pragma push_macro("_DLL")
+#undef _DLL
+#include <SDL2/SDL_opengl.h>
+#pragma pop_macro("_DLL")
+
 #elif defined(__EMSCRIPTEN__)
 
 #include "web/webgl2_compat.h"

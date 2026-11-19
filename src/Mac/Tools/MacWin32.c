@@ -169,6 +169,7 @@ BOOL SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes)
 
 extern int MacFiles_access(const char *inPath, int inMode);
 
+#if !(defined(_WIN32) && defined(__x86_64__))  /* same name as the real import there */
 DWORD GetFileAttributesA(LPCSTR lpFileName)
 {
 
@@ -181,12 +182,17 @@ BOOL SetThreadPriority(HANDLE hThread, int nPriority)
 
     return 1;
 }
+#endif
 
 #if !defined(_M_X64)  /* x64: use real Win32 (Mac/POSIX emulation collides by name) */
 DWORD GetCurrentThreadId(void)
 {
 
-#if COD2_APPLE_SDK
+#if defined(__linux__) && defined(COD2_X64)
+    return (DWORD)gettid();
+#elif COD2_WINDOWS_NATIVE
+    return (DWORD)(uintptr_t)pthread_self();
+#elif COD2_APPLE_SDK
     return (DWORD)pthread_mach_thread_np(pthread_self());
 #else
     return (DWORD)pthread_main_np();

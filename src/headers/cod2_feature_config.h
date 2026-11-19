@@ -61,6 +61,15 @@
   #define COD2_BANNER_DATE "Aug 30 2006"
 #endif
 
+/* The platform text in the version banners of the shipped binaries. */
+#if defined(_WIN32)
+  #define COD2_BUILD_PLATFORM "win-x86"
+#elif defined(__linux__)
+  #define COD2_BUILD_PLATFORM "linux-i386"
+#else
+  #define COD2_BUILD_PLATFORM "MacOSXS-i386"
+#endif
+
 #if COD2_IS_PATCH_13
   #define MAX_GAMESTATE_CHARS      0x20000
   #define MAX_MSGLEN               0x20000

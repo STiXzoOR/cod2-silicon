@@ -305,7 +305,7 @@ static inline __attribute__((always_inline)) void R_ResetFrameBackendData(void)
 
 static inline __attribute__((always_inline)) void R_SelectSkinnedCacheForFrame(DxGlobals *dx)
 {
-#if defined(COD2_X64) && defined(__APPLE__)
+#if defined(COD2_X64) && (defined(__APPLE__) || COD2_WINDOWS_NATIVE)
     /* Mac 0xc7db3/0xc7f5b selects the first cache every frame. */
     dx->dynamicBufferFrame = 0;
 #else
@@ -740,7 +740,7 @@ static void R_EndFrame_impl(void)
         return;
     }
 
-#if !defined(COD2_X64) || !defined(__APPLE__)
+#if !defined(COD2_X64) || !(defined(__APPLE__) || COD2_WINDOWS_NATIVE)
     RB_AdaptiveGpuSyncTarget();
 #endif
     R_UnlockSkinnedCache();

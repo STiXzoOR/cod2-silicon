@@ -4,8 +4,10 @@
 #include <string.h>
 
 #if defined(COD2_X64)
+#if __SIZEOF_POINTER__ == 8
 _Static_assert(sizeof(FxArchive) == 32, "FX native archive storage");
 _Static_assert(sizeof(FxChannelInstance) == 24, "FX native channel instance storage");
+#endif
 _Static_assert(sizeof(FxBoltInfo) == 8, "FX bolt wire storage");
 #endif
 

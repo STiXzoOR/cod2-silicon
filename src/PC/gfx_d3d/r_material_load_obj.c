@@ -22,7 +22,7 @@ extern dvar_t *r_rendererInUse;
 #    define MTLGLOB_COUNT (mtlLoadGlob.cachedShaderCount)
 #    define MTLGLOB_PTR(T) ((T *)mtlLoadGlob.cachedShaderText)
 #    define MTLGLOB_SET_PTR(p) (mtlLoadGlob.cachedShaderText = (p))
-#elif defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#elif defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 #    define MTLGLOB_COUNT (*(int *)mtlLoadGlob)
 #    define MTLGLOB_PTR(T) (*(T **)(mtlLoadGlob + 8))
 #    define MTLGLOB_SET_PTR(p) (*(void **)(mtlLoadGlob + 8) = (void *)(p))
@@ -316,7 +316,7 @@ void Material_PreLoadAllShaderText(void)
 
     totalCount = fileCountRoot + fileCountLib;
     MTLGLOB_COUNT = totalCount;
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
     cache = (GfxCachedShaderText *)Hunk_AllocInternal(totalCount * sizeof(GfxCachedShaderText));
 #else
     cache = (GfxCachedShaderText *)Hunk_AllocInternal(totalCount * 12);
@@ -349,7 +349,7 @@ void Material_PreLoadAllShaderText(void)
             ZSt16__introsort_loopIP19GfxCachedShaderTextiPFhRKS0_S3_EEvT_S6_T0_T1_(
                 first, last, depth, Material_CachedShaderTextLess);
 
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
             if ((char *)last - (char *)first > (long)(sizeof(GfxCachedShaderText) * 16)) {
 #else
             if ((char *)last - (char *)first > 12 * 16) {
@@ -1804,14 +1804,14 @@ static MaterialShader *MATERIAL_REGPARM2_ABI COD2_FORCE_ALIGN_ARG_POINTER Materi
     hi = count - 1;
     while (lo <= hi) {
         mid = (lo + hi) / 2;
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
         const char *entryName = *(const char **)(entries + mid * sizeof(GfxCachedShaderText));
 #else
         const char *entryName = *(const char **)(entries + mid * 12);
 #endif
         cmp = stricmp(filename, entryName);
         if (cmp == 0) {
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
             entry = entries + mid * sizeof(GfxCachedShaderText);
 #else
             entry = entries + mid * 12;

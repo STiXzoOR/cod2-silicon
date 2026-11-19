@@ -112,7 +112,7 @@ static void *Hunk_AllocXAnimTreePrecache(int size)
     return Hunk_AllocAlignInternal(size, 4);
 }
 
-#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__) || COD2_WINDOWS_NATIVE
 #if defined(COD2_X64)
 /* The four-byte chain stores program-buffer offsets or tagged indices into a
    growable table of external pointers. Scr_EndLoadAnimTrees releases the
@@ -217,7 +217,7 @@ static inline __attribute__((always_inline)) void Scr_EmitAnimationInternal(char
         /* The anim-ref chain slot is only 4 bytes (scr_anim_t / TempMallocAlign(4)); store the
            link as the 4-byte encoded code position (program-buffer offset or side-table index
            on x64), never an 8-byte raw pointer. */
-#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__) || COD2_WINDOWS_NATIVE
         *(unsigned int *)pos = 0;
         tempValue.type = SCR_VAR_CODEPOS;
         tempValue.u.codePosValue = AnimRef_Enc(pos);
@@ -231,7 +231,7 @@ static inline __attribute__((always_inline)) void Scr_EmitAnimationInternal(char
     }
 
     value = (VariableUnion *)GetVariableValueAddress(animId);
-#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__) || COD2_WINDOWS_NATIVE
     *(unsigned int *)pos = value->codePosValue;   /* link = previous head (encoded) */
     value->codePosValue = AnimRef_Enc(pos);       /* new head */
 #else
@@ -286,13 +286,13 @@ static void ConnectScriptToAnim(unsigned int names, int index, unsigned int file
 
     idx = (unsigned short)index;
     tree = (unsigned short)treeIndex;
-#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__) || COD2_WINDOWS_NATIVE
     codePos = AnimRef_Dec(value->codePosValue);
 #else
     codePos = SCR_CODEPOS_GET(*value);
 #endif
     for (; codePos; codePos = nextCodePos) {
-#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__) || COD2_WINDOWS_NATIVE
         /* link stored as a 4-byte encoded code position (see Scr_EmitAnimationInternal) */
         nextCodePos = AnimRef_Dec(*(const unsigned int *)codePos);
 #else
@@ -546,7 +546,7 @@ struct scr_animtree_t Scr_FindAnimTree(const char *filename)
        encoding, which retains external pointers in its native pointer table. */
     result.anims = (struct XAnim_s *)(void *)AnimRef_Dec(
         (unsigned int)Scr_EvalVariable(FindVariable(fileId, SCR_ANIMTREE_XANIM)));
-#elif defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
+#elif defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__) || COD2_WINDOWS_NATIVE
     /* The XAnim* was stored with SCR_CODEPOS_SET (a program-buffer-relative offset) at
        Scr_LoadAnimTreeAtIndex; decode it back to a real pointer. Reading the raw value would
        hand back the offset (e.g. 0xce60) as a pointer -> crash in XAnimGetAnimTreeSize. */

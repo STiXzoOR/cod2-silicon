@@ -9,7 +9,7 @@ extern void FS_FreeFile(void *buffer);
 extern const char **FS_ListFiles(const char *path, const char *extension, int behavior, int *numfiles, int allocTrackType);
 extern void FS_FreeFileList(const char **list, int allocTrackType);
 
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || defined(__linux__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
 #include "../../platform/macos_cpp_abi.h"
 #define STRINGED_STRING Cod2MacString
 #else
@@ -67,7 +67,7 @@ static void __attribute_regparm__(3)
 
     sysFiles = FS_ListFiles(psDir, psExtension, 0, &numSysFiles, 10);
     for (j = 0; j < numSysFiles; j++) {
-#if !defined(__APPLE__) || !defined(COD2_X64)
+#if !(defined(__APPLE__) || defined(__linux__) || COD2_WINDOWS_NATIVE) || !defined(COD2_X64)
         char *data;
         unsigned int size;
         unsigned int new_size;
@@ -77,7 +77,7 @@ static void __attribute_regparm__(3)
 
         __ZNSs6appendEPKcm(strResults, sDirName, strlen(sDirName));
 
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || defined(__linux__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
         /* The native COW header uses size_t fields; don't edit i386 offsets. */
         __ZNSs6appendEPKcm(strResults, ";", 1);
 #else

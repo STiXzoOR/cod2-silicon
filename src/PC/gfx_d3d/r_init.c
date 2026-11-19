@@ -86,7 +86,7 @@ static void R_CreateParticleCloudBuffer(void);
 static void R_ReleaseForShutdownOrReset(void);
 static Bool R_DisplayModeLess(const _D3DDISPLAYMODE *mode0, const _D3DDISPLAYMODE *mode1);
 void R_UpdateGpuSyncType(void);
-#if defined(COD2_X64) && defined(__APPLE__)
+#if defined(COD2_X64) && (defined(__APPLE__) || COD2_WINDOWS_NATIVE)
 extern qboolean RB_IsGpuFenceFinished(void);
 extern void RB_AdaptiveGpuSyncWait(void);
 extern void RB_GpuWaited(int ticks);
@@ -544,7 +544,7 @@ refexport_t *GetRefAPI(int apiVersion, refimport_t *rimp)
 #endif
     RE(328, imp_R_SyncRenderThread);
     RE(332, imp_R_AbortRenderCommands);
-#if defined(COD2_X64) && defined(__APPLE__)
+#if defined(COD2_X64) && (defined(__APPLE__) || COD2_WINDOWS_NATIVE)
     /* Keep API59's layout and void wait ABI. Its native wait callback owns
      * Mac CL_SyncGpu's delay query and polling, with one renderer clock. */
     re.IsGpuFenceFinished = RB_IsGpuFenceFinished;
@@ -804,7 +804,7 @@ static Bool R_CreateForInitOrReset(void)
         R_DxFatalError("Couldn't create a %i-byte dynamic vertex buffer: %s", vbSize, hr);
     dx.dynamicVertexBuffer = &dx.dynamicVertexBufferPool[0];
 
-#if defined(COD2_X64) && defined(__APPLE__)
+#if defined(COD2_X64) && (defined(__APPLE__) || COD2_WINDOWS_NATIVE)
     for (i = 0; i < 1; i++) {
 #else
     for (i = 0; i < 2; i++) {
@@ -1434,7 +1434,7 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
     }
 #endif
 #endif
-#if defined(COD2_X64) && defined(__APPLE__)
+#if defined(COD2_X64) && (defined(__APPLE__) || COD2_WINDOWS_NATIVE)
     /* Gamma belongs to presentation, including windowed native rendering. */
     vidConfig.deviceSupportsGamma = 1;
     R_SetColorMappings();

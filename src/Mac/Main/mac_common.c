@@ -221,7 +221,7 @@ char **Sys_ListFiles(const char *directory, const char *extension, const char *f
         if (nfiles == 0)
             return NULL;
 
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
         listCopy = (char **)Z_MallocInternal((nfiles + 1) * sizeof(char *));
 #else
         listCopy = (char **)Z_MallocInternal((nfiles + 1) * 4);
@@ -339,7 +339,7 @@ char **Sys_ListFiles(const char *directory, const char *extension, const char *f
     if (nfiles == 0)
         return NULL;
 
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
     listCopy = (char **)Z_MallocInternal((nfiles + 1) * sizeof(char *));
 #else
     listCopy = (char **)Z_MallocInternal((nfiles + 1) * 4);
@@ -391,7 +391,7 @@ qboolean Sys_DirectoryHasContents(const char *directory)
     while ((d = readdir(dir)) != NULL) {
         if (d->d_name[0] == '.')
             continue;
-#if defined(COD2_X64)
+#if defined(COD2_X64) && !defined(_WIN32)
         if (d->d_type != DT_REG)
             continue;
 #endif

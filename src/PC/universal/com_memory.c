@@ -7,7 +7,7 @@
 #include <stddef.h>
 #if COD2_APPLE_SDK
 #include "platform/macos_system.h"
-#include <malloc/malloc.h>
+#include COD2_MALLOC_HEADER
 #include <sys/mman.h>
 #include <unistd.h>
 #endif

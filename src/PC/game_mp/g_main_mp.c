@@ -611,7 +611,7 @@ extern void CheckTeamStatus(void);
 extern short int CheckTeamStatus(void);
 #endif
 extern void DeathmatchScoreboardMessage(gentity_t *ent);
-#if !defined(__APPLE__) || !defined(COD2_X64)
+#if !defined(COD2_X64)
 extern const char *SL_ConvertToString(unsigned short index);
 #endif
 extern void Dvar_SetBool(const dvar_t *dvar, int value);
@@ -1065,7 +1065,7 @@ extern void CheckTeamStatus(void);
 extern short int CheckTeamStatus(void);
 #endif
 extern void DeathmatchScoreboardMessage(gentity_t *ent);
-#if !defined(__APPLE__) || !defined(COD2_X64)
+#if !defined(COD2_X64)
 extern const char *SL_ConvertToString(unsigned short index);
 #endif
 extern void Dvar_SetBool(const dvar_t *dvar, int value);

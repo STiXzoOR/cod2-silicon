@@ -7,7 +7,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <errno.h>
-#if COD2_APPLE_SDK
+#if COD2_APPLE_SDK && !COD2_WINDOWS_NATIVE
 #include <net/if.h>
 #include <ifaddrs.h>
 #endif
@@ -235,7 +235,7 @@ qboolean Sys_StringToAdr(const char *s, netadr_t *a)
     struct hostent *h;
 
     memset(&sadr, 0, sizeof(sadr));
-#if COD2_APPLE_SDK
+#if COD2_APPLE_SDK && defined(__APPLE__)
     sadr.sin_len = sizeof(sadr);
 #endif
     sadr.sin_family = AF_INET;
@@ -399,7 +399,7 @@ void Sys_SendPacket(int length, const void *data, netadr_t to)
     }
 
     memset(&addr, 0, sizeof(addr));
-#if COD2_APPLE_SDK
+#if COD2_APPLE_SDK && defined(__APPLE__)
     addr.sin_len = sizeof(addr);
 #endif
 
@@ -543,7 +543,7 @@ void NET_OpenIP(void)
             struct sockaddr_in address;
 
             memset(&address, 0, sizeof(address));
-#if COD2_APPLE_SDK
+#if COD2_APPLE_SDK && defined(__APPLE__)
             address.sin_len = sizeof(address);
 #endif
 
@@ -635,7 +635,7 @@ void NET_OpenIP(void)
                         int useAuth;
 
                         memset(&saddr, 0, sizeof(saddr));
-#if COD2_APPLE_SDK
+#if COD2_APPLE_SDK && defined(__APPLE__)
                         saddr.sin_len = sizeof(saddr);
 #endif
                         saddr.sin_family = AF_INET;
@@ -789,7 +789,9 @@ void NET_OpenIP(void)
                         {
                             struct sockaddr_in relay;
                             memset(&relay, 0, sizeof(relay));
+#if COD2_APPLE_SDK && defined(__APPLE__)
                             relay.sin_len = sizeof(relay);
+#endif
                             relay.sin_family = AF_INET;
                             memcpy(&relay.sin_addr.s_addr, buf + 4, 4);
                             memcpy(&relay.sin_port, buf + 8, 2);
@@ -815,7 +817,29 @@ void NET_OpenIP(void)
             }
 #endif
 
-#if COD2_APPLE_SDK
+#if COD2_WINDOWS_NATIVE
+            {
+                char hostname[256];
+                struct hostent *host;
+                int i;
+                numIP = 0;
+                if (gethostname(hostname, sizeof(hostname)) == -1) {
+                    Com_Printf("NET_GetLocalAddress: gethostname: %s\n", strerror(errno));
+                    return;
+                }
+                host = gethostbyname(hostname);
+                if (!host) {
+                    Com_Printf("NET_GetLocalAddress: gethostbyname: %s\n", strerror(errno));
+                    return;
+                }
+                Com_Printf("Hostname: %s\n", host->h_name);
+                for (i = 0; host->h_addr_list[i] && numIP < 16; i++, numIP++) {
+                    memcpy(localIP[numIP], host->h_addr_list[i], sizeof(localIP[numIP]));
+                    Com_Printf("IP: %i.%i.%i.%i\n", localIP[numIP][0], localIP[numIP][1],
+                               localIP[numIP][2], localIP[numIP][3]);
+                }
+            }
+#elif COD2_APPLE_SDK
             {
                 struct ifaddrs *interfaces, *entry;
                 numIP = 0;

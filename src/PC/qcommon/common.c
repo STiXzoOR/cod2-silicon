@@ -1516,7 +1516,14 @@ void Com_ReadCDKey(void)
     extern qboolean CL_CDKeyValidate(const char *key, const char *checksum);
     char regkey[21];
 
+#if defined(COD2_X64) && COD2_WINDOWS_NATIVE
+    extern int Win_ReadRegistryCDKey(char *key, int size);
+
+    /* Windows 1.3 keeps the key in the registry; the preferences file stays a fallback. */
+    if (Win_ReadRegistryCDKey(regkey, sizeof(regkey)) || MacPreferences_GetString("codkey", regkey, 0x15, 0)) {
+#else
     if (MacPreferences_GetString("codkey", regkey, 0x15, 0)) {
+#endif
         memcpy(cl_cdkey, regkey, 16);
         cl_cdkey[16] = '\0';
         memcpy(cl_cdkeychecksum, regkey + 16, 4);

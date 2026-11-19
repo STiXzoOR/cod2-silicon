@@ -4,7 +4,7 @@
 #include "PC/gfx_d3d/r_log.h"
 #include "imports.h"
 #include "r_cod2x_film.h"
-#if defined(COD2_X64) && defined(__APPLE__)
+#if defined(COD2_X64) && (defined(__APPLE__) || COD2_WINDOWS_NATIVE)
 #include "platform/macos_system.h"
 extern float MacFeatures_GetCPUSpeedInGHz(void);
 extern void WinSleep(DWORD milliseconds);
@@ -1056,7 +1056,7 @@ static void RB_EndFrame_real(void)
         r_ignoreHwGamma_cvar = *(char **)imp_r_ignoreHwGamma;
         ri.Dvar_ClearModified((const dvar_t *)r_ignoreHwGamma_cvar);
 
-#if defined(COD2_X64) && defined(__APPLE__)
+#if defined(COD2_X64) && (defined(__APPLE__) || COD2_WINDOWS_NATIVE)
         R_SetColorMappings();
         return;
 #else
@@ -1400,7 +1400,7 @@ void RB_UpdateColor(const vec_t *color_allies, const vec_t *color_axis)
     RB_UpdateColorInternal(color_axis, (byte *)&backEnd.color_axis);
 }
 
-#if defined(COD2_X64) && defined(__APPLE__)
+#if defined(COD2_X64) && (defined(__APPLE__) || COD2_WINDOWS_NATIVE)
 static pthread_once_t gpuSyncClockOnce = PTHREAD_ONCE_INIT;
 static uint64_t gpuSyncClockHz;
 
@@ -1416,7 +1416,9 @@ static void RB_InitGpuSyncClock(void)
 
 static inline unsigned int rdtsc_lo(void)
 {
-#if defined(COD2_X64) && defined(__APPLE__)
+#if COD2_WINDOWS_NATIVE
+    return (unsigned int)__builtin_ia32_rdtsc();
+#elif defined(COD2_X64) && defined(__APPLE__)
     /* Native synthetic cycles, not a measurement of the original Intel TSC.
      * Widen before multiplying, then retain the original modulo-32 counter. */
     pthread_once(&gpuSyncClockOnce, RB_InitGpuSyncClock);
@@ -1430,7 +1432,7 @@ static inline unsigned int rdtsc_lo(void)
 
 void RB_AdaptiveGpuSyncWait(void)
 {
-#if defined(COD2_X64) && defined(__APPLE__)
+#if defined(COD2_X64) && (defined(__APPLE__) || COD2_WINDOWS_NATIVE)
     /* API59 retains its void callback. Implement Mac CL_SyncGpu 0x14a726
      * behind that boundary instead of casting a void callback to a query. */
     uint32_t startTime = rdtsc_lo();
@@ -1505,7 +1507,7 @@ void RB_AdaptiveGpuSyncTarget(void)
         ((DxGlobals *)dx)->flushGpuQueryIssued = 0;
     }
 
-#if defined(COD2_X64) && defined(__APPLE__)
+#if defined(COD2_X64) && (defined(__APPLE__) || COD2_WINDOWS_NATIVE)
     /* Mac 0xd93c0-0xd93e7 truncates before multiplying by 127. */
     val = (int32_t)((uint32_t)((DxGlobals *)dx)->gpuSyncDelay - 0x4e20u);
     if (val < 0)
@@ -3987,7 +3989,7 @@ void RB_ExecuteRenderCommands(const void *data)
     memset(&shadowCookieViews, 0, sizeof(shadowCookieViews));
 #endif
 
-#if defined(COD2_X64) && defined(__APPLE__)
+#if defined(COD2_X64) && (defined(__APPLE__) || COD2_WINDOWS_NATIVE)
     /* Retire a completed fence after switching sync off, including disabled or
      * lost-device frames. This native cleanup was previously in R_EndFrame. */
     if (((DxGlobals *)dx_g)->gpuSync == 0)
@@ -4073,7 +4075,7 @@ void RB_ExecuteRenderCommands(const void *data)
 
     dx = (char *)dx_g;
     deviceState = ((DxGlobals *)dx)->gpuSync;
-#if defined(COD2_X64) && defined(__APPLE__)
+#if defined(COD2_X64) && (defined(__APPLE__) || COD2_WINDOWS_NATIVE)
     /* Mac 0xd8a04 waits before drawing only in mode 1. */
     if (deviceState == 1) {
         while (!RB_IsGpuFenceFinished()) {
@@ -4322,7 +4324,7 @@ post_render:
 
     dx = (char *)dx_g;
     deviceState = ((DxGlobals *)dx)->gpuSync;
-#if defined(COD2_X64) && defined(__APPLE__)
+#if defined(COD2_X64) && (defined(__APPLE__) || COD2_WINDOWS_NATIVE)
     if (deviceState == 3) {
         if (RB_IsGpuFenceFinished()) {
             RB_AdaptiveGpuSyncTarget();

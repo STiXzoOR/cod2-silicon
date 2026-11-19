@@ -12,15 +12,39 @@
 #include <stdio.h>
 #include "cod2_feature_config.h"
 
-/* Native Apple LP64 uses SDK declarations, never the i386 STABS copies. */
-#if defined(__APPLE__) && defined(COD2_X64)
+/* The reconciled engine on Windows, under MinGW, on either architecture. */
+#ifndef COD2_WINDOWS_NATIVE
+#define COD2_WINDOWS_NATIVE 0
+#endif
+
+/* Native builds use SDK declarations, never the i386 STABS copies. The name
+ * predates the Linux and Windows ports, which take the same engine paths. */
+#if ((defined(__APPLE__) || defined(__linux__)) && defined(COD2_X64)) || COD2_WINDOWS_NATIVE
 #define COD2_APPLE_SDK 1
+#if !COD2_WINDOWS_NATIVE
 #include <sys/resource.h>
+#endif
+#if defined(__APPLE__)
+#define COD2_MALLOC_HEADER <malloc/malloc.h>
+#else
+#define COD2_MALLOC_HEADER <malloc.h>
+#endif
 #else
 #define COD2_APPLE_SDK 0
 #endif
 
-#if defined(__i386__) && defined(__GNUC__) && !defined(__clang__) && !defined(__EMSCRIPTEN__)
+/* Spots a 64-bit pointer that passed through a 32-bit slot, zero or sign extended.
+ * Every 32-bit pointer would look like one, so this is false there. It is false
+ * with the system Direct3D 9 too: with d3d9.dll loaded, 64-bit Windows places
+ * engine allocations below 4 GB. The Mac build that draws through Direct3D 9
+ * keeps the check: its allocations stay above 4 GB. */
+#if __SIZEOF_POINTER__ == 8 && (!COD2_WIN32_D3D9 || defined(__APPLE__))
+#define COD2_POINTER_LOOKS_TRUNCATED(pointer) ((uintptr_t)(pointer) + 0x100000000ULL < 0x200000000ULL)
+#else
+#define COD2_POINTER_LOOKS_TRUNCATED(pointer) 0
+#endif
+
+#if defined(__i386__) && defined(__GNUC__) && !defined(__clang__) && !defined(__EMSCRIPTEN__) && !COD2_WINDOWS_NATIVE
 #define COD2_GCC_X86_ABI 1
 #else
 #define COD2_GCC_X86_ABI 0
@@ -32,7 +56,7 @@
 #define COD2_APPLE_GCC_X86_ABI 0
 #endif
 
-#if defined(__EMSCRIPTEN__) || (defined(__APPLE__) && defined(COD2_X64))
+#if defined(__EMSCRIPTEN__) || ((defined(__APPLE__) || defined(__linux__)) && defined(COD2_X64)) || COD2_WINDOWS_NATIVE
 #define __attribute_regparm__(n)
 #define __attribute_sseregparm__
 #else

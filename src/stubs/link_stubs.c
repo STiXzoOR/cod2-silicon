@@ -441,7 +441,7 @@ int SV_GetBrushModelCount()
     return 0;
 }
 
-#if !COD2_APPLE_SDK
+#if !COD2_APPLE_SDK || COD2_WINDOWS_NATIVE
 int AUGraphGetCPULoad(void *graph, float *outLoad)
 {
     (void)graph;

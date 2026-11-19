@@ -110,9 +110,11 @@ typedef struct {
     GLint width, height, depth;
 } COpenGLTextureStateNative;
 _Static_assert(offsetof(COpenGLTextureStateNative, name) == sizeof(void *), "native texture name pointer");
+#if __SIZEOF_POINTER__ == 8
 _Static_assert(offsetof(COpenGLTextureStateNative, lastLevel) == 40, "native texture last level");
 _Static_assert(offsetof(COpenGLTextureStateNative, anisotropy) == 44, "native texture anisotropy");
 _Static_assert(offsetof(COpenGLTextureStateNative, depth) + sizeof(GLint) == 60, "native texture field extent");
+#endif
 
 /* Device stages have a widened COM pointer; never use the imported placeholder
  * or the original 164-byte stride as native storage. */

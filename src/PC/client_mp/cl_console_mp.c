@@ -719,6 +719,8 @@ static BM_NOINLINE void Con_DrawOuputWindow(void)
 #else
     version = va("Build %s %s", getBuildNumber(), "macOS arm64");
 #endif
+#elif defined(COD2_X64)
+    version = va("Build %s %s", getBuildNumber(), COD2_BUILD_PLATFORM);
 #else
     version = va("Build %s %s", getBuildNumber(), "MacOSXS-i386");
 #endif
@@ -802,6 +804,8 @@ static BM_NOINLINE void Con_DrawOuputWindow(void)
 #else
     version = va("Build %s %s", getBuildNumber(), "macOS arm64");
 #endif
+#elif defined(COD2_X64)
+    version = va("Build %s %s", getBuildNumber(), COD2_BUILD_PLATFORM);
 #else
     version = va("Build %s %s", getBuildNumber(), "MacOSXS-i386");
 #endif

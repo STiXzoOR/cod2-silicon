@@ -48,7 +48,7 @@ unsigned char MacPreferences_GetString(const char *inKey, char *outString, int i
                 char *nl = strchr(val, '\n');
                 if (nl)
                     *nl = '\0';
-#if defined(COD2_X64) && defined(__APPLE__)
+#if defined(COD2_X64) && (defined(__APPLE__) || defined(__linux__) || COD2_WINDOWS_NATIVE)
                 /* Mac 0x966c rejects a value that cannot fit with its terminator. */
                 if (inMaxString <= 0 || strlen(val) >= (size_t)inMaxString) {
                     fclose(f);
@@ -64,7 +64,7 @@ unsigned char MacPreferences_GetString(const char *inKey, char *outString, int i
         fclose(f);
     }
 
-#if defined(COD2_X64) && defined(__APPLE__)
+#if defined(COD2_X64) && (defined(__APPLE__) || defined(__linux__) || COD2_WINDOWS_NATIVE)
 use_default:
 #endif
     if (inDefault) {
@@ -92,7 +92,7 @@ void MacPreferences_PutString(const char *inKey, const char *inString)
         FILE *out = fopen(tmppath, "w");
         if (!out)
             return 0;
-#if defined(COD2_X64) && COD2_X64 && defined(__APPLE__)
+#if defined(COD2_X64) && COD2_X64 && (defined(__APPLE__) || defined(__linux__))
         // CD keys remain private when preferences are replaced by the engine.
         fchmod(fileno(out), 0600);
 #endif
@@ -116,6 +116,9 @@ void MacPreferences_PutString(const char *inKey, const char *inString)
         fclose(out);
     }
 
+#if COD2_WINDOWS_NATIVE
+    remove(prefs_path); /* rename() does not replace a file on Windows. */
+#endif
     rename(tmppath, prefs_path);
     return 1;
 }
@@ -141,7 +144,7 @@ void MacPreferences_Synchronize(void)
 {
 
 // Native file preferences are flushed and closed before the atomic rename.
-#if !defined(COD2_X64) || !defined(__APPLE__)
+#if !defined(COD2_X64) || !(defined(__APPLE__) || defined(__linux__) || COD2_WINDOWS_NATIVE)
     CFPreferencesAppSynchronize(*kCFPreferencesCurrentApplication);
 #endif
 }

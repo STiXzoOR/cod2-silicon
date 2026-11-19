@@ -151,8 +151,10 @@ COD2_ASSERT_FIELD(struct FxChannelBackwardCompatible, containsData, 0x3c);
 COD2_ASSERT_SIZE (struct FxChannelBackwardCompatible, 0x40);
 #if defined(COD2_X64)
 _Static_assert(sizeof(BackCompatibleParameters) == 0x600, "FX compatibility scratch size");
+#if __SIZEOF_POINTER__ == 8
 _Static_assert(sizeof(PrimitiveTemplate) == 0x330, "FX native template size");
 _Static_assert(sizeof(FxChannel) == 16, "FX native channel stride");
+#endif
 #endif
 
 void FxRange_SetRange(const FxRange *_this, float min, float max);

@@ -59,7 +59,7 @@ COD2_ALT("CDirect3DDevice_mNeedsTransformationValidation", "__ZN15CDirect3DDevic
 COD2_ALT("CDirect3DDevice_mNeedsRasterizationValidation", "__ZN15CDirect3DDevice29mNeedsRasterizationValidationE")
 #else
 /* Reconstructed __ZN identifiers also receive the Mach-O C prefix. */
-#if defined(_WIN32) || (defined(__APPLE__) && defined(COD2_X64))
+#if (defined(_WIN32) && !defined(__x86_64__)) || (defined(__APPLE__) && defined(COD2_X64))
 #define COD2_COFF_ASM_PREFIX "_"
 #else
 #define COD2_COFF_ASM_PREFIX ""
@@ -6132,6 +6132,11 @@ void CDirect3DDevice_Init(void *device)
     glGetIntegerv(0x0d33, (GLint *)&dev->maxTextureSize);
     glGetIntegerv(0x84e2, (GLint *)&dev->maxTextureUnits);
     glGetIntegerv(0x8872, (GLint *)&dev->maxTextureImageUnits);
+#if COD2_WINDOWS_NATIVE
+    /* Windows drivers often report more than the sixteen units this state stores. */
+    if (dev->maxTextureImageUnits > 16)
+        dev->maxTextureImageUnits = 16;
+#endif
     if (dev->maxTextureUnits > 16 || dev->maxTextureImageUnits > 16)
         abort();
     DeviceRenderState_Init(dev);

@@ -1,4 +1,4 @@
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || defined(__linux__) || defined(_WIN32)) && defined(COD2_X64)
 
 #include "macos_cpp_abi.h"
 #include "macos_exception_bridge.h"
@@ -628,7 +628,12 @@ extern "C" void *___cxa_allocate_exception(size_t size) { return __cxxabiv1::__c
 extern "C" void *___cxa_begin_catch(void *exception) { return __cxxabiv1::__cxa_begin_catch(exception); }
 extern "C" void ___cxa_end_catch() { __cxxabiv1::__cxa_end_catch(); }
 extern "C" [[noreturn]] void ___cxa_rethrow() { __cxxabiv1::__cxa_rethrow(); }
+#if defined(_WIN32) && defined(__i386__)
+/* 32-bit Windows destroys thrown objects through a thiscall destructor. */
+extern "C" [[noreturn]] void ___cxa_throw(void *exception, std::type_info *type, void (*destructor)(void *)) { __cxxabiv1::__cxa_throw(exception, type, reinterpret_cast<void (__attribute__((thiscall)) *)(void *)>(destructor)); }
+#else
 extern "C" [[noreturn]] void ___cxa_throw(void *exception, std::type_info *type, void (*destructor)(void *)) { __cxxabiv1::__cxa_throw(exception, type, destructor); }
+#endif
 extern "C" [[noreturn]] void __Unwind_Resume(_Unwind_Exception *exception) { _Unwind_Resume(exception); __builtin_unreachable(); }
 
 namespace __cxxabiv1 {

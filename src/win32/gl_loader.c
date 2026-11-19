@@ -232,10 +232,43 @@ void glSetFenceAPPLE(GLuint fence) { (void)fence; }
 GLboolean glTestFenceAPPLE(GLuint fence) { (void)fence; return (GLboolean)1; }
 void glFinishFenceAPPLE(GLuint fence) { (void)fence; }
 
+#if defined(COD2_X64)
+/* GL_APPLE_vertex_array_object exists only on Apple's GL. The ARB entry points are
+ * the same objects with the same arguments on a compatibility context. */
+static void *gl_resolve_vao(const char *apple, const char *arb)
+{
+    void *p = gl_resolve(apple);
+    return p ? p : gl_resolve(arb);
+}
+void glBindVertexArrayAPPLE(GLuint array)
+{
+    typedef void(__stdcall *PFN)(GLuint);
+    static PFN p;
+    if (!p) p = (PFN)gl_resolve_vao("glBindVertexArrayAPPLE", "glBindVertexArray");
+    if (p) p(array);
+}
+void glGenVertexArraysAPPLE(GLsizei n, GLuint *arrays)
+{
+    typedef void(__stdcall *PFN)(GLsizei, GLuint *);
+    static PFN p;
+    if (!p) p = (PFN)gl_resolve_vao("glGenVertexArraysAPPLE", "glGenVertexArrays");
+    if (p) p(n, arrays);
+}
+void glDeleteVertexArraysAPPLE(GLsizei n, const GLuint *arrays)
+{
+    typedef void(__stdcall *PFN)(GLsizei, const GLuint *);
+    static PFN p;
+    if (!p) p = (PFN)gl_resolve_vao("glDeleteVertexArraysAPPLE", "glDeleteVertexArrays");
+    if (p) p(n, arrays);
+}
+#else
 GLW_VOID(glBindVertexArrayAPPLE, (GLuint array), (array))
 GLW_VOID(glGenVertexArraysAPPLE, (GLsizei n, GLuint *arrays), (n, arrays))
 GLW_VOID(glDeleteVertexArraysAPPLE, (GLsizei n, const GLuint *arrays), (n, arrays))
+#endif
+#if !defined(COD2_X64) || !COD2_WINDOWS_NATIVE /* macos_display.c has this one */
 GLW_VOID(glVertexArrayParameteriAPPLE, (GLenum pname, GLint param), (pname, param))
+#endif
 GLW_VOID(glVertexArrayRangeAPPLE, (GLsizei length, GLvoid *pointer), (length, pointer))
 GLW_VOID(glFlushVertexArrayRangeAPPLE, (GLsizei length, GLvoid *pointer), (length, pointer))
 
@@ -245,3 +278,61 @@ GLW_VOID(glGetBooleanv, (GLenum pname, GLboolean *params), (pname, params))
 GLW_VOID(glGetTexImage, (GLenum target, GLint level, GLenum format, GLenum type, GLvoid *pixels), (target, level, format, type, pixels))
 GLW_VOID(glGetTexLevelParameteriv, (GLenum target, GLint level, GLenum pname, GLint *params), (target, level, pname, params))
 GLW_VOID(glOrtho, (GLdouble l, GLdouble r, GLdouble b, GLdouble t, GLdouble n, GLdouble f), (l, r, b, t, n, f))
+#if defined(COD2_X64)
+
+/* The reconciled renderer's framebuffer, shader and fixed-function entry points. */
+GLW_VOID(glActiveTexture, (GLenum texture), (texture))
+GLW_VOID(glAttachShader, (GLuint program, GLuint shader), (program, shader))
+GLW_VOID(glBindBuffer, (GLenum target, GLuint buffer), (target, buffer))
+GLW_VOID(glBindBufferARB, (GLenum target, GLuint buffer), (target, buffer))
+GLW_VOID(glBindFramebufferEXT, (GLenum target, GLuint framebuffer), (target, framebuffer))
+GLW_VOID(glBindRenderbufferEXT, (GLenum target, GLuint renderbuffer), (target, renderbuffer))
+GLW_VOID(glBlitFramebufferEXT,
+    (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
+     GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter),
+    (srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter))
+GLW_RET(GLenum, glCheckFramebufferStatusEXT, (GLenum target), (target))
+GLW_VOID(glCompileShader, (GLuint shader), (shader))
+GLW_RET(GLuint, glCreateProgram, (void), ())
+GLW_RET(GLuint, glCreateShader, (GLenum type), (type))
+GLW_VOID(glDeleteFramebuffersEXT, (GLsizei n, const GLuint *framebuffers), (n, framebuffers))
+GLW_VOID(glDeleteProgram, (GLuint program), (program))
+GLW_VOID(glDeleteRenderbuffersEXT, (GLsizei n, const GLuint *renderbuffers), (n, renderbuffers))
+GLW_VOID(glDeleteShader, (GLuint shader), (shader))
+GLW_VOID(glFramebufferRenderbufferEXT,
+    (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer),
+    (target, attachment, renderbuffertarget, renderbuffer))
+GLW_VOID(glGenFramebuffersEXT, (GLsizei n, GLuint *framebuffers), (n, framebuffers))
+GLW_VOID(glGenRenderbuffersEXT, (GLsizei n, GLuint *renderbuffers), (n, renderbuffers))
+GLW_VOID(glGetDoublev, (GLenum pname, GLdouble *params), (pname, params))
+GLW_VOID(glGetProgramInfoLog, (GLuint program, GLsizei size, GLsizei *length, char *log),
+    (program, size, length, log))
+GLW_VOID(glGetProgramiv, (GLuint program, GLenum pname, GLint *params), (program, pname, params))
+GLW_VOID(glGetShaderInfoLog, (GLuint shader, GLsizei size, GLsizei *length, char *log),
+    (shader, size, length, log))
+GLW_VOID(glGetShaderiv, (GLuint shader, GLenum pname, GLint *params), (shader, pname, params))
+GLW_VOID(glGetTexParameterfv, (GLenum target, GLenum pname, GLfloat *params), (target, pname, params))
+GLW_VOID(glGetTexParameteriv, (GLenum target, GLenum pname, GLint *params), (target, pname, params))
+GLW_RET(GLint, glGetUniformLocation, (GLuint program, const char *name), (program, name))
+GLW_RET(GLboolean, glIsEnabled, (GLenum cap), (cap))
+GLW_VOID(glLinkProgram, (GLuint program), (program))
+GLW_VOID(glLoadMatrixd, (const GLdouble *m), (m))
+GLW_VOID(glMultiTexCoord2f, (GLenum target, GLfloat s, GLfloat t), (target, s, t))
+GLW_VOID(glRenderbufferStorageEXT, (GLenum target, GLenum format, GLsizei width, GLsizei height),
+    (target, format, width, height))
+#if COD2_WINDOWS_NATIVE /* multisampled render targets, native builds only */
+GLW_VOID(glRenderbufferStorageMultisampleEXT,
+    (GLenum target, GLsizei samples, GLenum format, GLsizei width, GLsizei height),
+    (target, samples, format, width, height))
+#endif
+GLW_VOID(glShaderSource, (GLuint shader, GLsizei count, const char *const *source, const GLint *length),
+    (shader, count, source, length))
+GLW_VOID(glTexImage1D,
+    (GLenum target, GLint level, GLint internal, GLsizei width, GLint border,
+     GLenum format, GLenum type, const GLvoid *pixels),
+    (target, level, internal, width, border, format, type, pixels))
+GLW_VOID(glUniform1i, (GLint location, GLint value), (location, value))
+GLW_VOID(glUseProgram, (GLuint program), (program))
+GLW_VOID(glVertexAttrib4fARB, (GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w),
+    (index, x, y, z, w))
+#endif

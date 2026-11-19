@@ -32,7 +32,7 @@ extern int MT_IsNodeCovered(int);
    'main' at registration) and skipping them frees a live string -> "could not find main". */
 #if defined(COD2_X64)
 #define SL_NODE_DEAD(n) (0)
-#elif defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
+#elif defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__) || COD2_WINDOWS_NATIVE
 #define SL_NODE_DEAD(n) (MT_IsNodeCovered((int)(n)))
 #else
 #define SL_NODE_DEAD(n) (0)   /* x86 string table is unaffected; keep original behavior */

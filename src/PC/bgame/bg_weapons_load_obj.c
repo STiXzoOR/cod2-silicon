@@ -88,7 +88,7 @@ char *szWeapTypeNames[] = {
     NULL,
 };
 
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 
 __attribute__((used))
 cspField_t weaponDefFields[] = {

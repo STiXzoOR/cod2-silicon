@@ -103,7 +103,11 @@ static void R_MARKS_REGPARM3_ABI R_AABBTreeSurfaces_r(GfxAabbTree *tree, const v
         }
     } else if (tree->childCount > 0) {
 
+#if defined(COD2_X64)
+        GfxAabbTree *children = (GfxAabbTree *)(uintptr_t)tree->children;
+#else
         GfxAabbTree *children = (GfxAabbTree *)(unsigned long)tree->children;
+#endif
         for (childIndex = 0; childIndex < tree->childCount; childIndex++) {
             R_AABBTreeSurfaces_r(&children[childIndex], mins, maxs,
                                  surfList, surfListSize, surfCount);

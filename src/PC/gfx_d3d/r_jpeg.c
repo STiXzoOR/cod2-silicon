@@ -2,7 +2,7 @@
 #include "imports.h"
 #include "cod2_feature_config.h"
 
-#if COD2_APPLE_SDK
+#if COD2_APPLE_SDK && !COD2_WINDOWS_NATIVE
 #include "platform/macos_jpeg.h"
 #include <stdlib.h>
 extern refimport_t ri;
@@ -44,6 +44,75 @@ void R_LoadJpg(const char *filepath, byte **file, byte **pic, int *width, int *h
     free(pixels);
     *file = data;
     *imageFormat = (D3DFORMAT)0x15;
+}
+#elif defined(COD2_X64) && COD2_WINDOWS_NATIVE
+/* The path below lays out an i386 libjpeg by hand: a 372-byte compress
+ * struct, where the linked jpeg-6 has 376 on i686 and 520 on x86_64, so
+ * libjpeg's size check exited the game. Its decompress side calls a data stub
+ * for jpeg_memory_src. win_jpeg.c uses the library's own jpeglib.h. As in
+ * Windows 1.3 (gfx_d3d_mp_x86_s.dll 0x10014820), libjpeg errors are fatal. */
+#include "win32/win_jpeg.h"
+extern refimport_t ri;
+extern byte r_limits_ptr[];
+
+static void R_PrintJpegMessage(const char *message)
+{
+    ri.Printf(0, "%s\n", message);
+}
+
+static void *R_AllocJpegPixels(int bytes)
+{
+    /* Image_LoadRaw releases this buffer with Hunk_FreeTempMemory. */
+    return ri.Hunk_AllocateTempMemoryInternal(bytes);
+}
+
+void R_SaveJpg(const char *filename, int quality, int width, int height, byte *pixels)
+{
+    int capacity = width * height * 3;
+    byte *out = (byte *)ri.Hunk_AllocateTempMemoryInternal(capacity);
+    size_t size;
+    int result = WinJpeg_Encode(pixels, width, height, quality, out, (size_t)capacity, &size,
+                                R_PrintJpegMessage);
+    if (result == WIN_JPEG_OK)
+        ri.FS_WriteFile(filename, out, (int)size);
+    else if (result == WIN_JPEG_OVERFLOW)
+        ri.Printf(0, "R_SaveJpg: output buffer overflow\n");
+    ri.Hunk_FreeTempMemory(out);
+    if (result == WIN_JPEG_ERROR)
+        ri.Error(ERR_FATAL, "jpeg internal error");
+}
+
+void R_LoadJpg(const char *filepath, byte **file, byte **pic, int *width, int *height, D3DFORMAT *imageFormat)
+{
+    byte *data = NULL;
+    int size = ri.FS_ReadFile(filepath, (void **)&data);
+    int maxSize = ((vidConfig_t *)r_limits_ptr)->maxTextureSize;
+    byte *pixels;
+    int w, h;
+
+    if (!data)
+        return;
+    int result = WinJpeg_Decode(data, size > 0 ? (size_t)size : 0, maxSize, R_AllocJpegPixels,
+                                &pixels, &w, &h, R_PrintJpegMessage);
+    if (result == WIN_JPEG_OK) {
+        *width = w;
+        *height = h;
+        *imageFormat = (D3DFORMAT)0x15;
+        *pic = pixels;
+        *file = data;
+        return;
+    }
+    if (result == WIN_JPEG_BAD_SIZE)
+        ri.Printf(2, "WARNING: jpeg image '%s' has invalid dimensions\n", filepath);
+    else if (result == WIN_JPEG_TOO_LARGE)
+        ri.Printf(2, "WARNING: image '%s' is larger than %i on at least one side\n", filepath, maxSize);
+    else if (result == WIN_JPEG_NOT_RGB)
+        ri.Printf(2, "WARNING: jpeg image '%s' is not RGB\n", filepath);
+    if (pixels)
+        ri.Hunk_FreeTempMemory(pixels);
+    ri.FS_FreeFile(data);
+    if (result == WIN_JPEG_ERROR)
+        ri.Error(ERR_FATAL, "jpeg internal error");
 }
 #else
 

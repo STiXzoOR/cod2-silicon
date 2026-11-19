@@ -39,7 +39,7 @@ static GfxViewParms lockPvsViewParms;
    side (R_PreSkinStaticSurface / R_PreSkinXSurface in r_model.c). x86 sizes:
    skinned(3)=0x10, rigid(4)=0x38, SMC(5)=0x10. On x64 the structs grow (8-byte xsurf/
    skinnedVert + alignment): skinned/SMC 0x10->0x20, rigid 0x38->0x40. */
-#if defined(COD2_X64)
+#if defined(COD2_X64) && __SIZEOF_POINTER__ == 8
 __attribute__((used)) byte s_XModelSurfaceSize[8] = {
     0x00, 0x00, 0x00,
     0x20, /* 3: skinned  */

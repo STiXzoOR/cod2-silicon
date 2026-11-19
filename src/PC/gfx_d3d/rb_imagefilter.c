@@ -375,7 +375,7 @@ static void RB_ApplyFilterPasses(GfxImageFilter *filter, int swapLastPass)
 
         if (swapLastPass && passIndex == passCount - 1) {
 
-#if defined(COD2_X64) && COD2_APPLE_SDK
+#if defined(COD2_X64) && COD2_APPLE_SDK && !COD2_WIN32_D3D9
             /* Cancel the native half-pixel projection shift so every target
              * row is covered before the result is sampled by the next pass. */
             RB_DrawStretchPic(pass->material, 0.0f, 0.0f, dstW, dstH,

@@ -10,11 +10,16 @@ typedef struct {
 #include "imports.h"
 #endif
 #include <unistd.h>
+#if defined(__linux__) && defined(COD2_X64)
+#include <ftw.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#endif
 
 void MacFiles_CleanPath(const char *inPath, char *outPath, int inForHFS);
 #if defined(__APPLE__) && defined(COD2_X64)
 static void RemoveDirectoryContents(const FSRef *directory, MacRemoveDirectoryInfo *info);
-#else
+#elif !(defined(__linux__) && defined(COD2_X64)) && !COD2_WINDOWS_NATIVE
 static void RemoveDirectoryContents(void);
 #endif
 OSStatus MacFiles_RemoveDirectoryA(const char *inPath);
@@ -81,6 +86,41 @@ static void RemoveDirectoryContents(const FSRef *directory, MacRemoveDirectoryIn
         info->status = noErr;
     FSCloseIterator(iterator);
 }
+#elif defined(__linux__) && defined(COD2_X64)
+static int RemoveDirectoryEntry(const char *path, const struct stat *status, int type, struct FTW *walk)
+{
+    (void)status;
+    (void)type;
+    (void)walk;
+    return remove(path);
+}
+#elif COD2_WINDOWS_NATIVE
+#include <dirent.h>
+#include <stdio.h>
+#include <sys/stat.h>
+
+static void RemoveDirectoryEntries(const char *path)
+{
+    DIR *directory = opendir(path);
+    struct dirent *entry;
+    char child[512];
+    struct stat status;
+
+    if (!directory)
+        return;
+    while ((entry = readdir(directory)) != NULL) {
+        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, ".."))
+            continue;
+        snprintf(child, sizeof(child), "%s/%s", path, entry->d_name);
+        if (stat(child, &status) == 0 && S_ISDIR(status.st_mode)) {
+            RemoveDirectoryEntries(child);
+            rmdir(child);
+        } else {
+            remove(child);
+        }
+    }
+    closedir(directory);
+}
 #else
 static void RemoveDirectoryContents(void)
 {
@@ -104,6 +144,24 @@ OSStatus MacFiles_RemoveDirectoryA(const char *inPath)
         FSDeleteObject(&directory);
     /* Mac 0x8b68-0x8b7a returns the saved initial success even if deletion fails. */
     return status;
+#elif defined(__linux__) && defined(COD2_X64)
+    struct stat status;
+    if (stat(inPath, &status) != 0)
+        return -43; /* fnfErr, as FSPathMakeRef reports. */
+    if (!S_ISDIR(status.st_mode))
+        return -50; /* paramErr */
+    /* Like the Mac path, the result reports only that the directory was found. */
+    nftw(inPath, RemoveDirectoryEntry, 16, FTW_DEPTH | FTW_PHYS);
+    return 0;
+#elif COD2_WINDOWS_NATIVE
+    struct stat status;
+    if (stat(inPath, &status) != 0)
+        return -43; /* fnfErr, as FSPathMakeRef reports. */
+    if (!S_ISDIR(status.st_mode))
+        return -50; /* paramErr */
+    RemoveDirectoryEntries(inPath);
+    rmdir(inPath);
+    return 0;
 #else
     return 0;
 #endif

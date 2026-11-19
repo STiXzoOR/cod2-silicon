@@ -2245,7 +2245,7 @@ void RB_EndSurface(void)
        ptr is either zero-extended (high32==0) or sign-extended (high32==0xffffffff);
        `p + 0x1_0000_0000 < 0x2_0000_0000` catches both. Guard the deref so an editable
        text field / chat draw doesn't crash on a bad material or techniqueSet. */
-    if ((uintptr_t)material + 0x100000000ULL < 0x200000000ULL) {
+    if (COD2_POINTER_LOOKS_TRUNCATED(material)) {
         COD2_DEBUG_ONLY(g_rb_endsurface_nomaterial++;)
         goto cleanup;
     }
@@ -2263,7 +2263,7 @@ void RB_EndSurface(void)
             goto cleanup;
         }
 #if defined(COD2_X64)
-        if (ts + 0x100000000ULL < 0x200000000ULL) {
+        if (COD2_POINTER_LOOKS_TRUNCATED(ts)) {
             COD2_DEBUG_ONLY(g_rb_endsurface_notechnique++;)
             goto cleanup;
         }

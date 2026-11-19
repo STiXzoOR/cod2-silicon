@@ -21,8 +21,8 @@ int FS_CreatePath(char *path);
 void FS_CreatePath(const char *path);
 #endif
 
-#if defined(__APPLE__) && defined(COD2_X64)
-/* Native macOS links the SDK libcurl; its prototypes take enum option types. */
+#if (defined(__APPLE__) || defined(__linux__)) && defined(COD2_X64)
+/* Native builds link the SDK libcurl; its prototypes take enum option types. */
 #    include <curl/curl.h>
 #    include <time.h>
 #else

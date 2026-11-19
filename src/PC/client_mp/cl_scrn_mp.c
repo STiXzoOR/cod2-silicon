@@ -56,7 +56,7 @@ typedef void (*re_write_cubemap_func)(const char *, int, float, float);
  * (field index * 4). On x64 the pointers are 8 bytes, so the same field lives at
  * field index * 8 == double the x86 byte offset. refexport_t is a pure vtable
  * (all function pointers) so the doubling is exact. */
-#if defined(COD2_X64)
+#if defined(COD2_X64) && __SIZEOF_POINTER__ == 8
 #define RE_FUNC(re, offset, type) ((type)(*(void **)((byte *)(re) + (offset) * 2)))
 #else
 #define RE_FUNC(re, offset, type) ((type)(*(void **)((byte *)(re) + (offset))))

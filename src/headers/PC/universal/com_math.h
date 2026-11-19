@@ -42,7 +42,7 @@ typedef struct DObjTrace_s DObjTrace;
 typedef struct XAnim_s XAnim;
 
 typedef struct weaponInfo_s weaponInfo_t;
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || defined(__linux__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
 #include <setjmp.h>
 #elif !defined(_WIN32)
 typedef int jmp_buf[39];

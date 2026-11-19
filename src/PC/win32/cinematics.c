@@ -52,7 +52,7 @@ extern short unsigned int vq8[262144];
 extern struct cinematics_t cin;
 extern cin_cache cinTable[16];
 __attribute__((used)) int CL_handle = -1;
-#if COD2_APPLE_SDK
+#if COD2_APPLE_SDK && defined(__APPLE__)
 __attribute__((used, section("__DATA,__currentHandle"), aligned(4))) int currentHandle = -1;
 __attribute__((used, section("__DATA,__currentHandle"), aligned(4))) static int currentHandle_pad[6];
 #else

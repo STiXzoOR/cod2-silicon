@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 uint64_t MacSystem_Nanoseconds(void);
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || defined(__linux__) || defined(_WIN32)) && defined(COD2_X64)
 void MacSystem_WaitUntil(uint64_t deadline);
 void MacSystem_ObserveFrame(int engineTime);
 #endif

@@ -1,4 +1,6 @@
+#if !defined(COD2_X64)
 const unsigned char declEnd[20] = { 0xff,0,0,0, 0x11,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0 };
+#endif
 int g_dip_drawflag_zero;
 int g_dip_gl_draw;
 int g_dip_is_tri;
@@ -17,6 +19,7 @@ void IN_Frame(void) {}
  * CDirect3D*D0Ev/D1Ev destructors in the reconstructed CDirect3D*.c -- stubbing
  * them here is what required /FORCE:MULTIPLE, so they're dropped. */
 void UpdateSystemActivity(void) {}
+#if !defined(COD2_X64)
 void __ZNSs4_Rep11_S_terminalE(void) {}
 void __ZNSs6appendEPKcm(void) {}
 void __ZNSs6assignEPKcm(void) {}
@@ -25,7 +28,10 @@ void __ZNSt15_List_node_base4hookEPS_(void) {}
 void __ZNSt15_List_node_base6unhookEv(void) {}
 void __ZSt18_Rb_tree_incrementPSt18_Rb_tree_node_base(void) {}
 void __ZSt28_Rb_tree_rebalance_for_erasePSt18_Rb_tree_node_baseRS_(void) {}
+#endif
+#if !defined(__x86_64__)
 void __ZTIl(void) {}
+#endif
 /* ___toupper has a real def in macos_compat.c */
 
 void aglDestroyContext(void) {}
@@ -34,6 +40,19 @@ void aglSetDrawable(void) {}
 void aglSwapBuffers(void) {}
 
 #ifndef W32_CLIENT
+#if defined(COD2_X64)
+/* The headless server links the renderer graph but never reaches a display. */
+void SDL_GL_SwapWindowDirect(void) {}
+void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples, int quality,
+                                     int interval, int *hasAux)
+{
+    (void)depth; (void)stencil; (void)samples; (void)quality; (void)interval;
+    if (hasAux)
+        *hasAux = 0;
+    return 0;
+}
+#endif
+
 void glActiveTextureARB(void) {}
 void glAlphaFunc(void) {}
 void glBindProgramARB(void) {}
@@ -120,6 +139,8 @@ void _ZN21CDirect3DVertexShaderD0Ev(void){} void _ZN21CDirect3DVertexShaderD1Ev(
 void FD_ZERO(void *s){ if(s)*(unsigned*)s=0; }
 void FD_SET(unsigned fd, void *s){ unsigned *c=(unsigned*)s; if(*c<64){((unsigned*)((char*)s+4))[*c]=fd;(*c)++;} }
 
+/* The client links libcurl; the server has no downloads. */
+#if !defined(W32_CLIENT) || !defined(COD2_X64)
 void *curl_easy_init(void){return 0;}
 int   curl_easy_setopt(void*a,int b,...){(void)a;(void)b;return 0;}
 int   curl_easy_getinfo(void*a,int b,...){(void)a;(void)b;return 0;}
@@ -130,4 +151,5 @@ int   curl_multi_add_handle(void*a,void*b){(void)a;(void)b;return 0;}
 int   curl_multi_remove_handle(void*a,void*b){(void)a;(void)b;return 0;}
 int   curl_multi_perform(void*a,int*b){(void)a;if(b)*b=0;return 0;}
 void *curl_multi_info_read(void*a,int*b){(void)a;if(b)*b=0;return 0;}
+#endif
 void  Sys_OpenURL(const char *url, int activate){(void)url;(void)activate;}

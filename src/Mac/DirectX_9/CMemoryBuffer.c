@@ -41,7 +41,12 @@ static CMemoryBufferFreeRequestNode CMemoryBuffer_delayedFreeHead;
 
 static byte *CMemoryBuffer_AlignAllocation(byte *allocation)
 {
+#if defined(COD2_X64)
+    /* unsigned long is 32 bits on 64-bit Windows. */
+    return (byte *)(((uintptr_t)(allocation + 31)) & ~(uintptr_t)31);
+#else
     return (byte *)(((unsigned long)(allocation + 31)) & ~31UL);
+#endif
 }
 
 static CMemoryBufferFreeRequestNode *CMemoryBuffer_GetDelayedFreeHead(void)

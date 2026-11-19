@@ -179,7 +179,7 @@ void Com_LoadSoundAliases(const char *loadspec, const char *loadspecCurGame, snd
                 ci++;
                 namePtr += 0x40;
                 fptr++;
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 
                 curvePtr = (void *)((byte *)curvePtr + sizeof(SndCurve));
 #else
@@ -281,7 +281,7 @@ void Com_LoadSoundAliases(const char *loadspec, const char *loadspecCurGame, snd
     }
 
     Com_MakeSoundAliasesPermanent(
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
         (void *)&g_sa.aliasInfo[system],
         (void *)&g_sa.soundFileInfo[system]);
 #else
@@ -299,7 +299,7 @@ after_load:
 
 #if !COD2_APPLE_SDK || !defined(DEDICATED)
     if ((int)system <= 1) {
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
         if (g_sa.initialized[0] == 0 && g_sa.initialized[1] == 0) {
 #else
         if (*(short *)((byte *)&g_sa) == 0) {
@@ -316,7 +316,7 @@ after_load:
 #if !COD2_APPLE_SDK || !defined(DEDICATED)
     if ((int)system <= 1) {
 
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
         int missCount = Com_LoadSoundAliasSounds((void *)&g_sa.soundFileInfo[system]);
 #else
         int missCount = Com_LoadSoundAliasSounds((SoundFileInfo *)((byte *)&g_sa + 4152 + (int)system * 8));
@@ -592,7 +592,7 @@ snd_alias_t *Com_PickSoundAliasFromList(snd_alias_list_t *aliasList)
     return Com_PickSoundAliasFromList_core(aliasList);
 }
 
-#if COD2_APPLE_SDK
+#if COD2_APPLE_SDK || defined(COD2_X64)
 snd_alias_list_t *Com_FindSoundAlias(const char *name)
 #else
 __forceinline snd_alias_list_t *Com_FindSoundAlias(const char *name)
@@ -626,7 +626,7 @@ Bool Com_AddAliasList(const char *name, snd_alias_list_t *aliasList)
         }
     }
 
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
     aliasList->pHashNext = (intptr_t)(uintptr_t)g_sa.pHash[hash];
 #else
     aliasList->pHashNext = (int)(uintptr_t)g_sa.pHash[hash];
@@ -659,7 +659,7 @@ void Com_DuplicateSoundAlias(snd_alias_list_t *aliasCopy, const char *name)
         strcpy(newName, name);
         aliasList->aliasName = newName;
     }
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
     aliasList->pHashNext = (intptr_t)(uintptr_t)g_sa.pHash[hash];
 #else
     aliasList->pHashNext = (int)(uintptr_t)g_sa.pHash[hash];

@@ -1,4 +1,4 @@
-#if defined(__APPLE__) && defined(COD2_X64) && defined(DEDICATED)
+#if (defined(__APPLE__) || defined(__linux__) || defined(_WIN32)) && defined(COD2_X64) && defined(DEDICATED)
 #include "common_types.h"
 #include "macos_system.h"
 #if defined(COD2_CODX) && COD2_CODX
@@ -32,6 +32,10 @@ static void MacServer_RequestQuit(int signalNumber)
 
 void MacServer_InstallSignals(void)
 {
+#if defined(_WIN32)
+    signal(SIGTERM, MacServer_RequestQuit);
+    signal(SIGINT, MacServer_RequestQuit);
+#else
     struct sigaction action;
     memset(&action, 0, sizeof(action));
     action.sa_handler = MacServer_RequestQuit;
@@ -40,6 +44,7 @@ void MacServer_InstallSignals(void)
         perror("CoD2 server signal setup");
         exit(1);
     }
+#endif
 }
 
 void MacServer_CheckQuit(void)

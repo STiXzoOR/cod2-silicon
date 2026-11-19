@@ -360,7 +360,7 @@ void R_LockSkinnedCache(GfxLockType lockType)
     if (!vb)
         return;
 
-#if defined(COD2_X64) && defined(__APPLE__)
+#if defined(COD2_X64) && (defined(__APPLE__) || COD2_WINDOWS_NATIVE)
     /* Mac 0xd0054 always discards; the native GL owner now honors flags. */
     (void)lockType;
     lockFlags = 0x2000;
@@ -794,7 +794,7 @@ set_origin_bounds:
    xsurf@8} (16B); skinned adds {int skinnedCachedOffset@16; union skinnedVert@24} (0x20);
    rigid adds {vec3 boneAxis[4]@16} (0x40). Keep x86 byte-identical. MUST agree with
    s_XModelSurfaceSize[] in r_scene.c. */
-#if defined(COD2_X64)
+#if defined(COD2_X64) && __SIZEOF_POINTER__ == 8
 #define PSK_XSURF   8
 #define PSK_F2      16
 #define PSK_F3      24

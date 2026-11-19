@@ -17,7 +17,7 @@ static void CM_TraceThroughLeafBrushNode_r(const traceWork_t *tw, cLeafBrushNode
 static Bool CM_TraceThroughLeafBrushNode(const traceWork_t *tw, cLeaf_t *leaf, trace_t *trace);
 static int CM_SightTraceThroughTree(const traceWork_t *tw, int num, const vec_t *p1, const vec_t *p2, trace_t *trace);
 #else
-#if COD2_APPLE_SDK
+#if COD2_APPLE_SDK || defined(COD2_X64)
 static int CM_SightTraceThroughBrush(const traceWork_t *tw, cbrush_t *brush, trace_t *tr);
 #else
 static int CM_SightTraceThroughBrush(cbrush_t *brush);
@@ -53,7 +53,7 @@ cmodel_t *CM_ClipHandleToModel(clipHandle_t handle)
     if (handle < cm->numSubModels) {
         return &cm->cmodels[handle];
     }
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 
     return ((struct TraceThreadInfo *)Sys_GetValue(3))->box_model;
 #else

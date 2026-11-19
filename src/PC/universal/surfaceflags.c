@@ -37,7 +37,7 @@ const char *Com_SurfaceTypeToName(int iTypeIndex)
 
 /* This reconstructed table embeds i386 symbol addresses as flag bits.
  * The typed-data migration must recover its values before Apple LP64 links. */
-#if !COD2_APPLE_SDK
+#if !COD2_APPLE_SDK && !defined(COD2_X64)
 infoParm_t infoParms[54] = {
     { (char *)&str_0022009c, 0x0, 0x100000, 0x0, 0x0 },
     { (char *)&str_002200a4, 0x0, 0x200000, 0x0, 0x0 },

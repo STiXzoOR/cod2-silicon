@@ -333,7 +333,7 @@ qboolean SV_MapExists(const char *name)
 void SV_ResetEntityParsePoint(void)
 {
 
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 
     const char *parse_point = CM_EntityString();
 #else

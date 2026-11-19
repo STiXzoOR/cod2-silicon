@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) && defined(COD2_X64)) || COD2_WINDOWS_NATIVE
 
 /* Matches the native AILSOUNDINFO fields, without importing reconstructed SDK types. */
 typedef struct {

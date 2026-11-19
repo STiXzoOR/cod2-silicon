@@ -11,7 +11,7 @@
 #define STRINGED_NOINLINE __attribute__((noinline))
 #endif
 
-#if defined(COD2_X64) && defined(__APPLE__)
+#if defined(COD2_X64) && (defined(__APPLE__) || defined(__linux__) || COD2_WINDOWS_NATIVE)
 #include "../../platform/macos_cpp_abi.h"
 
 extern CStringEdPackage *TheStringPackage;
@@ -22,7 +22,7 @@ extern void SE_FreeFileDataAfterLoad(unsigned char *data);
 extern int SE_BuildFileList(const char *directory, Cod2MacString *result);
 extern const char *va(const char *format, ...);
 extern int stricmp(const char *a, const char *b);
-extern int strnicmp(const char *a, const char *b, unsigned long length);
+extern int strnicmp(const char *a, const char *b, size_t length);
 extern char *strupr(char *text);
 
 /* The package uses zone allocation; GCC tree nodes use operator new/delete.
@@ -43,8 +43,10 @@ typedef struct {
     size_t count;
 } NativeStringEdPackage;
 
+#if __SIZEOF_POINTER__ == 8
 _Static_assert(sizeof(NativeStringEdEntry) == 48, "native StringEd tree node");
 _Static_assert(sizeof(NativeStringEdPackage) == 80, "native StringEd package");
+#endif
 
 static NativeStringEdPackage *SE_Package(const CStringEdPackage *package)
 {

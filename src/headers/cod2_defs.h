@@ -3024,8 +3024,14 @@ typedef double Float64;
 typedef void (*Free_t)(void *, int);   /* real Free(ptr,size) sig; byte-neutral fn-ptr */
 typedef GDevice * GDPtr;
 #if COD2_APPLE_SDK
-/* OpenGL scalars stay 32 bits on Darwin LP64; buffer sizes are pointer-sized. */
+/* OpenGL scalars stay 32 bits on LP64; buffer sizes are pointer-sized. */
+#if defined(__APPLE__)
 #include <OpenGL/gl.h>
+#elif COD2_WINDOWS_NATIVE
+#include "imports/opengl.h"
+#else
+#include <GL/gl.h>
+#endif
 #else
 typedef long unsigned int GLbitfield;
 
@@ -3516,7 +3522,11 @@ typedef WindowPtr WindowRef;
 #if !defined(__GNUC__) && !defined(__clang__)
 typedef __builtin_va_list __gnuc_va_list;
 #endif
+#if (defined(__linux__) || COD2_WINDOWS_NATIVE) && COD2_APPLE_SDK
+typedef unsigned int natural_t; /* Darwin's SDK supplies __darwin_natural_t. */
+#else
 typedef __darwin_natural_t natural_t;
+#endif
 #if !COD2_APPLE_SDK
 typedef __int32_t __darwin_blksize_t;
 typedef __int32_t __darwin_dev_t;
@@ -6040,7 +6050,7 @@ union VariableUnion {
     int intValue;
     float floatValue;
     unsigned int stringValue;
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
     unsigned int vectorValue;
     unsigned int codePosValue;
 #else
@@ -6048,7 +6058,7 @@ union VariableUnion {
     const char *codePosValue;
 #endif
     unsigned int pointerValue;
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
     unsigned int stackValue;
 #else
     VariableStackBuffer *stackValue;
@@ -6059,7 +6069,7 @@ union VariableUnion {
 extern unsigned char scrMemTreeGlob[];
 
 extern void * const imp_scrVarPub;
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 #define SCR_ARENA_PTR(off)    ((void *)(scrMemTreeGlob + (unsigned int)(off)))
 #if defined(COD2_X64)
 #define SCR_ARENA_ENC(ptr)    ((unsigned int)((uintptr_t)(ptr) - (uintptr_t)scrMemTreeGlob))

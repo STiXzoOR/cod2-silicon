@@ -5,8 +5,12 @@
 #endif
 #include "macos_system.h"
 #include <SDL2/SDL.h>
+#if COD2_WINDOWS_NATIVE
+#include "imports/opengl.h"
+#else
 #include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
+#endif
 #if defined(__APPLE__) && defined(COD2_X64)
 #include <OpenGL/OpenGL.h>
 #include <CoreGraphics/CoreGraphics.h>
@@ -91,12 +95,20 @@ static int requestedMonitor;
 static int nativeWidth = 640, nativeHeight = 480;
 #endif
 static int windowMode = MAC_WINDOWED;
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
 static int exclusiveSuspended;
 static int exclusiveResumeArmed;
+#endif
+#if defined(__APPLE__) && defined(COD2_X64)
 extern int MacWindow_IsVisible(SDL_Window *window);
 extern void MacWindow_SetBorderless(int enabled);
 extern void MacWindow_HideSplash(void);
+#elif COD2_WINDOWS_NATIVE
+static int MacWindow_IsVisible(SDL_Window *window)
+{
+    return !(SDL_GetWindowFlags(window) & (SDL_WINDOW_HIDDEN | SDL_WINDOW_MINIMIZED));
+}
+#define MacWindow_SetBorderless(enabled) ((void)0)
 #endif
 static int refreshRate;
 static int initialized;
@@ -323,7 +335,7 @@ void MacPlatform_ConfigureWindow(int width, int height, int mode, int refresh)
     sdl_gl_width = width;
     sdl_gl_height = height;
     windowMode = mode;
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
     exclusiveSuspended = 0;
     exclusiveResumeArmed = 0;
 #endif
@@ -569,7 +581,7 @@ static void ResolveFrameBuffer(MacContext *ctx)
 }
 #endif
 
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
 /* Called from the event pump. In exclusive fullscreen, losing focus returns the
  * display to its desktop mode so other apps are usable; regaining focus restores
  * the exclusive mode chosen by SetWindowMode. */
@@ -1121,7 +1133,7 @@ uint16_t MacDisplay_ReleaseContext(void **reference)
     MacContext *ctx = reference ? *reference : NULL;
     if (!ctx)
         return 0;
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
     /* Windows 0x10012eb6 retires the window before releasing its device.
      * Use that visible lifetime boundary in place of AGL's odd-count flip:
      * retire our owned drawable before discarding its retained FBO image.
@@ -1164,7 +1176,7 @@ uint16_t MacDisplay_ReleaseContext(void **reference)
         glDeleteRenderbuffersEXT(1, &ctx->depth);
         SDL_GL_DeleteContext(ctx->context);
     }
-#if defined(__APPLE__) && defined(COD2_X64)
+#if (defined(__APPLE__) || COD2_WINDOWS_NATIVE) && defined(COD2_X64)
     if (retiredWindow) {
         SDL_DestroyWindow(retiredWindow);
         if (sdl_gl_window == retiredWindow)
@@ -1441,7 +1453,12 @@ int MacDisplay_GetMaxTextureImageUnits(void) {
 #if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
     if (MacShim_Metal()) return 16;
 #endif
-    GLint n = 0; glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &n); return n;
+    GLint n = 0; glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &n);
+#if COD2_WINDOWS_NATIVE
+    /* Windows drivers often report more than the sixteen units COpenGL stores. */
+    if (n > 16) n = 16;
+#endif
+    return n;
 }
 uint32_t MacDisplay_GetPCPixelShaderVersion(void) { return 0xffff0200u; }
 int MacDisplay_GetSupportsSeparateBlendFunc(void) { return MacDisplay_IsGLExtensionSupported("GL_EXT_blend_func_separate"); }

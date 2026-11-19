@@ -54,7 +54,7 @@ SInt16 MacTools_FindDiscVolume(CFStringRef inVolumeName, char *outVolumePath)
 
 void MacTools_CenterRect(MacRect *ioRect, const MacRect *inBounds)
 {
-#if defined(COD2_X64) && defined(__APPLE__)
+#if defined(COD2_X64) && (defined(__APPLE__) || defined(__linux__) || COD2_WINDOWS_NATIVE)
     /* Mac 0xa409-0xa47d wraps each extent to signed 16 bits first. */
     short width = (short)(ioRect->right - ioRect->left);
     short height = (short)(ioRect->bottom - ioRect->top);
