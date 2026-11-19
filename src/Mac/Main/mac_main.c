@@ -21,6 +21,16 @@ extern void MacServer_CheckQuit(void);
 #include "platform/macos_system.h"
 #include <strings.h>
 #endif
+/* The Windows CoD2x client has the same hooks, in src/win32/win_cod2x.c. */
+#if defined(COD2_WINDOWS_NATIVE) && COD2_WINDOWS_NATIVE && defined(COD2_X64) && COD2_X64 && \
+    defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+#define COD2_WIN_CODX_CLIENT 1
+#include "platform/cod2x_native.h"
+/* Its own header needs <windows.h>, which this file avoids. */
+char *Win_Cod2xStartup(char *arguments);
+#else
+#define COD2_WIN_CODX_CLIENT 0
+#endif
 #ifdef __EMSCRIPTEN__
 #    include <emscripten/emscripten.h>
 #endif
@@ -219,6 +229,9 @@ void Sys_Error(const char *error, ...)
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
     Cod2xNative_Shutdown();
 #endif
+#if COD2_WIN_CODX_CLIENT
+    Cod2xNative_Shutdown();
+#endif
     Sys_DestroySplashWindow();
     timeEndPeriod(1);
 #if !COD2_APPLE_SDK || !defined(DEDICATED)
@@ -350,6 +363,9 @@ void Sys_LoadingKeepAlive(void)
 {
 
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+    Cod2xNative_Heartbeat();
+#endif
+#if COD2_WIN_CODX_CLIENT
     Cod2xNative_Heartbeat();
 #endif
     UpdateSystemActivity(0);
@@ -514,6 +530,10 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 #else
     Sys_InstallCrashHandler("CoD2 MP " COD2_VERSION_SHORT, COD2_VERSION_SHORT,
                             COD2_VERSION_DATE, lpCmdLine);
+#if COD2_WIN_CODX_CLIENT
+    /* CoD2x's checks of the game folder, its registry values and cod2x:// links. */
+    lpCmdLine = Win_Cod2xStartup(lpCmdLine);
+#endif
 #endif
 #endif
     { extern int atexit(void (*)(void)); atexit(cr_atexit_diag); }
@@ -605,6 +625,9 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
     Cod2xNative_Init();
 #endif
+#if COD2_WIN_CODX_CLIENT
+    Cod2xNative_Init();
+#endif
 
     getcwd(cwd, sizeof(cwd));
     Com_Printf("Working directory: %s\n", cwd);
@@ -621,6 +644,9 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
         Cod2xNative_Frame();
         { extern void MacInput_WaitIfMinimized(void); MacInput_WaitIfMinimized(); }
+#endif
+#if COD2_WIN_CODX_CLIENT
+        Cod2xNative_Frame();
 #endif
         Com_Frame();
 #if (defined(__APPLE__) || (defined(COD2_WINDOWS_NATIVE) && COD2_WINDOWS_NATIVE)) && defined(COD2_X64) && COD2_X64 && \
@@ -643,6 +669,9 @@ void Sys_Quit(void)
 #endif
 
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+    Cod2xNative_Shutdown();
+#endif
+#if COD2_WIN_CODX_CLIENT
     Cod2xNative_Shutdown();
 #endif
     timeEndPeriod(1);

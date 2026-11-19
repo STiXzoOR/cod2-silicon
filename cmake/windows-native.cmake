@@ -50,6 +50,12 @@ if(COD2_WIN32_CLIENT)
     set(COD2_WIN_VOICE_C src/win32/win_voice_none.c)
   endif()
   list(APPEND WIN_TARGET_C src/platform/macos_audio.c ${COD2_WIN_VOICE_C} src/win32/win_window.c)
+  if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
+    # CoD2x raw mouse rate statistics, read by src/unix/linux_input.c; CoD2x's raw
+    # input modes and the rest of its Windows client behaviour.
+    list(APPEND WIN_TARGET_C src/platform/cod2x_native_mouse.c src/win32/win_rawmouse.c
+      src/win32/win_cod2x.c src/win32/win_cod2x_report.c)
+  endif()
   # The renderer renders into the exact r_mode framebuffer; presentation scales it.
   set_source_files_properties(src/PC/gfx_d3d/rb_state.c src/PC/gfx_d3d/r_screenshot.c PROPERTIES
     COMPILE_DEFINITIONS "glDrawBuffer=MacGL_DrawBuffer;glReadBuffer=MacGL_ReadBuffer")
@@ -74,6 +80,8 @@ else()
   list(FILTER WIN_TARGET_C EXCLUDE REGEX "/PC/(snd|win32/cinematics)\\.c$")
   list(FILTER WIN_TARGET_C EXCLUDE REGEX "/Mac/Main/(mac_input|mac_decode|mac_sound)\\.c$")
   list(FILTER WIN_TARGET_C EXCLUDE REGEX "/PC/win32/(snd_driver|win_voice)\\.c$")
+  # The CoD2x client-only units stay out of the dedicated server.
+  list(FILTER WIN_TARGET_C EXCLUDE REGEX "/PC/qcommon/cod2x_(features|demo|url|vmix)\\.c$")
   list(APPEND WIN_TARGET_C src/platform/macos_server.c src/win32/win_ded_stubs.c)
   # --gc-sections drops input sections, not objects, so the dedicated view gives
   # every typed object its own section.
@@ -165,7 +173,33 @@ if(COD2_WIN32_CLIENT)
   endif()
   target_link_directories(${WIN_TARGET} PRIVATE "${COD2_CURL_DIR}/install/lib")
   target_link_libraries(${WIN_TARGET} PRIVATE curl ws2_32 bcrypt crypt32 secur32 advapi32 iphlpapi)
+  if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
+    # The CoD2x machine identity reads WMI (src/PC/qcommon/cod2x_identity.c), and
+    # its demo upload uses the libcurl headers (src/PC/qcommon/cod2x_demo.c).
+    target_link_libraries(${WIN_TARGET} PRIVATE wbemuuid)
+    # CoD2x's HTTP (src/PC/qcommon/cod2x_http.c) includes the curl headers.
+    target_include_directories(${WIN_TARGET} PRIVATE "${COD2_CURL_DIR}/install/include")
+    target_compile_definitions(${WIN_TARGET} PRIVATE CURL_STATICLIB)
+  endif()
 else()
   # A server downloads nothing.
   target_compile_definitions(${WIN_TARGET} PRIVATE DEDICATED COD2_FEATURE_WWW_DOWNLOAD=0)
+  if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
+    # Except a CoD2x server: its update check, zPAM downloads, script HTTP and reports
+    # use the same static libcurl as the client (src/PC/qcommon/cod2x_http.c).
+    set(COD2_CURL_DIR "${CMAKE_BINARY_DIR}/curl" CACHE PATH "Static libcurl build for this target")
+    execute_process(COMMAND sh "${CMAKE_SOURCE_DIR}/tools/windows/fetch-curl.sh" "${COD2_CURL_DIR}"
+        "${CMAKE_TOOLCHAIN_FILE}"
+      RESULT_VARIABLE fetch_result)
+    if(fetch_result)
+      message(FATAL_ERROR "Could not build libcurl in ${COD2_CURL_DIR}; see its configure.log and build.log")
+    endif()
+    target_include_directories(${WIN_TARGET} PRIVATE "${COD2_CURL_DIR}/install/include")
+    target_compile_definitions(${WIN_TARGET} PRIVATE CURL_STATICLIB)
+    target_link_directories(${WIN_TARGET} PRIVATE "${COD2_CURL_DIR}/install/lib")
+    target_link_libraries(${WIN_TARGET} PRIVATE curl ws2_32 bcrypt crypt32 secur32 advapi32 iphlpapi)
+  endif()
 endif()
+
+include(${CMAKE_SOURCE_DIR}/cmake/cod2x-layer.cmake)
+cod2x_layer_order(${WIN_TARGET})

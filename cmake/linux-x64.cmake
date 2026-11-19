@@ -33,6 +33,8 @@ endforeach()
 list(FILTER LINUX_DED_C EXCLUDE REGEX "/PC/(snd|win32/cinematics)\\.c$")
 list(FILTER LINUX_DED_C EXCLUDE REGEX "/Mac/Main/(mac_input|mac_decode|mac_sound)\\.c$")
 list(FILTER LINUX_DED_C EXCLUDE REGEX "/PC/win32/(snd_driver|win_voice)\\.c$")
+# The CoD2x client-only units stay out of the dedicated server.
+list(FILTER LINUX_DED_C EXCLUDE REGEX "/PC/qcommon/cod2x_(features|demo|url|vmix)\\.c$")
 list(APPEND LINUX_DED_C src/platform/macos_server.c)
 
 include(${CMAKE_SOURCE_DIR}/cmake/datagen.cmake)
@@ -77,6 +79,11 @@ target_compile_options(cod2_lnxded PRIVATE -g "$<$<COMPILE_LANGUAGE:C>:${COD2_LI
 target_compile_definitions(cod2_lnxded PRIVATE DEDICATED ${COD2_LINUX_DEFINITIONS})
 target_compile_features(cod2_lnxded PRIVATE cxx_std_17)
 target_link_libraries(cod2_lnxded PRIVATE ZLIB::ZLIB m dl pthread)
+if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
+  # CoD2x's update check, zPAM downloads, script HTTP (src/PC/qcommon/cod2x_http.c) and reports.
+  find_package(CURL REQUIRED)
+  target_link_libraries(cod2_lnxded PRIVATE CURL::libcurl)
+endif()
 # ELF equivalents of the ld64 aliases in macos-arm64.cmake.
 target_link_options(cod2_lnxded PRIVATE -no-pie -Wl,-z,noexecstack
   -Wl,--defsym,__mh_execute_header=0x1000
@@ -93,3 +100,7 @@ target_compile_options(cod2_lnxded PRIVATE -ffunction-sections -fdata-sections)
 target_link_options(cod2_lnxded PRIVATE -Wl,--gc-sections)
 set_source_files_properties(src/PC/qcommon/crash_handler.c PROPERTIES
   COMPILE_DEFINITIONS "COD2_GIT_HASH=\"${COD2_GIT_HASH}\"")
+
+# CoD2x-layer units as one run, for the error and crash reports (cod2x_report.c).
+include(${CMAKE_SOURCE_DIR}/cmake/cod2x-layer.cmake)
+cod2x_layer_order(cod2_lnxded)

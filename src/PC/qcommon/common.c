@@ -2754,10 +2754,13 @@ void Com_Init_Try_Block_Function(char *commandLine)
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     Com_Printf("Command line: '%s'\n", commandLine);
-    Com_Printf("%s %s build %s %s\n", "CoD2 MP", COD2X_RELEASE, "macOS-arm64", __DATE__ " " __TIME__);
+    Com_Printf("%s %s build %s %s\n", "CoD2 MP", COD2X_RELEASE, COD2X_PLATFORM, __DATE__ " " __TIME__);
 #else
 #if defined(__APPLE__) && defined(COD2_X64)
     Com_Printf("%s %s build %s %s\n", "CoD2 MP", COD2_VERSION_SHORT, "macOS-arm64", COD2_BANNER_DATE);
+#elif defined(COD2_X64) && COD2_IS_PATCH_13
+    /* Windows and Linux print the platform text of their own shipped binaries. */
+    Com_Printf("%s %s build %s %s\n", "CoD2 MP", COD2_VERSION_SHORT, COD2_BUILD_PLATFORM, COD2_BANNER_DATE);
 #elif COD2_APPLE_SDK && COD2_IS_PATCH_13
     Com_Printf("%s %s build %s %s\n", "CoD2 MP", COD2_VERSION_SHORT, "MacOSXS-i386", COD2_BANNER_DATE);
 #else
@@ -2897,10 +2900,12 @@ void Com_Init_Try_Block_Function(char *commandLine)
     {
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
         /* CoD2x's version text, without its author's name in the build field. */
-        char *s = va("%s %s build %s %s", "CoD2 MP", COD2X_RELEASE, __DATE__ " " __TIME__, "macOS-arm64");
+        char *s = va("%s %s build %s %s", "CoD2 MP", COD2X_RELEASE, __DATE__ " " __TIME__, COD2X_PLATFORM);
 #elif defined(__APPLE__) && defined(COD2_X64)
         /* The Apple-silicon build names its own platform; servers and status queries see this text. */
         char *s = va("%s %s build %s %s", "CoD2 MP", COD2_VERSION_SHORT, getBuildNumber(), "macOS-arm64");
+#elif defined(COD2_X64)
+        char *s = va("%s %s build %s %s", "CoD2 MP", COD2_VERSION_SHORT, getBuildNumber(), COD2_BUILD_PLATFORM);
 #else
         char *s = va("%s %s build %s %s", "CoD2 MP", COD2_VERSION_SHORT, getBuildNumber(), "MacOSXS-i386");
 #endif

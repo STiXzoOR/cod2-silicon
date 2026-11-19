@@ -120,7 +120,14 @@ static void cr_emit_common(int fd, const char *crashDesc)
 
 #    include <windows.h>
 #    include <dbghelp.h>
+#    if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED) && \
+        defined(COD2_WINDOWS_NATIVE) && COD2_WINDOWS_NATIVE
+/* CoD2x's crash dialog, report name and restart offer (src/win32/win_cod2x.c). */
+#        define CR_COD2X_DIALOG 1
+#        include "win32/win_cod2x.h"
+#    endif
 
+#    if !defined(CR_COD2X_DIALOG)
 static HWND cr_win_edit = NULL;
 
 static LRESULT CALLBACK cr_win_proc(HWND h, UINT m, WPARAM w, LPARAM l)
@@ -200,6 +207,7 @@ static void cr_win_popup(const char *path, const char *crashDesc)
     }
 }
 
+#    endif
 static void cr_win_regs(int fd, CONTEXT *c)
 {
     if (!c)
@@ -576,6 +584,17 @@ static void cr_win_do(EXCEPTION_POINTERS *ep, const char *descIn)
         snprintf(desc, sizeof(desc), "%s", descIn ? descIn : "fatal error");
     }
 
+#    if defined(CR_COD2X_DIALOG)
+    /* CoD2x's Windows report and dialog (win_cod2x_report.c): a CoD2x-layer fault
+       is sent to CoD2x, every other fault goes to the report receiver. */
+    (void)pid;
+    (void)fd;
+    Win_Cod2xCrashReport(ep, desc, cr_win_owned(ep ? ep->ContextRecord : NULL), path, sizeof(path));
+    if (getenv("COD2_CRASH_NOPOPUP"))
+        Win_Cod2xSendWait();
+    else
+        Win_Cod2xCrashDialog(path, ep);
+#    else
     snprintf(path, sizeof(path), "cod2_crash_%lu.txt", (unsigned long)pid);
     fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0644);
 
@@ -606,6 +625,7 @@ static void cr_win_do(EXCEPTION_POINTERS *ep, const char *descIn)
         return;
 
     cr_win_popup(path, desc);
+#    endif
 }
 
 static LONG WINAPI cr_seh_filter(EXCEPTION_POINTERS *ep)

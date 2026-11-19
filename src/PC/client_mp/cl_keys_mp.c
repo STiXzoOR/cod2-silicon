@@ -1176,6 +1176,20 @@ void Console_Key(int key)
         Console_HistoryDown();
         return;
     }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_WINDOWS_NATIVE) && COD2_WINDOWS_NATIVE && defined(COD2_CODX) && COD2_CODX
+    {
+        /* CoD2x console.cpp: numpad 8 and 2 browse the history only with NumLock off;
+           with it on they type their digit. */
+        extern int Win_Cod2xNumLock(void);
+        if ((key == 0xb7 || key == 0xbd) && !Win_Cod2xNumLock()) {
+            if (key == 0xb7)
+                Console_HistoryUp();
+            else
+                Console_HistoryDown();
+            return;
+        }
+    }
+#endif
 
     if (key == K_PGUP || key == K_MWHEELUP) {
         Con_PageUp();

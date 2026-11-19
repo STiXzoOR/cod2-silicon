@@ -96,8 +96,9 @@ void CMacGameEngine_DrawSplashScreen(const char *fileName)
 void *__ZTIl = 0;
 #endif
 
-#if !defined(DEDICATED)
-/* SDL's relative mouse mode already reads raw input on Windows. */
+#if !defined(DEDICATED) && !(defined(COD2_CODX) && COD2_CODX)
+/* SDL's relative mouse mode already reads raw input on Windows. CoD2x's raw
+   input modes are in win_rawmouse.c. */
 void MacRawMouse_Init(void) {}
 void MacRawMouse_Shutdown(void) {}
 void MacRawMouse_SetActive(int active) { (void)active; }
@@ -165,4 +166,21 @@ int Win_ReadRegistryCDKey(char *key, int size)
     }
     return 0;
 }
+#if defined(COD2_CODX) && COD2_CODX
+/* com_autoaffinity, CoD2x src/mss32/affinity.cpp. */
+int Sys_Cod2xProcessorCount(void)
+{
+    SYSTEM_INFO info;
+    GetSystemInfo(&info);
+    return (int)info.dwNumberOfProcessors;
+}
+
+int Sys_Cod2xSetAffinity(unsigned long long mask, unsigned long *error)
+{
+    if (SetProcessAffinityMask(GetCurrentProcess(), (DWORD_PTR)mask))
+        return 1;
+    *error = GetLastError();
+    return 0;
+}
+#endif
 #endif

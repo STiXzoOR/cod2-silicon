@@ -21,8 +21,16 @@
 #else
 #define COD2X_VERSION "opencod2-cod2x-1.4.6"
 #endif
-/* The platform named in CoD2x reports. */
+/* The platform named in CoD2x reports and version banners. */
+#if defined(__APPLE__)
 #define COD2X_PLATFORM "macOS-arm64"
+#elif defined(_WIN64)
+#define COD2X_PLATFORM "win-x86_64"
+#elif defined(_WIN32)
+#define COD2X_PLATFORM "win-x86"
+#else
+#define COD2X_PLATFORM "linux-x86_64"
+#endif
 
 int Cod2x_ConnectProtocol(int advertised);
 size_t Cod2x_EncodeConnect(char *packet, size_t capacity, const char *userinfo);
