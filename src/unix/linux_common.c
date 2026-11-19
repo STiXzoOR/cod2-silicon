@@ -11,6 +11,10 @@
 #if defined(__APPLE__) && defined(COD2_X64) && !defined(DEDICATED)
 #include <pthread/qos.h>
 #endif
+#if defined(__APPLE__) && defined(COD2_X64)
+#include <sys/resource.h>
+#include <sys/select.h>
+#endif
 #if !defined(__EMSCRIPTEN__) && defined(COD2_ENABLE_NULL_CALL_RECOVERY)
 #define __USE_GNU
 #include <ucontext.h>
@@ -164,8 +168,34 @@ void Sys_OpenURL(const char *url, int activate)
 }
 #endif
 
+#if defined(__APPLE__) && defined(COD2_X64)
+/* A program started from Finder or by launchd may hold 256 files open at once, and
+ * the game keeps every .iwd archive open: its own, and those of a server's mods and
+ * custom maps. Past the limit an archive silently fails to open. Ask for 1024, or
+ * for what the system allows if that is less. Not more: the network code waits on
+ * its sockets with select(), whose descriptor sets end at FD_SETSIZE. */
+static void Mac_RaiseOpenFileLimit(void)
+{
+    struct rlimit limit;
+    rlim_t want = FD_SETSIZE;
+
+    if (getrlimit(RLIMIT_NOFILE, &limit) != 0)
+        return;
+    if (limit.rlim_max != RLIM_INFINITY && want > limit.rlim_max)
+        want = limit.rlim_max;
+    if (limit.rlim_cur == RLIM_INFINITY || limit.rlim_cur >= want)
+        return;
+    limit.rlim_cur = want;
+    if (setrlimit(RLIMIT_NOFILE, &limit) != 0)
+        fprintf(stderr, "CoD2-native open-file limit stays as it was\n");
+}
+#endif
+
 int main(int argc, char **argv)
 {
+#if defined(__APPLE__) && defined(COD2_X64)
+    Mac_RaiseOpenFileLimit();
+#endif
 #if defined(__APPLE__) && defined(COD2_X64) && !defined(DEDICATED)
     int qosError = pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);
     if (qosError)
