@@ -20,10 +20,9 @@ struct NewLoadoutSheet: View {
                       actions: [.cancel { model.dismissSheet() },
                                 .primary("Create Loadout", enabled: reason == nil) { create(copying: copy && source != nil) }]) {
             VStack(alignment: .leading, spacing: 12) {
+                // A sheet that asks for a name shows one field across its width, like every other sheet's field.
+                LauncherTextField("Loadout name", text: $name, prompt: "Name, for example Scrim", shape: .capsule, autofocus: true)
                 FormGroup {
-                    FormRow("Name") {
-                        LauncherTextField("Name", text: $name, prompt: "For example, Scrim", width: 240, autofocus: true)
-                    }
                     FormRow("Start from") { PopUpButton("Start from", selection: $copy, options: startOptions(source)) }
                 }
                 if let error { Banner(.error, title: "Couldn’t create the loadout", message: error) }
@@ -70,9 +69,7 @@ struct RenameLoadoutSheet: View {
                                 .primary("Rename", enabled: reason == nil) {
                                     studio.rename(name, undo: model.launcherWindow?.undoManager); model.dismissSheet()
                                 }]) {
-            FormGroup {
-                FormRow("Name") { LauncherTextField("Name", text: $name, width: 240, autofocus: true) }
-            }
+            LauncherTextField("Loadout name", text: $name, shape: .capsule, invalid: reason != nil && !unchanged, autofocus: true)
         } note: {
             if let reason { Text(reason) }
         }

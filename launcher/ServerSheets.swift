@@ -31,10 +31,9 @@ struct ConnectSheet: View {
                     .onSubmit(launch)
                 status.padding(.leading, 8)
             }
+            LauncherTextField("Server password", text: $password, prompt: "Password, only if the server needs one", shape: .capsule, secure: true,
+                              invalid: passwordProblem != nil)
             FormGroup {
-                FormRow("Password") {
-                    LauncherTextField("Server password", text: $password, prompt: "Only if the server needs one", secure: true, invalid: passwordProblem != nil, width: 230)
-                }
                 FormRow("Add to Favorites", isOn: $addFavorite)
             }
             if let passwordProblem {
