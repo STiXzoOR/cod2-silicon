@@ -4,7 +4,9 @@
 #include "PC/qcommon/cod2x_url.h"
 #include <string.h>
 #include <stdio.h>
+#if !defined(COD2_ENGINE_ONLY)
 #include "cod2x_native_setup.h"
+#endif
 
 extern void Cbuf_AddText(const char *text);
 extern void Dvar_SetStringByName(const char *name, const char *value);
@@ -32,10 +34,12 @@ int Cod2xNativeApp_Arguments(char *buffer, int capacity)
     id arguments = [NSBundle.mainBundle objectForInfoDictionaryKey:@"CoD2LaunchArguments"];
     if (![arguments isKindOfClass:NSString.class])
         return 0;
+#if !defined(COD2_ENGINE_ONLY)
     /* First-launch setup pumps Cocoa events before WinMain installs handlers. */
     Cod2xNativeURL_Install();
     if ([[NSBundle.mainBundle objectForInfoDictionaryKey:@"CoD2AutomaticShaderSetup"] boolValue])
         return Cod2xSetupAppArguments(NSBundle.mainBundle, arguments, buffer, capacity);
+#endif
     int length = snprintf(buffer, capacity, "%s", [arguments UTF8String]);
     return length >= 0 && length < capacity ? length : -1;
 }

@@ -1,7 +1,11 @@
 #include "common_types.h"
 #include "r_cod2x_xray.h"
 #if COD2X_XRAY_RENDER
+#if !defined(COD2_ENGINE_ONLY)
 #include "Mac/Metal/metal_backend.h"
+#else
+#define MacShim_IsMetal() 0 /* there is one renderer here, and it is OpenGL */
+#endif
 #if COD2_MAC_D3D9
 /* The Direct3D 9 on Metal path has no OpenGL context, and this pass is drawn with
  * OpenGL. Until it has a Direct3D 9 pass of its own it is off there, as on the

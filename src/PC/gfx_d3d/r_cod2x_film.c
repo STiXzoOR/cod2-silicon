@@ -4,7 +4,11 @@
 #if COD2X_FILM
 #include <string.h>
 #include <stdatomic.h>
+#if !defined(COD2_ENGINE_ONLY)
 #include "Mac/Metal/metal_backend.h"
+#else
+#define MacShim_IsMetal() 0 /* there is one renderer here, and it is OpenGL */
+#endif
 #if COD2_MAC_D3D9
 /* The Direct3D 9 on Metal path has no OpenGL context. It draws this pass itself
  * (rb_backend.c: RB_Cod2xFilm_D3D9) and must never reach the OpenGL one. */

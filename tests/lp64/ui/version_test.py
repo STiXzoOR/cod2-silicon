@@ -128,11 +128,16 @@ for x64, codx, release in [(1, 0, '9.8.7'), (1, 1, '9.8.7'), (1, 1, '10.20.30'),
     if not x64:
         footer = 'Build reference-build MacOSXS-i386'
     else:
+        # export-begin: app
         footer = 'CoD2 Unbound ' + release + ' · CoD2x ' + cod2x_release + ' · macOS arm64' if codx else 'Build reference-build macOS arm64'
+        # export-else
+        #| footer = 'Build reference-build macOS arm64' + (' · CoD2x ' + cod2x_release if codx else '')
+        # export-end
     subprocess.run([str(exe), prompt, footer], cwd=out, check=True)
 print('PASS production stock/CoD2x prompt, footer, dynamic release version, feature gates and input width')
 
 # Evaluate the production defaults without building or packaging an application.
+# export-begin: app
 release = (ROOT / 'RELEASE_VERSION').read_text().strip()
 cmake = (ROOT / 'cmake/macos-arm64.cmake').read_text()
 version_config = cmake[cmake.index('set(COD2_RELEASE_VERSION'):cmake.index('enable_language')]
@@ -157,3 +162,4 @@ parser = namespace['parser']
 assert parser.parse_args(['unused', 'unused.app']).version == release
 assert parser.parse_args(['unused', 'unused.app', '--version', '9.8.7']).version == '9.8.7'
 print('PASS RELEASE_VERSION default and explicit release override in production CMake/bundle parser')
+# export-end

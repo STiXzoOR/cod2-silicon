@@ -81,6 +81,7 @@ if(NOT COD2_X64)
   set_source_files_properties(src/PC/qcommon/match_summary.c PROPERTIES HEADER_FILE_ONLY TRUE)
 endif()
 
+# export-begin: codx
 # Opt-in follows COD2_FEATURE_CFLAGS; keep gate-off object/debug inputs unchanged.
 if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
   add_compile_definitions(COD2_CODX=1)
@@ -107,6 +108,7 @@ if(NOT (COD2_X64 AND COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)"))
     src/PC/gfx_d3d/r_cod2x_xray.c
     PROPERTIES HEADER_FILE_ONLY TRUE)
 endif()
+# export-end
 
 # x64 port: expose COD2_X64 to the source so the ILP32 layout pins
 # (COD2_ASSERT_FIELD/SIZE in cod2_defs.h) and other arch-specific code can adapt.

@@ -17,7 +17,9 @@ extern void MacServer_InstallSignals(void);
 extern void MacServer_CheckQuit(void);
 #endif
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+#if !defined(COD2_ENGINE_ONLY) || (defined(COD2_CODX) && COD2_CODX)
 #include "platform/cod2x_native.h"
+#endif
 #include "platform/macos_system.h"
 #include <strings.h>
 #endif
@@ -226,7 +228,7 @@ void Sys_Error(const char *error, ...)
     }
 #endif
 
-#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED) && (!defined(COD2_ENGINE_ONLY) || (defined(COD2_CODX) && COD2_CODX))
     Cod2xNative_Shutdown();
 #endif
 #if COD2_WIN_CODX_CLIENT
@@ -362,7 +364,7 @@ void Sys_Init(void)
 void Sys_LoadingKeepAlive(void)
 {
 
-#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED) && (!defined(COD2_ENGINE_ONLY) || (defined(COD2_CODX) && COD2_CODX))
     Cod2xNative_Heartbeat();
 #endif
 #if COD2_WIN_CODX_CLIENT
@@ -551,7 +553,9 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     Win_InitLocalization();
     Dvar_Init();
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+#if !defined(COD2_ENGINE_ONLY) || (defined(COD2_CODX) && COD2_CODX)
     Cod2xNativeURL_SetupPaths();
+#endif
 #if !COD2_CODX
     // Upstream CoD2x deliberately disables the improper-quit recovery prompt.
     int previousExit = MacSystem_BeginSession();
@@ -622,7 +626,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     Com_Init(lpCmdLine);
 #endif
 
-#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED) && (!defined(COD2_ENGINE_ONLY) || (defined(COD2_CODX) && COD2_CODX))
     Cod2xNative_Init();
 #endif
 #if COD2_WIN_CODX_CLIENT
@@ -642,7 +646,9 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         MacServer_CheckQuit();
 #endif
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+#if !defined(COD2_ENGINE_ONLY) || (defined(COD2_CODX) && COD2_CODX)
         Cod2xNative_Frame();
+#endif
         { extern void MacInput_WaitIfMinimized(void); MacInput_WaitIfMinimized(); }
 #endif
 #if COD2_WIN_CODX_CLIENT
@@ -668,7 +674,7 @@ void Sys_Quit(void)
     if (!sys_exitCode) Sys_NormalExit();
 #endif
 
-#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED) && (!defined(COD2_ENGINE_ONLY) || (defined(COD2_CODX) && COD2_CODX))
     Cod2xNative_Shutdown();
 #endif
 #if COD2_WIN_CODX_CLIENT

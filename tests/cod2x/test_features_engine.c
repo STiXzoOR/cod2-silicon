@@ -382,8 +382,12 @@ int main(void)
         Cod2x_FeaturesClientState(CA_CONNECTING);
         assert(errorCount == 0);
         Cod2x_UpdateConfirmed();
+#if !defined(COD2_ENGINE_ONLY)
         assert(strstr(openedURL, "github.com/cod2unbound/cod2-unbound/releases"));
         assert(strstr(lastError, "CoD2 Unbound") && strstr(lastError, "launcher"));
+#else
+        assert(!openedURL[0] && strstr(lastError, "does not download"));
+#endif
     }
     {
         char version[601], body[800];

@@ -20,7 +20,7 @@
 #include <time.h>
 #if defined(COD2_X64) && !defined(DEDICATED)
 #include <SDL_messagebox.h>
-#if defined(__APPLE__)
+#if defined(__APPLE__) && (!defined(COD2_ENGINE_ONLY) || (defined(COD2_CODX) && COD2_CODX))
 #include "platform/cod2x_native.h"
 #endif
 #endif
@@ -124,11 +124,11 @@ int MessageBoxA(void *hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType)
     int result = fallback;
     /* Startup and profile-change prompts can both wait for user input. */
     if (pthread_main_np()) {
-#if defined(__APPLE__)
+#if defined(__APPLE__) && (!defined(COD2_ENGINE_ONLY) || (defined(COD2_CODX) && COD2_CODX))
         Cod2xNative_BeginUserWait();
 #endif
         int shown = SDL_ShowMessageBox(&message, &result);
-#if defined(__APPLE__)
+#if defined(__APPLE__) && (!defined(COD2_ENGINE_ONLY) || (defined(COD2_CODX) && COD2_CODX))
         Cod2xNative_EndUserWait();
 #endif
         if (shown == 0)

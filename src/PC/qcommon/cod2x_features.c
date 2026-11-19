@@ -939,8 +939,13 @@ static void Cod2x_UpdateAnswer(int available, const char *url, const char *versi
         Dvar_SetString(updateVersion, version);
         Dvar_SetString(updateOldVersion, COD2X_RELEASE);
         if (available == 2) {
+#if !defined(COD2_ENGINE_ONLY)
             Com_Printf("CoD2x %s requires a newer CoD2 Unbound release. Check for updates in the launcher.\n"
                        "Servers compatible with this build can still be joined.\n", version);
+#else
+            Com_Printf("CoD2x %s requires a newer build.\n"
+                       "Servers compatible with this build can still be joined.\n", version);
+#endif
         }
     } else {
         Com_Printf("CoD2x: No updates available.\n");
@@ -1002,12 +1007,18 @@ void Cod2x_UpdatePacket(netadr_t from)
 /* The update prompt's "getautoupdate". CoD2x downloads its mss32.dll and restarts. */
 void Cod2x_UpdateConfirmed(void)
 {
+#if !defined(COD2_ENGINE_ONLY)
     extern void Sys_OpenURL(const char *, int);
     Sys_OpenURL("https://github.com/cod2unbound/cod2-unbound/releases", 1);
     Com_Error(1, "CoD2x %s is available.\n\nCheck for CoD2 Unbound updates in the launcher or on the release page opened in your browser.\n"
               "Upstream Windows updates cannot be installed in this native Mac build.\n"
               "You can still join servers compatible with this version.\n",
               updateVersion ? updateVersion->current.string : "");
+#else
+    Com_Error(1, "CoD2x %s is available.\n\nThis build does not download or install CoD2x's files.\n"
+              "You can still join servers compatible with this version.\n",
+              updateVersion ? updateVersion->current.string : "");
+#endif
 }
 
 void Cod2x_FeaturesRenderer(void)

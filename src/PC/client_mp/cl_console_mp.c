@@ -5,13 +5,13 @@
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "PC/qcommon/cod2x.h"
 #include "PC/qcommon/cod2x_features.h"
-#define COD2X_CON_NAME_CHARS 40
-#define COD2X_CON_VALUE_OFFSET 340.0f
-#define COD2X_CON_MATCHES 60
+#define CON_MATCH_NAME_CHARS 40
+#define CON_MATCH_VALUE_OFFSET 340.0f
+#define CON_MATCH_LIMIT 60
 #else
-#define COD2X_CON_NAME_CHARS 0x18
-#define COD2X_CON_VALUE_OFFSET 200.0f
-#define COD2X_CON_MATCHES 24
+#define CON_MATCH_NAME_CHARS 0x18
+#define CON_MATCH_VALUE_OFFSET 200.0f
+#define CON_MATCH_LIMIT 24
 #endif
 #include "imports.h"
 #include "bytematch.h"
@@ -715,7 +715,11 @@ static BM_NOINLINE void Con_DrawOuputWindow(void)
 
 #if defined(COD2_X64) && COD2_X64 && defined(__APPLE__) && (defined(__aarch64__) || defined(__arm64__))
 #if defined(COD2_CODX) && COD2_CODX
+#if !defined(COD2_ENGINE_ONLY)
     version = va("CoD2 Unbound %s · CoD2x " COD2X_RELEASE " · macOS arm64", COD2_RELEASE_VERSION);
+#else
+    version = va("Build %s %s · CoD2x " COD2X_RELEASE, getBuildNumber(), "macOS arm64");
+#endif
 #else
     version = va("Build %s %s", getBuildNumber(), "macOS arm64");
 #endif
@@ -800,7 +804,11 @@ static BM_NOINLINE void Con_DrawOuputWindow(void)
 
 #if defined(COD2_X64) && COD2_X64 && defined(__APPLE__) && (defined(__aarch64__) || defined(__arm64__))
 #if defined(COD2_CODX) && COD2_CODX
+#if !defined(COD2_ENGINE_ONLY)
     version = va("CoD2 Unbound %s · CoD2x " COD2X_RELEASE " · macOS arm64", COD2_RELEASE_VERSION);
+#else
+    version = va("Build %s %s · CoD2x " COD2X_RELEASE, getBuildNumber(), "macOS arm64");
+#endif
 #else
     version = va("Build %s %s", getBuildNumber(), "macOS arm64");
 #endif
@@ -1303,8 +1311,8 @@ static void ConDrawInput_DvarMatch(const char *str)
 
     cls_ = &cls;
 
-    re.DrawText(str, COD2X_CON_NAME_CHARS, cls_->consoleFont, conDrawInputGlob.x, conDrawInputGlob.y + conDrawInputGlob.fontHeight, 1.0f, 1.0f, con_inputDvarMatchColor, 0);
-    conDrawInputGlob.x += COD2X_CON_VALUE_OFFSET;
+    re.DrawText(str, CON_MATCH_NAME_CHARS, cls_->consoleFont, conDrawInputGlob.x, conDrawInputGlob.y + conDrawInputGlob.fontHeight, 1.0f, 1.0f, con_inputDvarMatchColor, 0);
+    conDrawInputGlob.x += CON_MATCH_VALUE_OFFSET;
 
     value = Dvar_GetVariantString(str);
     re.DrawText(value, 0x28, cls_->consoleFont, conDrawInputGlob.x, conDrawInputGlob.y + conDrawInputGlob.fontHeight, 1.0f, 1.0f, con_inputDvarValueColor, 0);
@@ -2106,19 +2114,19 @@ static void ConDrawInput_DetailedDvarMatch(const char *str)
 #ifdef COD2_X64
     lineCount = hasLatchedValue ? 3 : 2;
     ConDrawInput_DrawHintBox(lineCount, 0.0f);
-    ConDrawInput_DrawText(str, COD2X_CON_NAME_CHARS, con_inputDvarMatchColor);
-    conDrawInputGlob.x += COD2X_CON_VALUE_OFFSET;
+    ConDrawInput_DrawText(str, CON_MATCH_NAME_CHARS, con_inputDvarMatchColor);
+    conDrawInputGlob.x += CON_MATCH_VALUE_OFFSET;
     ConDrawInput_DrawText(Dvar_DisplayableValue(dvar), 0x28, con_inputDvarValueColor);
     ConDrawInput_NextLine();
 
     if (hasLatchedValue) {
         ConDrawInput_DrawText("  latched value", 0x7fffffff, con_inputDvarInactiveValueColor);
-        conDrawInputGlob.x += COD2X_CON_VALUE_OFFSET;
+        conDrawInputGlob.x += CON_MATCH_VALUE_OFFSET;
         ConDrawInput_DrawText(Dvar_DisplayableLatchedValue(dvar), 0x28, con_inputDvarInactiveValueColor);
         ConDrawInput_NextLine();
     }
     ConDrawInput_DrawText("  default", 0x7fffffff, con_inputDvarInactiveValueColor);
-    conDrawInputGlob.x += COD2X_CON_VALUE_OFFSET;
+    conDrawInputGlob.x += CON_MATCH_VALUE_OFFSET;
     ConDrawInput_DrawText(Dvar_DisplayableResetValue(dvar), 0x28, con_inputDvarInactiveValueColor);
     ConDrawInput_NextLine();
     ConDrawInput_NextLine();
@@ -2136,7 +2144,7 @@ static void ConDrawInput_DetailedDvarMatch(const char *str)
     lineCount = hasLatchedValue ? 4 : 3;
     ConDrawInput_DrawHintBox(lineCount, 0.0f);
 
-    ConDrawInput_DrawText(str, COD2X_CON_NAME_CHARS, con_inputDvarMatchColor);
+    ConDrawInput_DrawText(str, CON_MATCH_NAME_CHARS, con_inputDvarMatchColor);
     ConDrawInput_NextLine();
 
     ConDrawInput_DrawText(Dvar_DisplayableValue(dvar), 0x28, con_inputDvarValueColor);
@@ -2239,7 +2247,7 @@ static BM_NOINLINE void Con_DrawInput(void)
 
     ConDrawInput_NextLine();
 
-    if (matchCount > COD2X_CON_MATCHES) {
+    if (matchCount > CON_MATCH_LIMIT) {
         const char *tooMany = va("%i matches (too many to show)", matchCount);
         ConDrawInput_DrawHintBox(1, 0.0f);
         ConDrawInput_DrawText(tooMany, 0x7fffffff, con_inputDvarMatchColor);
@@ -2317,7 +2325,7 @@ static BM_NOINLINE void Con_DrawInput(void)
     if (!matchCount)
         return;
 
-    if (matchCount > COD2X_CON_MATCHES) {
+    if (matchCount > CON_MATCH_LIMIT) {
         const char *tooMany = va("%i matches (too many to show)", matchCount);
         ConDrawInput_DrawHintBox(1, 0.0f);
         ConDrawInput_DrawText(tooMany, 0x7fffffff, con_inputDvarMatchColor);

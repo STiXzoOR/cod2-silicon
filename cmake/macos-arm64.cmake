@@ -1,6 +1,7 @@
 # Native Apple platform. Typed engine data/import slots are supplied by WS2.
 set(CMAKE_OSX_ARCHITECTURES arm64)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "26.0" CACHE STRING "Minimum native macOS version" FORCE)
+# export-begin: app
 option(COD2_MACOS_RELEASE "Require a portable pinned-SDL release build" OFF)
 set(COD2_RELEASE_VERSION "" CACHE STRING "Release version override (empty uses RELEASE_VERSION)")
 if(NOT COD2_RELEASE_VERSION)
@@ -10,12 +11,14 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_SOURCE_D
 if(NOT COD2_RELEASE_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
   message(FATAL_ERROR "COD2_RELEASE_VERSION must be N.N.N")
 endif()
+# export-end
 enable_language(CXX OBJC)
 find_library(COD2_AUDIO_FRAMEWORK AudioToolbox REQUIRED)
 find_library(COD2_COREAUDIO_FRAMEWORK CoreAudio REQUIRED)
 find_library(COD2_GAMECONTROLLER_FRAMEWORK GameController REQUIRED)
 find_library(COD2_FOUNDATION_FRAMEWORK Foundation REQUIRED)
 find_package(SDL2 CONFIG REQUIRED)
+# export-begin: app
 if(COD2_MACOS_RELEASE)
   set(COD2_MACOS_SDL_PREFIX "" CACHE PATH "Pinned SDL install prefix for release bundles")
   if(NOT COD2_MACOS_SDL_PREFIX)
@@ -24,6 +27,7 @@ if(COD2_MACOS_RELEASE)
   set(CMAKE_SKIP_BUILD_RPATH TRUE)
   set(COD2_MACOS_APP_FRAMEWORK_ARGS --frameworks "${COD2_MACOS_SDL_PREFIX}")
 endif()
+# export-end
 file(GLOB MACOS_PLATFORM_SOURCES "${CMAKE_SOURCE_DIR}/src/platform/*.[cm]" "${CMAKE_SOURCE_DIR}/src/platform/*.cpp")
 set_property(SOURCE ${MACOS_PLATFORM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS
   -Werror=unguarded-availability -Werror=unguarded-availability-new)
@@ -36,8 +40,10 @@ file(GLOB_RECURSE MACOS_MAC_C CONFIGURE_DEPENDS "${COD2_SRC_DIR}/Mac/*.c")
 file(GLOB_RECURSE MACOS_STUBS_C CONFIGURE_DEPENDS "${COD2_SRC_DIR}/stubs/*.c")
 file(GLOB MACOS_ROOT_C CONFIGURE_DEPENDS "${COD2_SRC_DIR}/*.c")
 set(MACOS_C ${MACOS_PC_C} ${MACOS_MAC_C} ${MACOS_STUBS_C} ${MACOS_ROOT_C})
+# export-begin: app
 # Metal providers belong only to the native client, never the dedicated graph.
 list(FILTER MACOS_C EXCLUDE REGEX "/Mac/Metal/")
+# export-end
 # Use the SDK zlib, as in the native Linux build. No 32-bit data generators or ASM.
 list(FILTER MACOS_C EXCLUDE REGEX "/PC/zlib/(inflate|infblock|infcodes|inffast|inftrees|infutil|adler32|zutil)\\.c$")
 list(FILTER MACOS_C EXCLUDE REGEX "/(data|import_pointers|literals)\\.c$")
@@ -65,7 +71,9 @@ list(FILTER MACOS_DED_C EXCLUDE REGEX "/PC/(snd|win32/cinematics)\\.c$")
 list(FILTER MACOS_DED_C EXCLUDE REGEX "/Mac/Main/(mac_input|mac_decode|mac_sound)\\.c$")
 # A dedicated build never loads the client sound driver or group voice output.
 list(FILTER MACOS_DED_C EXCLUDE REGEX "/PC/win32/(snd_driver|win_voice)\\.c$")
+# export-begin: codx
 list(FILTER MACOS_DED_C EXCLUDE REGEX "/PC/qcommon/cod2x_(features|demo|url|vmix)\\.c$")
+# export-end
 
 # Typed LP64 data generated from the Mac binary's STABS (WS2, tools/datagen).
 include(${CMAKE_SOURCE_DIR}/cmake/datagen.cmake)
@@ -110,7 +118,9 @@ foreach(target cod2_macos cod2_macos_ded)
     -ferror-limit=0)
   target_link_libraries(${target} PRIVATE ZLIB::ZLIB c++ "-framework IOKit" "-framework CoreFoundation" "-framework CoreServices")
   target_compile_features(${target} PRIVATE cxx_std_17)
+  # export-begin: app
   target_compile_definitions(${target} PRIVATE COD2_RELEASE_VERSION="${COD2_RELEASE_VERSION}")
+  # export-end
   # ld64 equivalents of the MinGW --defsym seam aliases in CMakeLists.txt.
   target_link_options(${target} PRIVATE
     "LINKER:-alias,_g_entities,_g_entities_ptr"
@@ -127,6 +137,7 @@ target_sources(cod2_macos PRIVATE src/unix/linux_input.c src/platform/macos_disp
   src/platform/macos_record.c src/platform/macos_microphone.m
   src/platform/macos_jpeg.c)
 set_property(SOURCE src/platform/macos_rawmouse.m APPEND PROPERTY COMPILE_OPTIONS -fobjc-arc)
+# export-begin: app
 # Native object/resource/presentation providers; Classic remains the default.
 target_sources(cod2_macos PRIVATE src/Mac/Metal/metal_core.m
   src/Mac/Metal/metal_dispatch.m src/Mac/Metal/metal_gpu.m
@@ -137,6 +148,7 @@ set_property(SOURCE src/Mac/Metal/metal_gpu.m src/Mac/Metal/metal_frame.m
   src/Mac/Metal/metal_resources.m src/platform/macos_metal_present.m APPEND PROPERTY COMPILE_OPTIONS
   -fobjc-arc -Werror=unguarded-availability -Werror=unguarded-availability-new)
 target_link_libraries(cod2_macos PRIVATE "-framework Metal" "-framework QuartzCore" "-framework IOSurface")
+# export-end
 # The renderer renders into the exact r_mode framebuffer; presentation scales it.
 set_source_files_properties(src/PC/gfx_d3d/rb_state.c src/PC/gfx_d3d/r_screenshot.c PROPERTIES
   COMPILE_DEFINITIONS "glDrawBuffer=MacGL_DrawBuffer;glReadBuffer=MacGL_ReadBuffer")
@@ -144,6 +156,7 @@ target_link_libraries(cod2_macos PRIVATE SDL2::SDL2 ${COD2_OPENGL_FRAMEWORK} ${C
   ${COD2_AUDIO_FRAMEWORK} ${COD2_COREAUDIO_FRAMEWORK}
   ${COD2_GAMECONTROLLER_FRAMEWORK} ${COD2_FOUNDATION_FRAMEWORK}
   "-framework ImageIO" "-framework CoreGraphics" "-framework AppKit" "-framework AVFoundation")
+# export-begin: app
 # The client can render through libd3d9metal (mtld3d's Direct3D 9 on Metal) with
 # the renderer's system-Direct3D-9 path, instead of the OpenGL device layer.
 # COD2_D3D9METAL_DIR is the install prefix from scripts/build-d3d9metal.sh
@@ -172,6 +185,8 @@ if(COD2_MAC_D3D9)
   set_property(SOURCE src/PC/gfx_d3d/rb_backend.c APPEND PROPERTY COMPILE_DEFINITIONS
     "glGenFencesAPPLE=MacD3D9_GenFences;glSetFenceAPPLE=MacD3D9_SetFence;glTestFenceAPPLE=MacD3D9_TestFence;glDeleteFencesAPPLE=MacD3D9_DeleteFences")
 endif()
+# export-end
+# export-begin: app
 # The app layer of the client is built with and without CoD2x: launch links from
 # the launcher, the freeze watcher, crash reports in the game's home and the
 # first-launch setup.
@@ -181,9 +196,24 @@ target_sources(cod2_macos PRIVATE src/platform/cod2x_native.c
 set_property(SOURCE src/platform/cod2x_native_macos.m src/platform/cod2x_native_shaders.m
   APPEND PROPERTY COMPILE_OPTIONS -fobjc-arc)
 target_link_libraries(cod2_macos PRIVATE ${COD2_APPKIT_FRAMEWORK})
+# export-else
+#| # export-begin: codx
+#| # CoD2x client platform layer: the freeze watcher and cod2x:// links.
+#| if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
+#|   find_library(COD2_APPKIT_FRAMEWORK AppKit REQUIRED)
+#|   target_sources(cod2_macos PRIVATE src/platform/cod2x_native.c src/platform/cod2x_native_macos.m)
+#|   set_property(SOURCE src/platform/cod2x_native_macos.m APPEND PROPERTY COMPILE_OPTIONS -fobjc-arc)
+#|   target_link_libraries(cod2_macos PRIVATE ${COD2_APPKIT_FRAMEWORK})
+#| endif()
+#| # export-end
+# export-end
+# export-begin: codx
 if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
+  # export-begin: app
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  # export-end
   target_sources(cod2_macos PRIVATE src/platform/cod2x_native_mouse.c src/platform/cod2x_film_gl.c src/platform/cod2x_xray_gl.c)
+  # export-begin: app
   # The shader generator builds the OpenGL shader cache from the game's HLSL at
   # setup time. It is a separate program so that libvkd3d-shader (LGPL) stays a
   # replaceable library and a compiler fault cannot take the game down.
@@ -216,18 +246,24 @@ if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
     DEPENDS cod2_macos cod2_launcher ${COD2_MACOS_APP_SHADERGEN_DEPENDS}
     COMMENT "Build and ad-hoc sign CoD2 Unbound.app"
     VERBATIM)
+  # export-end
 endif()
+# export-end
 target_compile_definitions(cod2_macos_ded PRIVATE DEDICATED)
+# export-begin: codx
 if(COD2_X64 AND COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
   # CoD2x's update check, zPAM downloads and script HTTP (src/PC/qcommon/cod2x_http.c).
   target_link_libraries(cod2_macos_ded PRIVATE ${COD2_CURL_LIBRARY})
 endif()
+# export-end
 target_sources(cod2_macos_ded PRIVATE src/platform/macos_server.c)
 target_link_options(cod2_macos_ded PRIVATE -Wl,-dead_strip)
 set_source_files_properties(src/PC/qcommon/crash_handler.c PROPERTIES
   COMPILE_DEFINITIONS "COD2_GIT_HASH=\"${COD2_GIT_HASH}\"")
 
+# export-begin: codx
 # The CoD2x units link as one run, so a fault can be placed in or out of them.
 include(${CMAKE_SOURCE_DIR}/cmake/cod2x-layer.cmake)
 cod2x_layer_order(cod2_macos)
 cod2x_layer_order(cod2_macos_ded)
+# export-end

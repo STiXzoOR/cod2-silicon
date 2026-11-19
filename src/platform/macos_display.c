@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
 #include "macos_metal_present.h"
 #include "Mac/Metal/shim_dispatch.h"
 #include "Mac/Metal/metal_backend.h"
@@ -44,7 +44,7 @@ typedef struct {
     GLuint msFramebuffer, msColor, msDepth;
     int samples;
 #endif
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     MacMetalPresenter *metal;
     int nativeRenderer;
 #endif
@@ -118,12 +118,14 @@ static MacContext *screenContext;
 static int presentMode;
 static GLsync presentFence;
 void MacPlatform_SetPresentMode(int mode) { presentMode = mode; }
+#if !defined(COD2_ENGINE_ONLY)
 static int metalPresentation, metalEDR;
 void MacPlatform_ConfigurePresentation(int metal, int edr)
 {
     metalPresentation = metal;
     metalEDR = edr;
 }
+#endif
 #endif
 #if !defined(COD2_X64)
 static unsigned short originalGamma[3][256];
@@ -167,7 +169,7 @@ int Sys_Cod2xHwidRetry(unsigned int code, const char *error)
 
 int MacDisplay_Initialize(void)
 {
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     if (MacShim_Metal()) MacMetalBackend_PrepareWindow();
 #endif
     if (initialized)
@@ -181,7 +183,7 @@ int MacDisplay_Initialize(void)
     /* Cocoa reads this at video initialization, before mode enumeration.
      * The environment can opt into Spaces for Game Mode experiments. */
     SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES,
-#if defined(__aarch64__)
+#if defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
                 metalPresentation ? "1" :
 #endif
                 "0");
@@ -190,7 +192,7 @@ int MacDisplay_Initialize(void)
 #endif
     if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
         return -1;
-#if defined(__APPLE__) && defined(COD2_X64) && !defined(DEDICATED)
+#if defined(__APPLE__) && defined(COD2_X64) && !defined(DEDICATED) && (!defined(COD2_ENGINE_ONLY) || (defined(COD2_CODX) && COD2_CODX))
     /* SDL's Cocoa app delegate installs its own URL drop handler at video
      * initialization. Restore the validated link handler afterwards. */
     { extern void Cod2xNativeURL_Install(void); Cod2xNativeURL_Install(); }
@@ -621,7 +623,7 @@ void MacDisplay_PumpVisibility(void)
 }
 #endif
 
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
 static void MetalNextRenderTarget(MacContext *ctx)
 {
     GLuint texture = MacMetal_BeginFrame(ctx->metal);
@@ -761,7 +763,7 @@ void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
 #endif
     if (screenContext)
         MacDisplay_ReleaseContext((void **)&screenContext);
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     if (MacShim_Metal()) {
         if (sdl_gl_window && (SDL_GetWindowFlags(sdl_gl_window) & SDL_WINDOW_OPENGL)) {
             SDL_DestroyWindow(sdl_gl_window);
@@ -895,7 +897,7 @@ void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
     CreateMultisampleBuffer(ctx);
 #endif
     screenContext = ctx;
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     CreateMetalPresentation(ctx);
 #endif
     if (hasAux)
@@ -956,7 +958,7 @@ static GLenum RenderBuffer(unsigned int buffer)
     return buffer;
 }
 void MacGL_DrawBuffer(unsigned int buffer) {
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     if (MacShim_Metal()) return;
 #endif
 #if defined(COD2_X64)
@@ -968,7 +970,7 @@ void MacGL_DrawBuffer(unsigned int buffer) {
     glDrawBuffer(RenderBuffer(buffer));
 }
 void MacGL_ReadBuffer(unsigned int buffer) {
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     if (MacShim_Metal()) return;
 #endif
 #if defined(COD2_X64)
@@ -984,7 +986,7 @@ void MacGL_ReadBuffer(unsigned int buffer) {
  * MacGL_ReadBuffer; resolving here would copy the previous scene needlessly. */
 void MacGL_SelectReadBuffer(unsigned int buffer)
 {
-#if defined(__APPLE__) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     if (MacShim_Metal()) return;
 #endif
     glReadBuffer(RenderBuffer(buffer));
@@ -1031,7 +1033,7 @@ void MacPlatform_MapWindowPoint(int x, int y, int *rx, int *ry)
 
 void SDL_GL_SwapWindowDirect(void)
 {
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     if (screenContext && screenContext->nativeRenderer) {
         MacMetalBackend_Present(presentationGammaRamp, presentationGammaRevision, presentationGammaIdentity);
         return;
@@ -1044,6 +1046,7 @@ void SDL_GL_SwapWindowDirect(void)
     ResolveFrameBuffer(ctx);
 #endif
 #if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if !defined(COD2_ENGINE_ONLY)
     if (ctx->metal) {
         static int observerChecked;
         static void (*observer)(SDL_Window *);
@@ -1059,6 +1062,7 @@ void SDL_GL_SwapWindowDirect(void)
         MetalNextRenderTarget(ctx);
         return;
     }
+#endif
     if (presentFence) {
         GLenum ready = glClientWaitSync(presentFence, 0, 0);
         if (presentMode && ready == GL_TIMEOUT_EXPIRED) {
@@ -1144,7 +1148,7 @@ uint16_t MacDisplay_ReleaseContext(void **reference)
         SDL_HideWindow(retiredWindow);
     }
 #endif
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     if (ctx->nativeRenderer) MacMetalBackend_Stop();
 #endif
 #if defined(__APPLE__) && defined(COD2_X64)
@@ -1160,8 +1164,10 @@ uint16_t MacDisplay_ReleaseContext(void **reference)
         SDL_GL_MakeCurrent(sdl_gl_window, ctx->context);
 #endif
 #if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if !defined(COD2_ENGINE_ONLY)
         MacMetal_Destroy(ctx->metal);
         ctx->metal = NULL;
+#endif
         if (presentFence) {
             glDeleteSync(presentFence);
             presentFence = NULL;
@@ -1226,7 +1232,7 @@ void MacPlatform_GetDrawableSize(int *width, int *height)
         return;
     }
 #endif
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     if (screenContext && (screenContext->metal || screenContext->nativeRenderer)) {
         /* Input maps view pixels through the same aspect-preserving rect.
          * The Metal layer's backing itself stays at the selected render size. */
@@ -1243,7 +1249,7 @@ void MacPlatform_GetDrawableSize(int *width, int *height)
         }
     }
 #endif
-#if defined(__aarch64__) && defined(__APPLE__) && defined(COD2_X64)
+#if defined(__aarch64__) && defined(__APPLE__) && defined(COD2_X64) && !defined(COD2_ENGINE_ONLY)
     if (MacShim_Metal()) { SDL_GetWindowSizeInPixels(sdl_gl_window, width, height); return; }
 #endif
     SDL_GL_GetDrawableSize(sdl_gl_window, width, height);
@@ -1325,7 +1331,7 @@ uint16_t MacDisplay_SetMode(int w, int h, int d, int r)
 #endif
     if (sdl_gl_window && SetWindowMode() != 0)
         return 1;
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     if (screenContext && screenContext->nativeRenderer) {
         if (screenContext->width != w || screenContext->height != h) {
             if (!MacMetalBackend_Resize(sdl_gl_window, w, h, metalEDR)) return 1;
@@ -1355,7 +1361,7 @@ uint16_t MacDisplay_SetMode(int w, int h, int d, int r)
 #endif
             return 1;
         }
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
         MacMetal_Destroy(screenContext->metal);
         screenContext->metal = NULL;
 #endif
@@ -1371,7 +1377,7 @@ uint16_t MacDisplay_SetMode(int w, int h, int d, int r)
         DestroyMultisampleBuffer(screenContext);
         CreateMultisampleBuffer(screenContext);
 #endif
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
         CreateMetalPresentation(screenContext);
 #endif
         glViewport(0, 0, w, h);
@@ -1405,19 +1411,19 @@ void MacDisplay_FadeIn(float duration) { (void)duration; }
 void MacDisplay_FadeOut(float duration) { (void)duration; }
 uint16_t MacDisplay_StopCapture(void) { return 0; }
 const char *MacDisplay_GetGLVendor(void) {
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     if (MacShim_Metal()) return "Apple";
 #endif
     return (const char *)glGetString(GL_VENDOR);
 }
 const char *MacDisplay_GetGLRenderer(void) {
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     if (MacShim_Metal()) return "Metal 4";
 #endif
     return (const char *)glGetString(GL_RENDERER);
 }
 const char *MacDisplay_GetGLExtensions(void) {
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     if (MacShim_Metal()) return "";
 #endif
     return (const char *)glGetString(GL_EXTENSIONS);
@@ -1444,13 +1450,13 @@ void MacDisplay_GetVideoMemoryInfo(int *video, int *texture)
     *texture = (int)budget;
 }
 int MacDisplay_GetMaxTextureUnits(void) {
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     if (MacShim_Metal()) return 16;
 #endif
     GLint n = 0; glGetIntegerv(GL_MAX_TEXTURE_UNITS, &n); return n;
 }
 int MacDisplay_GetMaxTextureImageUnits(void) {
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     if (MacShim_Metal()) return 16;
 #endif
     GLint n = 0; glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &n);
@@ -1519,7 +1525,7 @@ void aglDestroyPixelFormat(void *pixelFormat) { free(pixelFormat); }
 void *aglCreateContext(void *pixelFormat, void *share)
 {
     (void)pixelFormat;
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     if (MacShim_Metal()) return NULL;
 #endif
     if (share && SDL_GL_MakeCurrent(sdl_gl_window, share) != 0)
@@ -1531,21 +1537,21 @@ void *aglCreateContext(void *pixelFormat, void *share)
 }
 int aglDestroyContext(void *ctx)
 {
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     if (MacShim_Metal()) { return 0; }
 #endif
     if (ctx) SDL_GL_DeleteContext(ctx); return 1;
 }
 int aglSetCurrentContext(void *ctx)
 {
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     if (MacShim_Metal()) { return 0; }
 #endif
     return SDL_GL_MakeCurrent(sdl_gl_window, ctx) == 0;
 }
 int aglSetDrawable(void *ctx, void *drawable)
 {
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     if (MacShim_Metal()) { return 0; }
 #endif
     return SDL_GL_MakeCurrent(drawable ? drawable : sdl_gl_window, ctx) == 0;
@@ -1554,7 +1560,7 @@ void *aglGetDrawable(void *ctx) { (void)ctx; return sdl_gl_window; }
 int aglUpdateContext(void *ctx) { return aglSetCurrentContext(ctx); }
 void aglSwapBuffers(void *ctx)
 {
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     if (MacShim_Metal()) { SDL_GL_SwapWindowDirect(); return; }
 #endif
     if (screenContext && ctx == screenContext->context) SDL_GL_SwapWindowDirect(); else if (sdl_gl_window) SDL_GL_SwapWindow(sdl_gl_window);
@@ -1562,14 +1568,14 @@ void aglSwapBuffers(void *ctx)
 int aglSetFullScreen(void *ctx, int w, int h, int rate, int device) { (void)ctx; (void)device; MacPlatform_ConfigureWindow(w, h, MAC_FULLSCREEN, rate); return SetWindowMode() == 0; }
 int aglSetInteger(void *ctx, unsigned int name, const int *values)
 {
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     if (MacShim_Metal()) { return 0; }
 #endif
     if (!values || name != 222 || !aglSetCurrentContext(ctx)) return 0; return SDL_GL_SetSwapInterval(*values) == 0;
 }
 int aglGetInteger(void *ctx, unsigned int name, int *values)
 {
-#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__) && !defined(COD2_ENGINE_ONLY)
     if (MacShim_Metal()) { return 0; }
 #endif
     if (!values || name != 222 || !aglSetCurrentContext(ctx)) return 0; *values = SDL_GL_GetSwapInterval(); return 1;
@@ -1578,7 +1584,7 @@ int aglGetError(void) { return *SDL_GetError() ? 1 : 0; }
 const char *aglErrorString(int error) { return error ? SDL_GetError() : "no error"; }
 void glVertexArrayParameteriAPPLE(GLenum name, GLint value) { (void)name; (void)value; }
 
-#if defined(__APPLE__) && defined(COD2_X64) && !defined(DEDICATED)
+#if defined(__APPLE__) && defined(COD2_X64) && !defined(DEDICATED) && (!defined(COD2_ENGINE_ONLY) || (defined(COD2_CODX) && COD2_CODX))
 /* The game's link handler (cod2x_native_macos.m) takes this one's place; a
  * program built without it has no handler to restore. */
 __attribute__((weak)) void Cod2xNativeURL_Install(void)
