@@ -487,7 +487,7 @@ static unsigned int Scr_TimeoutMilliseconds(void)
 
 static inline __attribute__((always_inline)) void Scr_ResetTimeout_core(void)
 {
-#if defined(__GNUC__) && !defined(__clang__) && defined(__i386__) && !defined(__EMSCRIPTEN__)
+#if defined(__GNUC__) && !defined(__clang__) && defined(__i386__) && !defined(__EMSCRIPTEN__) && !COD2_WINDOWS_NATIVE
 
     unsigned long long tsc;
     unsigned int tsc_low_raw, tsc_high_raw;
@@ -642,7 +642,7 @@ static VariableStackBuffer *__attribute_regparm__(3)
         if (value->type == 7) {
             scrVmPub.function_count--;
             scrVmPub.function_frame--;
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 
 #if defined(COD2_X64)
             VM_StoreI32(record + 1, SCR_CODEPOS_ENC(scrVmPub.function_frame->fs.pos));
@@ -1292,7 +1292,7 @@ const char *Scr_GetNextCodepos(VariableValue *top, const char *pos, int opcode, 
             case 0x54:
                 if (scrVmPub.function_count <= 31) {
                     *localId = 0;
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 #if defined(COD2_X64)
                     return SCR_CODEPOS_PTR((unsigned int)VM_LoadI32(next));
 #else
@@ -1316,7 +1316,7 @@ const char *Scr_GetNextCodepos(VariableValue *top, const char *pos, int opcode, 
             case 0x56:
                 if (top->type == 1 && scrVmPub.function_count <= 31) {
                     *localId = 0;
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 #if defined(COD2_X64)
                     return SCR_CODEPOS_PTR((unsigned int)VM_LoadI32(next));
 #else
@@ -1517,7 +1517,7 @@ const char *Scr_GetNextCodepos(VariableValue *top, const char *pos, int opcode, 
 #else
                 unsigned int switchValue = *(const unsigned int *)next;
 #endif
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 #if defined(COD2_X64)
                 const char *caseCodePos = SCR_CODEPOS_PTR((unsigned int)VM_LoadI32(next + 4));
 #else
@@ -7641,7 +7641,7 @@ static void VM_CandidateHandleSwitch(const char **pos, VariableValue **top)
 #else
         unsigned int currentCaseValue = *(const unsigned int *)*pos;
 #endif
-#    if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#    if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 #if defined(COD2_X64)
         const char *currentCodePos = SCR_CODEPOS_PTR((unsigned int)VM_LoadI32(*pos + 4));
 #else
@@ -7914,7 +7914,7 @@ static const char *VM_CandidateReadScriptCallTarget(const char *volatile *pos)
 static const char *VM_CandidateReadScriptCallTarget(const char **pos)
 #endif
 {
-#    if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#    if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 #if defined(COD2_X64)
     const char *target = SCR_CODEPOS_PTR((unsigned int)VM_LoadI32(*pos));
 #else
@@ -8547,7 +8547,7 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
 
         case VMOP_GetFunction: {
             VariableValue *out = VM_PushValue(&top);
-#    if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#    if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 
 #if defined(COD2_X64)
             out->u.codePosValue = (unsigned int)VM_LoadI32(pos);
@@ -9406,7 +9406,7 @@ static void VM_Resume(unsigned int timeId)
                 top->type = type;
 
                 if (type == 7) {
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 #if defined(COD2_X64)
                     scrVmPub.function_frame->fs.pos =
                         SCR_CODEPOS_PTR((unsigned int)VM_LoadI32(record + 1));
