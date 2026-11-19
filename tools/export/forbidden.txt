@@ -1,0 +1,20 @@
+# What exported text must not contain. Entries are regular expressions, one per line.
+
+[names]
+# This project's own names, anywhere in any exported file.
+(?i)cod2[-_ ]?unbound
+(?i)cod2[-_ ]?silicon
+(?i)cod2-native
+CoD2Launcher|cod2_launcher
+
+[plain engine code]
+# The plain export carries nothing of the CoD2x layer. Checked in the engine (not in
+# tests/ and tools/, whose harnesses name the option), with comments left aside.
+(?i)cod2x
+(?i)codx
+
+[allowed]
+# Exact lines that may stay, as "path: line".
+src/PC/universal/com_files.c: if (!I_strnicmp(iwdfiles[i], "iw_CoD2x_", 9))
+src/platform/macos_input_policy.h: static inline int MacInput_CaptureMouse(int fullscreen, int active, int keyCatchers, int codx)
+src/platform/macos_input_policy.h: return fullscreen || (codx ? active && !(keyCatchers & ~16) : !(keyCatchers & 1));

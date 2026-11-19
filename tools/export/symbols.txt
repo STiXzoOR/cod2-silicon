@@ -1,0 +1,20 @@
+# Preprocessor symbols whose value export.py knows, by the kind of block they guard.
+
+[defined]
+# Marks this project's own code: `#if !defined(COD2_ENGINE_ONLY)` blocks leave every
+# export, and their `#else` branches stay. Nothing in this repository defines it.
+COD2_ENGINE_ONLY
+
+[app]
+# Undefined in every export.
+MAC_METAL_NATIVE
+COD2_MAC_D3D9
+
+[codx]
+# Undefined in the plain export only.
+COD2_CODX
+COD2X_FILM
+COD2X_XRAY_RENDER
+COD2X_SPECTATOR
+COD2_WIN_CODX_CLIENT
+CR_COD2X_DIALOG

@@ -1,0 +1,49 @@
+# What tools/export/export.py copies. Patterns are shell globs on paths from the
+# repository root ("*" also crosses "/"); a pattern ending in "/" means that folder.
+
+[include]
+src/
+cmake/
+build/
+tests/
+tools/
+third_party/
+CMakeLists.txt
+CMakePresets.json
+
+[exclude]
+# This project's app, packaging and names
+src/Mac/Metal/
+src/platform/mac_d3d9*
+src/platform/macos_metal_present.*
+src/platform/macos_home_adopt.h
+src/platform/cod2x_native_setup.h
+src/platform/cod2x_native_shaders.*
+src/PC/gfx_d3d/rb_fxlayer.c
+src/PC/gfx_d3d/rb_scenetarget.c
+tests/launcher/
+tests/metal/
+tests/packaging/
+tests/matches/
+tools/export/
+tools/config-directory/
+tools/macos/
+tools/metal/
+tools/dmg/
+tools/catalog/
+tools/brand/
+tools/ci/
+tools/wine/
+tools/cod2x/icon-source/
+tools/cod2x/app_icon.swift
+tools/cod2x/make_macos_app.py
+tools/tests/test_server_service.py
+# Written for the other copy and kept there
+tools/windows/README.md
+
+[codx only]
+src/win32/win_rawmouse.c
+*cod2x*
+*Cod2x*
+tests/cod2x/
+tools/cod2x/

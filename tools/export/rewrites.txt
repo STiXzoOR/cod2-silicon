@@ -1,0 +1,22 @@
+# Literal replacements made in every exported text file: this project's name on the
+# left, the neutral one on the right. They are applied from the top down, so the
+# longer forms come first.
+
+[rewrite]
+Projects/cod2-native-refs/ => cod2-refs/
+Projects/cod2-native-wt/_agents/bench.lock => cod2-refs/bench.lock
+Application Support/CoD2-native-ws42 => Application Support/cod2-input-evidence
+Application Support/CoD2-native-ws44 => Application Support/cod2-evidence
+Application Support/CoD2-native-audio => Application Support/cod2-evidence
+Application Support/CoD2-native-decomp => Application Support/cod2-evidence
+Application Support/CoD2-native => Application Support/cod2-evidence
+Application Support/CoD2 Unbound => Application Support/Call of Duty 2
+"CoD2 Unbound" => "Call of Duty 2"
+"CoD2 Silicon" => "Call of Duty 2"
+com.cod2unbound.rawmouse => cod2.rawmouse
+opencod2-native-CoD2x- => opencod2-CoD2x-
+COD2_UNBOUND_COD2X_REPORTS => COD2_COD2X_REPORTS
+/opt/cod2-silicon => /opt/cod2-source
+CoD2-native => CoD2
+CoD2 Unbound => CoD2
+CoD2 Silicon => CoD2
