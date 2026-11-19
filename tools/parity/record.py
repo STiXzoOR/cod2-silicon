@@ -110,7 +110,7 @@ def main():
     out.mkdir(parents=True, exist_ok=False)
     home = out / 'home'
     home.mkdir()
-    # Map commands require a selected profile, including in dedicated mode.
+    # A client's map commands require a selected profile; a dedicated server ignores it.
     profile = home / 'main' / 'players' / 'default'
     profile.mkdir(parents=True)
     (profile.parent / 'active.txt').write_text('default\n')

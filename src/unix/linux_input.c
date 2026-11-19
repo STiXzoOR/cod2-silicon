@@ -205,7 +205,20 @@ char *Sys_GetClipboardData(void)
     extern void *Z_MallocInternal(int size);
     char *utf8 = SDL_GetClipboardText();
     if (!utf8) return NULL;
+#if COD2_WINDOWS_NATIVE
+    /* As with typed text on Windows: one byte per code point, anything wider is dropped. */
+    char *bytes = malloc(strlen(utf8) + 1);
+    if (bytes) {
+        char *out = bytes;
+        for (const unsigned char *p = (const unsigned char *)utf8; *p;) {
+            unsigned int character = MacInput_DecodeUTF8(&p);
+            if (character && character < 0x100) *out++ = (char)character;
+        }
+        *out = 0;
+    }
+#else
     char *bytes = MacText_EncodeUTF8(utf8, loc_language ? loc_language->current.integer : 0);
+#endif
     SDL_free(utf8);
     if (!bytes) return NULL;
     /* Windows Sys_GetClipboardData stops at the first line/control boundary.

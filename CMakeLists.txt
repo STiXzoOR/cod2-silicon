@@ -9,11 +9,12 @@
 #     emcmake cmake -S . -B build/web && cmake --build build/web -j
 #       -> build/web/cod2.html (+ cod2.js / cod2.wasm / cod2_fs.js)
 #
-#   Windows (MinGW cross-compile):
+#   Windows (MinGW cross-compile, see tools/windows/README.md):
 #     cmake -S . -B build/win32 -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-mingw32.cmake
 #     cmake --build build/win32 -j
 #       -> build/win32/cod2_win32_ded.exe          (headless, default)
-#     add -DCOD2_WIN32_CLIENT=ON for the SDL2/GL client (needs static SDL2 libs).
+#     add -DCOD2_WIN32_CLIENT=ON for the SDL2/GL client (fetches SDL2 at configure).
+#     cmake/toolchain-mingw64.cmake gives the same targets on x86_64.
 #
 # compile_commands.json is emitted for IDE/clangd use.
 # =============================================================================
@@ -50,6 +51,14 @@ endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_STANDARD 99)
+
+# MinGW builds the reconciled engine, on i686 or x86_64: COD2_X64 selects those
+# engine paths, and pointer-width code keys off the real pointer size. The plain
+# ILP32 path below stays selectable but compiles stale logic.
+option(COD2_WIN32_LEGACY "MinGW: build the plain non-COD2_X64 path instead" OFF)
+if(WIN32 AND NOT MSVC AND NOT COD2_WIN32_LEGACY)
+  set(COD2_X64 ON)
+endif()
 
 # git short hash for the crash-reporter build stamp.
 execute_process(COMMAND git -C ${CMAKE_SOURCE_DIR} rev-parse --short HEAD
@@ -180,6 +189,16 @@ elseif(APPLE AND COD2_X64)
 include(${CMAKE_SOURCE_DIR}/cmake/macos-arm64.cmake)
 
 # =============================================================================
+elseif(COD2_X64 AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+# Native Linux LP64 build; shares the Apple LP64 engine source graph.
+include(${CMAKE_SOURCE_DIR}/cmake/linux-x64.cmake)
+
+# =============================================================================
+elseif(WIN32 AND COD2_X64 AND NOT MSVC)
+# MinGW build of the reconciled engine, on either Windows architecture.
+include(${CMAKE_SOURCE_DIR}/cmake/windows-native.cmake)
+
+# =============================================================================
 elseif(WIN32 AND MSVC)
 # ----------------------------------------------------------------------------
 # WINDOWS / MSVC (cl.exe) -- additive native-Windows client build.
@@ -195,8 +214,16 @@ elseif(WIN32)
 option(COD2_WIN32_CLIENT "SDL2/GL client (needs static SDL2 libs) instead of the headless server" OFF)
 option(COD2_WIN32_REAL_D3D9 "Real IDirect3DDevice9 renderer path (Wine d3d9.dll)" OFF)
 
+# -Wreturn-mismatch is GCC 14; older MinGW compilers reject the -Wno-error form.
+include(CheckCCompilerFlag)
+check_c_compiler_flag(-Wno-error=return-mismatch COD2_WIN_HAS_RETURN_MISMATCH)
+if(NOT COD2_WIN_HAS_RETURN_MISMATCH)
+  list(REMOVE_ITEM COD2_WNO -Wno-error=return-mismatch)
+endif()
+
 # win32 C flags (mirror Makefile.win32 WCFLAGS); -fcommon is essential (tentative
 # BSS defs in both bss.c and the reconstructed .c rely on the pre-GCC-10 merge).
+add_compile_definitions(COD2_PORT_DEBUG=0)
 add_compile_options(
   "$<$<COMPILE_LANGUAGE:C>:-w;-g;-msse;-fcommon;-DSDL_DISABLE_IMMINTRIN_H>"
   "$<$<COMPILE_LANGUAGE:C>:-include;${COD2_SRC_DIR}/headers/win32_compat.h>"
@@ -254,6 +281,11 @@ file(GLOB         W_ROOT_C  CONFIGURE_DEPENDS RELATIVE ${CMAKE_SOURCE_DIR} "${CO
 set(WIN_C ${W_PC_C} ${W_MAC_C} ${W_STUBS_C} ${W_WIN_C} ${W_ROOT_C})
 list(FILTER WIN_C EXCLUDE REGEX "^src/(data|import_pointers|literals)\\.c$")
 list(FILTER WIN_C EXCLUDE REGEX "^src/stubs/(cpp_trampoline|agl_stubs)\\.c$")
+# MSVC-only shims: dirent_msvc.c would replace MinGW's opendir/readdir with an
+# incompatible struct dirent.
+list(FILTER WIN_C EXCLUDE REGEX "^src/win32/shims-msvc/")
+# The platform layer of cmake/windows-native.cmake.
+list(FILTER WIN_C EXCLUDE REGEX "^src/win32/win_(system|window|ded_stubs)\\.c$")
 list(FILTER WIN_C EXCLUDE REGEX "^src/PC/zlib/(inflate|infblock|infcodes|inffast|inftrees|infutil|adler32|zutil)\\.c$")
 list(APPEND WIN_C src/blobs/bss.c src/unix/sysdiff_statehash.c)
 if(COD2_WIN32_CLIENT)

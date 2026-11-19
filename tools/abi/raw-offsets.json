@@ -196,6 +196,13 @@
     "reason": "Literal31 rounds a byte allocation/address up to the existing32-byte alignment, independent of pointer-bearing object layout."
   },
   {
+    "file": "src/Mac/DirectX_9/CMemoryBuffer.c",
+    "text": "return (byte *)(((uintptr_t)(allocation + 31)) & ~(uintptr_t)31);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Rounds a byte pointer up to a 32-byte boundary inside an allocation made 31 bytes larger; byte arithmetic through uintptr_t, the same on every target."
+  },
+  {
     "file": "src/Mac/DirectX_9/COpenGLVAO.c",
     "text": "return (void **)((unsigned char *)vtbl_ptr + 2 * sizeof(void *));",
     "count": 1,

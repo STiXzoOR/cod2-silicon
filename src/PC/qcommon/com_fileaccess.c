@@ -6,7 +6,9 @@
 #include <stdio.h>
 #include "com_fileaccess.h"
 #if COD2_APPLE_SDK && defined(COD2_X64)
+#if defined(__APPLE__)
 #include <CoreFoundation/CoreFoundation.h>
+#endif
 #include <dirent.h>
 #include <errno.h>
 #include <limits.h>
@@ -55,7 +57,21 @@ int FS_FileSeek(FILE *file, long int offset, int whence)
  * UTF-8 names use non-expanding, invariant uppercase per UTF-16 code unit,
  * as in Windows name comparison. No extra normalization is applied; invalid
  * UTF-8 names are compared bytewise. No locale or cached directory
- * contents are involved. Symlinks retain normal POSIX traversal semantics. */
+ * contents are involved. Symlinks retain normal POSIX traversal semantics.
+ * Linux volumes are taken as case-sensitive and, without CoreFoundation, fold
+ * ASCII letters only. Windows resolves names itself, so nothing is searched. */
+#if defined(__APPLE__)
+#define FS_OS_PATH_CASE_SENSITIVE(path) (pathconf(path, _PC_CASE_SENSITIVE) != 0)
+#define FS_OS_DIR_CASE_SENSITIVE(directory) (fpathconf(dirfd(directory), _PC_CASE_SENSITIVE) != 0)
+#elif defined(_WIN32)
+#define FS_OS_PATH_CASE_SENSITIVE(path) 0
+#define FS_OS_DIR_CASE_SENSITIVE(directory) 0
+#else
+#define FS_OS_PATH_CASE_SENSITIVE(path) 1
+#define FS_OS_DIR_CASE_SENSITIVE(directory) 1
+#endif
+
+#if defined(__APPLE__)
 static UniChar FS_OSUpperCharacter(UniChar character)
 {
     if (character < 128)
@@ -70,6 +86,7 @@ static UniChar FS_OSUpperCharacter(UniChar character)
     CFRelease(upper);
     return character;
 }
+#endif
 
 static int FS_OSNameCompare(const char *a, const char *b)
 {
@@ -82,6 +99,15 @@ static int FS_OSNameCompare(const char *a, const char *b)
         if (ca != cb) return ca < cb ? -1 : 1;
         if (!ca) return 0;
     }
+#if !defined(__APPLE__)
+    for (;; ++pa, ++pb) {
+        unsigned ca = *pa, cb = *pb;
+        if (ca >= 'a' && ca <= 'z') ca -= 'a' - 'A';
+        if (cb >= 'a' && cb <= 'z') cb -= 'a' - 'A';
+        if (ca != cb) return ca < cb ? -1 : 1;
+        if (!ca) return 0;
+    }
+#else
     CFStringRef sa = CFStringCreateWithCString(NULL, a, kCFStringEncodingUTF8);
     CFStringRef sb = CFStringCreateWithCString(NULL, b, kCFStringEncodingUTF8);
     int result = strcmp(a, b);
@@ -97,6 +123,7 @@ static int FS_OSNameCompare(const char *a, const char *b)
     if (sa) CFRelease(sa);
     if (sb) CFRelease(sb);
     return result;
+#endif
 }
 
 static int FS_OSNameSort(const void *a, const void *b)
@@ -109,7 +136,8 @@ static int FS_OSNameSort(const void *a, const void *b)
 static int FS_OSDirectoryIsCaseSensitive(DIR *directory)
 {
     /* Unknown filesystems take the conservative resolving path. */
-    return fpathconf(dirfd(directory), _PC_CASE_SENSITIVE) != 0;
+    (void)directory;
+    return FS_OS_DIR_CASE_SENSITIVE(directory);
 }
 
 int FS_ResolveOSPath(const char *path, char *resolved, size_t capacity)
@@ -142,7 +170,7 @@ int FS_ResolveOSPath(const char *path, char *resolved, size_t capacity)
         /* Checking the parent directly avoids opening each directory on the
          * usual case-insensitive volume. Still check every parent: a nested
          * mount or symlink can enter a case-sensitive filesystem mid-path. */
-        int sensitive = pathconf(used ? resolved : ".", _PC_CASE_SENSITIVE) != 0;
+        int sensitive = FS_OS_PATH_CASE_SENSITIVE(used ? resolved : ".");
         directory = sensitive ? opendir(used ? resolved : ".") : NULL;
         if (directory) {
             if (strcmp(component, ".") && strcmp(component, "..")) {

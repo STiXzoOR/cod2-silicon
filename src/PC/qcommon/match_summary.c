@@ -14,6 +14,9 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
+#if defined(_WIN32)
+#define gmtime_r(timer, result) (gmtime_s((result), (timer)) ? NULL : (result))
+#endif
 
 extern const dvar_t *fs_homepath;
 extern const dvar_t *com_maxfps;
@@ -272,6 +275,16 @@ static void MatchSummary_Record(FILE *file, const char *reason)
     fputs("]}\n", file);
 }
 
+#if defined(_WIN32)
+/* The history file is written with POSIX directory handles and a file lock.
+ * Windows has no reader for it yet, so a match ends without a record there. */
+void MatchSummary_Finish(const char *reason)
+{
+    (void)reason;
+    (void)MatchSummary_Record;
+    match.active = 0;
+}
+#else
 void MatchSummary_Finish(const char *reason)
 {
     char temporary[96];
@@ -350,4 +363,5 @@ void MatchSummary_Finish(const char *reason)
     close(statsFD);
     free(lines);
 }
+#endif
 #endif

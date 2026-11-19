@@ -65,3 +65,9 @@ cod2_crash_*.txt
 /build/package/
 /build/ws21-*/
 /dist/
+
+# Windows and Linux build output
+/build-linux/
+/build-tests/
+/build-shadergen/
+/out-win/

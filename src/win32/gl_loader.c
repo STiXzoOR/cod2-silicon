@@ -336,3 +336,30 @@ GLW_VOID(glUseProgram, (GLuint program), (program))
 GLW_VOID(glVertexAttrib4fARB, (GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w),
     (index, x, y, z, w))
 #endif
+
+#if defined(COD2_X64)
+/* What the OpenGL device layer calls beyond the list above: two-sided stencil,
+ * occlusion queries, alpha-tested edges under multisampling, and the state it
+ * reads back before a copy. */
+GLW_VOID(glBeginQueryARB, (GLenum target, GLuint id), (target, id))
+GLW_VOID(glBlendEquationSeparate, (GLenum modeRGB, GLenum modeAlpha), (modeRGB, modeAlpha))
+GLW_VOID(glDeleteQueriesARB, (GLsizei n, const GLuint *ids), (n, ids))
+GLW_VOID(glEndQueryARB, (GLenum target), (target))
+GLW_VOID(glFogCoordPointer, (GLenum type, GLsizei stride, const GLvoid *pointer), (type, stride, pointer))
+GLW_VOID(glFramebufferTexture2DEXT, (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level),
+    (target, attachment, textarget, texture, level))
+GLW_VOID(glGenQueriesARB, (GLsizei n, GLuint *ids), (n, ids))
+GLW_VOID(glGetFramebufferAttachmentParameterivEXT, (GLenum target, GLenum attachment, GLenum pname, GLint *params),
+    (target, attachment, pname, params))
+GLW_VOID(glGetProgramEnvParameterfvARB, (GLenum target, GLuint index, GLfloat *params), (target, index, params))
+GLW_VOID(glGetProgramStringARB, (GLenum target, GLenum pname, GLvoid *string), (target, pname, string))
+GLW_VOID(glGetQueryObjectuivARB, (GLuint id, GLenum pname, GLuint *params), (id, pname, params))
+GLW_VOID(glGetRenderbufferParameterivEXT, (GLenum target, GLenum pname, GLint *params), (target, pname, params))
+GLW_VOID(glGetVertexAttribPointervARB, (GLuint index, GLenum pname, GLvoid **pointer), (index, pname, pointer))
+GLW_VOID(glGetVertexAttribivARB, (GLuint index, GLenum pname, GLint *params), (index, pname, params))
+GLW_VOID(glProgramLocalParameter4fARB, (GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w),
+    (target, index, x, y, z, w))
+GLW_VOID(glSampleCoverage, (GLclampf value, GLboolean invert), (value, invert))
+GLW_VOID(glStencilFuncSeparate, (GLenum face, GLenum func, GLint ref, GLuint mask), (face, func, ref, mask))
+GLW_VOID(glStencilOpSeparate, (GLenum face, GLenum sfail, GLenum dpfail, GLenum dppass), (face, sfail, dpfail, dppass))
+#endif

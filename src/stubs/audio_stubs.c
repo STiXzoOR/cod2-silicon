@@ -185,7 +185,7 @@ void CSoundObject_get_3D_position(void *obj, float *x, float *y, float *z)
         *z = 0.0f;
 }
 
-#if !COD2_WINDOWS_NATIVE /* src/reconstructed/windows/voice implements these there */
+#if !COD2_WINDOWS_NATIVE /* the Windows voice layer has these there */
 unsigned char DSound_Frame(void)
 {
     return 0;

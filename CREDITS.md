@@ -78,6 +78,7 @@ provenance description. Neither original executable is part of this repo.
 | [zlib](https://zlib.net/) | Jean-loup Gailly and Mark Adler | Zlib | Library: archive decompression; macOS links SDK zlib, with inherited bundled sources on legacy targets. |
 | [Speex](https://www.speex.org/) | Jean-Marc Valin / Xiph.Org and credited contributors | BSD-3-Clause; per-file notices retained | Library: inherited voice codec sources; native microphone capture is not implemented. |
 | [libjpeg-turbo / Independent JPEG Group](https://github.com/libjpeg-turbo/libjpeg-turbo) | libjpeg-turbo contributors; Thomas G. Lane and Guido Vollbeding / IJG | IJG, BSD-3-Clause and Zlib as described in its notices | Library: vendored third_party headers/support for legacy JPEG integration; native JPEG uses ImageIO. This software is based in part on the work of the Independent JPEG Group. |
+| [minimp3](https://github.com/lieff/minimp3) | lieff and contributors | CC0-1.0 | Library: MP3 decoding in the Windows build, at commit `ea99364` |
 | [macOS SDK frameworks](https://developer.apple.com/documentation/) | Apple | Apple SDK terms / proprietary system frameworks | Libraries: AppKit, Foundation, CoreFoundation, IOKit, OpenGL/CGL, AudioToolbox/CoreAudio, GameController, CoreGraphics and ImageIO for native adapters. |
 
 ## Typefaces bundled with the launcher

@@ -12,7 +12,9 @@
 #define MINIMP3_ONLY_MP3
 #include "third_party/minimp3/minimp3.h"
 typedef int OSStatus;
+typedef unsigned int UInt32;
 enum {
+    noErr = 0,
     kAudio_ParamError = -50,
     kAudioFileUnsupportedDataFormatError = 1,
     kAudioFileUnsupportedFileTypeError = 2,
@@ -61,8 +63,12 @@ typedef struct {
 
 struct MacAudioStream {
     MacAudioSample *sample;
+#if defined(__APPLE__)
     AudioFileID file;
     ExtAudioFileRef decoder;
+#else
+    float *decoded; /* the whole file, decoded when the stream opens */
+#endif
     FILE *disk;
     unsigned long handle;
     MacAudioCloseCallback close;
@@ -806,7 +812,7 @@ static void SDLCALL Render(void *userdata, Uint8 *stream, int bytes)
         memset(stream, 0, (size_t)bytes);
         return;
     }
-    MixLocked(pcm, frames);
+    MixLocked(pcm, frames, 2);
     pthread_mutex_unlock(&audio_mutex);
     float peak = 0;
     uint64_t audible = 0;
@@ -887,9 +893,13 @@ void *AIL_open_digital_driver(int frequency, int bits, int channels, int flags)
     }
     return AUDIO_DRIVER;
 #else
-    driver_rate = frequency;
+    /* SDL takes stereo here whatever the game asked for. */
     if (output_device)
         return AUDIO_DRIVER;
+    driver_rate = frequency;
+    driver_channels = 2;
+    memset(&room_reverb, 0, sizeof(room_reverb));
+    ConfigureReverb(0);
     SDL_AudioSpec want = { .freq = AUDIO_RATE, .format = AUDIO_F32SYS, .channels = 2, .samples = 1024, .callback = Render };
     if (SDL_InitSubSystem(SDL_INIT_AUDIO) || !(output_device = SDL_OpenAudioDevice(NULL, 0, &want, NULL, 0))) {
         snprintf(last_error, sizeof(last_error), "SDL audio: %s", SDL_GetError());
@@ -1278,7 +1288,11 @@ void AIL_set_file_callbacks(MacAudioOpenCallback open_cb, MacAudioCloseCallback 
 /* Miles opens a seekable stream and services bounded buffers on a worker.
  * CoreAudio supplies the decoder here; neither file reads nor decoding run in
  * the render callback. CoreAudio may scan the encoded stream for its duration
- * at open; retain overlapping reads so compressed IWD callbacks stay forward. */
+ * at open; retain overlapping reads so compressed IWD callbacks stay forward.
+ * Without CoreAudio (Windows) the whole file is decoded when the stream opens,
+ * with SDL for WAV and minimp3 for MP3, and the same worker feeds the ring
+ * from memory, so starting, seeking and looping behave the same. */
+#if defined(__APPLE__)
 static OSStatus StreamRead(void *client, SInt64 position, UInt32 count, void *buffer, UInt32 *actual)
 {
     MacAudioStream *stream = client;
@@ -1335,11 +1349,16 @@ static OSStatus StreamRead(void *client, SInt64 position, UInt32 count, void *bu
 }
 
 static SInt64 StreamSize(void *client) { return (SInt64)((MacAudioStream *)client)->bytes; }
+#endif
 
 static void DisposeStream(MacAudioStream *stream)
 {
+#if defined(__APPLE__)
     if (stream->decoder) ExtAudioFileDispose(stream->decoder);
     if (stream->file) AudioFileClose(stream->file);
+#else
+    free(stream->decoded);
+#endif
     if (stream->disk) fclose(stream->disk);
     else if (stream->close) stream->close(stream->handle);
     pthread_cond_destroy(&stream->wake);
@@ -1398,10 +1417,14 @@ static void *StreamWorker(void *context)
         if (frames > limit - start) frames = (UInt32)(limit - start);
         pthread_mutex_unlock(&audio_mutex);
         OSStatus error = noErr;
+#if defined(__APPLE__)
         if (reposition || position == 0) error = ExtAudioFileSeek(stream->decoder, (SInt64)position);
         AudioBufferList buffers = { .mNumberBuffers = 1,
             .mBuffers = {{ (UInt32)stream->channels, frames * stream->channels * sizeof(float), pcm }} };
         if (!error) error = ExtAudioFileRead(stream->decoder, &frames, &buffers);
+#else
+        memcpy(pcm, stream->decoded + position * stream->channels, frames * stream->channels * sizeof(float));
+#endif
         pthread_mutex_lock(&audio_mutex);
         if (stream->stop) break;
         if (serial != stream->serial) continue; /* A seek invalidated this decode. */
@@ -1463,6 +1486,7 @@ void *AIL_open_stream(void *driver, const char *name, int memory)
             if (length > 0) stream->bytes = (size_t)length;
         }
     }
+#if defined(__APPLE__)
     if (stream->bytes && !stream->disk) {
         stream->encoded_capacity = stream->bytes < STREAM_READ_BYTES ? stream->bytes : STREAM_READ_BYTES;
         stream->encoded = malloc(stream->encoded_capacity);
@@ -1489,6 +1513,31 @@ void *AIL_open_stream(void *driver, const char *name, int memory)
         if (!stream->ring) error = -ENOMEM;
     }
     if (error) { AudioError("Stream open", error); DisposeStream(stream); return NULL; }
+#else
+    int stream_rate = 0;
+    OSStatus error = kAudioFileFileNotFoundError;
+    unsigned char *encoded = stream->bytes && stream->bytes <= AUDIO_MAX_BYTES ? malloc(stream->bytes) : NULL;
+    if (encoded) {
+        size_t used = 0, length = 0;
+        if (stream->disk) {
+            if (!fseek(stream->disk, 0, SEEK_SET)) used = fread(encoded, 1, stream->bytes, stream->disk);
+        } else if (stream->seek(stream->handle, 0, 0) >= 0) {
+            while (used < stream->bytes) {
+                unsigned long got = stream->read(stream->handle, encoded + used, (unsigned long)(stream->bytes - used));
+                if (!got || got > stream->bytes - used) break;
+                used += got;
+            }
+        }
+        error = kAudioFileUnsupportedDataFormatError;
+        if (used == stream->bytes && DecodeFile(encoded, used, &stream->decoded, &length, &stream->channels, &stream_rate) && length) {
+            stream->length = length;
+            stream->ring = malloc(STREAM_FRAMES * stream->channels * sizeof(float));
+            error = stream->ring ? noErr : -ENOMEM;
+        }
+        free(encoded);
+    }
+    if (error) { AudioError("Stream open", error); DisposeStream(stream); return NULL; }
+#endif
     void *handle = AIL_allocate_sample_handle(driver);
     if (!handle) { DisposeStream(stream); return NULL; }
     pthread_mutex_lock(&audio_mutex);
@@ -1497,7 +1546,11 @@ void *AIL_open_stream(void *driver, const char *name, int memory)
     stream->sample = sample;
     stream->serial = 1;
     sample->frames[0] = stream->length;
+#if defined(__APPLE__)
     sample->rate = sample->stream_rate = (int)input.mSampleRate;
+#else
+    sample->rate = sample->stream_rate = stream_rate;
+#endif
     sample->channels = stream->channels;
     sample->source_bytes = stream->bytes;
     sample->format = stream->channels == 2 ? 3 : 1;

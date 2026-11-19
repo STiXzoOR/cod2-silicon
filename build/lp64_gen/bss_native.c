@@ -578,7 +578,7 @@ dg_type_179 scrVmGlob = {0};
 #else
 unsigned char scrVmGlob[8320];
 #endif
-#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__) || COD2_WINDOWS_NATIVE
 struct scrCompileGlob_t scrCompileGlob;   /* x86 was unsigned char[512]; x64 struct is ~920B (value_start[32] grows) -> blob overflowed */
 #else
 unsigned char scrCompileGlob[512];
@@ -1129,7 +1129,7 @@ int msgInit = 0;
 #else
 unsigned char msgInit[32];
 #endif
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 
 struct huffman_t msgHuff;
 #else
@@ -1595,7 +1595,7 @@ char *fs_serverIwdNames[1024];
 char *fs_serverIwdNames[1024];
 #endif
 int fs_serverIwds[1024];
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 
 fileHandleData_t fsh[74];
 #else
@@ -1634,7 +1634,7 @@ const dvar_t *snd_stereo;
 const dvar_t *snd_bits;
 const dvar_t *snd_khz;
 const dvar_t *snd_errorOnMissing;
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 
 struct snd_local_t g_snd;
 #else
@@ -1759,7 +1759,7 @@ unsigned char scrVarPub[262240];
 #endif
 /* DATAGEN_FALLBACK: non-native i386 aggregate size */
 unsigned char scrVarGlob[1048608];
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 struct scrCompilePub_t scrCompilePub;   /* typed so the x64-wider func_table (intptr_t) is sized correctly */
 #else
 struct scrCompilePub_t scrCompilePub;
@@ -1770,12 +1770,12 @@ scrParserPub_t scrParserPub;   /* x86 blob 28; x64 sizeof(scrParserPub_t)=32 -> 
 struct scrParserPub_t scrParserPub;
 #endif
 struct scrParserGlob_t scrParserGlob;
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 struct scrAnimPub_t scrAnimPub;   /* typed: xanim_lookup[2][128] of scr_animtree_t grows on x64 (blob was x86-sized 1152) */
 #else
 struct scrAnimPub_t scrAnimPub;
 #endif
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 
 struct g_sa_type g_sa;
 #else
@@ -2367,7 +2367,7 @@ const dvar_t *rcon_password;
 const dvar_t *sv_zombietime;
 const dvar_t *sv_timeout;
 const dvar_t *sv_fps;
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_WINDOWS_NATIVE
 
 server_t sv;
 serverStatic_t svs;
@@ -2454,8 +2454,8 @@ extern int g_banIPs_dvar __attribute__((alias("g_banIPs")));
 /* MSVC equivalent of the GAS .set alias: resolve the (otherwise undefined)
  * alias to the target at link. x86 C symbols carry one leading underscore. */
 COD2_ALT("g_banIPs_dvar", "g_banIPs")
-#elif defined(__APPLE__)
-/* Mach-O C symbols carry one leading underscore. */
+#elif defined(__APPLE__) || (COD2_WINDOWS_NATIVE && defined(__i386__))
+/* Mach-O and 32-bit PE C symbols carry one leading underscore. */
 __asm__(".globl _g_banIPs_dvar\n.set _g_banIPs_dvar, _g_banIPs\n");
 #else
 __asm__(".globl g_banIPs_dvar\n.set g_banIPs_dvar, g_banIPs\n");

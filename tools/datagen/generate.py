@@ -361,6 +361,16 @@ def generate(args):
 #define DG_RODATA "__TEXT,__const"
 #define DG_BSS "__DATA,__data"
 #define DG_RELRO "__DATA_CONST,__const"
+#elif defined(_WIN32)
+#if defined(__i386__)
+#define DG_ASM(name) "_" name
+#else
+#define DG_ASM(name) name
+#endif
+#define DG_DATA ".data"
+#define DG_RODATA ".rdata"
+#define DG_BSS ".data"
+#define DG_RELRO ".rdata"
 #else
 #define DG_ASM(name) name
 #define DG_DATA ".data"
