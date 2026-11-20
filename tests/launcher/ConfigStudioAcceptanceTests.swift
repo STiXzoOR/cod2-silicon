@@ -359,7 +359,7 @@ enum ConfigStudioAcceptanceTests {
         }
 
         // A player from Discover.
-        model.compare(with: ConfigPlayerComparison(entryID: "player-1", name: "[Player 1]", provenance: "Players catalog",
+        model.compare(with: ConfigPlayerComparison(entryID: "player-1", name: "vargr", provenance: "Players catalog",
                                                    values: ["cg_viewsize": "100", "cg_weaponcycledelay": "150", "sensitivity": "3.2",
                                                             catalogOwned.name.lowercased(): alternative(catalogOwned, model: model),
                                                             launcher.name.lowercased(): alternative(launcher, model: model)]))
@@ -369,9 +369,9 @@ enum ConfigStudioAcceptanceTests {
         guarded(launcher, "player", "CoD2 Unbound sets")
         require(model.takeTheirsBlock(speed) == nil)
         model.takeTheirs(speed)
-        require(model.state(speed).raw == "3.2" && session.history.first?.summary == "Took Mouse speed from [Player 1]", "ordinary settings stay writable")
+        require(model.state(speed).raw == "3.2" && session.history.first?.summary == "Took Mouse speed from vargr", "ordinary settings stay writable")
         model.setLock(speed, true)
-        model.compare(with: ConfigPlayerComparison(entryID: "player-1", name: "[Player 1]", provenance: "Players catalog", values: ["sensitivity": "2.2"]))
+        model.compare(with: ConfigPlayerComparison(entryID: "player-1", name: "vargr", provenance: "Players catalog", values: ["sensitivity": "2.2"]))
         guarded(speed, "player", "Locked")
         model.setLock(speed, false)
 

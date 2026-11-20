@@ -20,8 +20,6 @@ enum StudioMetrics {
 }
 
 enum StudioTypography {
-    static var loadoutTitle: Font { .stencil(46) }
-    static var discoverTitle: Font { .stencil(60) }
     static var groupTitle: Font { .system(size: 20, weight: .bold) }
     static var rowTitle: Font { .system(size: 14) }
     static var help: Font { .system(size: 12) }

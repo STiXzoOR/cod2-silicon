@@ -13,8 +13,7 @@ struct DiscoverColumnSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("DISCOVER").font(.system(size: 11, weight: .semibold)).tracking(0.88).foregroundStyle(palette.tertiary)
-                .padding(.horizontal, 10).padding(.bottom, 6).accessibilityAddTraits(.isHeader)
+            GroupLabel("Discover").padding(.horizontal, 10).padding(.bottom, 6)
             row("Player Setups", symbol: "person.2", count: nil, selected: isPlayers) { open(.home) }
             // Saved has nothing to show until the catalogue lists someone.
             if !discover.saved.isEmpty || !discover.entries.isEmpty {
@@ -32,11 +31,7 @@ struct DiscoverColumnSection: View {
     private func row(_ title: String, symbol: String, count: Int?, selected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 10) {
-                Image(systemName: symbol).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.accent)
-                    .frame(width: 30, height: 30)
-                    .background(palette.dark ? Palette.hex(0x1b1f17) : palette.crate, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(palette.dark ? Color.white.opacity(0.09) : palette.wellStroke, lineWidth: 1))
-                    .accessibilityHidden(true)
+                MonogramTile(symbol: symbol)
                 Text(title).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text)
                 Spacer(minLength: 4)
                 if let count { Text("\(count)").font(.system(size: 12)).monospacedDigit().foregroundStyle(palette.secondary) }
@@ -79,7 +74,7 @@ struct ConfigDiscoverView: View {
 
 // MARK: - Shared header
 
-/// A Discover page's heading, at the size and in the place a loadout's name has.
+/// A Discover page's title (SF bold 30, as every page's), at the place a loadout's name has.
 struct DiscoverHeader<Trailing: View>: View {
     var title: String
     var subtitle: String? = nil
@@ -94,9 +89,8 @@ struct DiscoverHeader<Trailing: View>: View {
     }
     private var heading: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Eyebrow(text: "Discover")
-            Text(title.uppercased()).font(StudioTypography.loadoutTitle).tracking(0.92).foregroundStyle(palette.heading)
-                .lineLimit(1).truncationMode(.tail).accessibilityLabel(title).accessibilityAddTraits(.isHeader)
+            Text(title).font(.system(size: 30, weight: .bold)).tracking(-0.3).foregroundStyle(palette.heading)
+                .lineLimit(1).truncationMode(.tail).accessibilityAddTraits(.isHeader)
             if let subtitle { Text(subtitle).font(.system(size: 13)).monospacedDigit().foregroundStyle(palette.secondary).lineLimit(1) }
         }
     }
@@ -126,15 +120,18 @@ struct AddConfigButton: View {
     }
     private func show() {
         guard let view = anchor.view else { return }
-        NativeMenu.popUp(Self.items(discover, window: view.window), below: view)
+        NativeMenu.popUp(Self.items(discover, window: view.window), below: view, header: Self.header, footnote: Self.footnote)
     }
+    /// The menu's group label and closing note (Discover board › Add a Config menu).
+    static let header = "Bring in a config"
+    static let footnote = "Everything you add is reviewed first. Nothing changes until you choose Import."
     /// Every import source, with the File menu's shortcuts shown beside the matching items.
     @MainActor static func items(_ discover: ConfigDiscoverModel, window: NSWindow?) -> [NativeMenu.Item] {
-        [.init(title: "From a File…", symbol: "doc", key: "o", modifiers: .command) { discover.chooseFile(in: window) },
-         .init(title: "From a Link or GitHub…", symbol: "link") { discover.step = .link("") },
-         .init(title: "From This Mac’s Server (localhost)…", symbol: "desktopcomputer") { discover.step = .link("http://localhost:") },
-         .init(title: "From Your Windows Install…", symbol: "pc") { discover.step = .windows },
-         .init(title: "Paste Config", symbol: "doc.on.clipboard", key: "v", modifiers: [.command, .shift], separatorBefore: true) { discover.importPasteboard() }]
+        [.init(title: "From a File…", key: "o", modifiers: .command) { discover.chooseFile(in: window) },
+         .init(title: "From a Link or GitHub…") { discover.step = .link("") },
+         .init(title: "From This Mac’s Server (localhost)…") { discover.step = .link("http://localhost:") },
+         .init(title: "From Your Windows Install…") { discover.step = .windows },
+         .init(title: "Paste Config", key: "v", modifiers: [.command, .shift], separatorBefore: true) { discover.importPasteboard() }]
     }
 }
 
@@ -149,7 +146,8 @@ struct MenuAnchor: NSViewRepresentable {
 enum NativeMenu {
     struct Item {
         var title: String
-        var symbol: String
+        /// An SF Symbol beside the title; none when empty.
+        var symbol = ""
         var key = ""
         var modifiers: NSEvent.ModifierFlags = []
         var separatorBefore = false
@@ -159,16 +157,27 @@ enum NativeMenu {
         var actions: [@MainActor () -> Void] = []
         @objc func run(_ sender: NSMenuItem) { actions[sender.tag]() }
     }
-    @MainActor static func popUp(_ items: [Item], below view: NSView) {
+    @MainActor static func popUp(_ items: [Item], below view: NSView, header: String? = nil, footnote: String? = nil) {
         let menu = NSMenu(), target = Target()
         target.actions = items.map(\.action)
+        if let header {
+            if #available(macOS 14.0, *) { menu.addItem(.sectionHeader(title: header)) }
+            else { let item = NSMenuItem(title: header, action: nil, keyEquivalent: ""); item.isEnabled = false; menu.addItem(item) }
+        }
         for (index, item) in items.enumerated() {
             if item.separatorBefore { menu.addItem(.separator()) }
             let row = NSMenuItem(title: item.title, action: #selector(Target.run(_:)), keyEquivalent: item.key)
             row.keyEquivalentModifierMask = item.modifiers
             row.target = target; row.tag = index
-            row.image = NSImage(systemSymbolName: item.symbol, accessibilityDescription: nil)
+            if !item.symbol.isEmpty { row.image = NSImage(systemSymbolName: item.symbol, accessibilityDescription: nil) }
             menu.addItem(row)
+        }
+        if let footnote {
+            // A note, not a command: dimmed, in the small secondary type of a menu's help line.
+            let note = NSMenuItem(title: footnote, action: nil, keyEquivalent: "")
+            note.isEnabled = false
+            note.attributedTitle = NSAttributedString(string: footnote, attributes: [.font: NSFont.systemFont(ofSize: 11), .foregroundColor: NSColor.secondaryLabelColor])
+            menu.addItem(note)
         }
         // Tracking is synchronous, so the target outlives the menu.
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: view.isFlipped ? view.bounds.height + 6 : -6), in: view)
@@ -192,7 +201,7 @@ struct PlayerGrid: View {
 }
 
 enum PlayerInitials {
-    /// “[Player 1]” → “P1”: first letters of the first two words, digits kept.
+    /// “Iron Larks 2” → “IL2”: first letters of the first two words, digits kept.
     static func of(_ name: String) -> String {
         let words = name.split(whereSeparator: { !$0.isLetter && !$0.isNumber }).prefix(2)
         let text = words.map { word in word.allSatisfy(\.isNumber) ? String(word) : String(word.prefix(1)) }.joined().uppercased()
@@ -205,7 +214,7 @@ struct FlowChips: View {
     var tags: [String]
     @Environment(\.palette) private var palette
     var body: some View {
-        ChipFlow(spacing: 5) {
+        ChipFlow(spacing: 8) {
             ForEach(tags, id: \.self) { tag in
                 chip(tag)
             }
@@ -214,15 +223,7 @@ struct FlowChips: View {
         .accessibilityLabel("Style: " + tags.joined(separator: ", "))
     }
 
-    private func chip(_ tag: String) -> some View {
-        let fill: Color = palette.dark ? Color.white.opacity(0.06) : Color.white.opacity(0.55)
-        let stroke: Color = palette.dark ? Color.white.opacity(0.12) : palette.wellStroke
-        let label = Text(tag).font(.system(size: 11, weight: .semibold)).foregroundStyle(palette.chipText).lineLimit(1)
-            .padding(.horizontal, 9).frame(height: 22)
-        return label
-            .background(fill, in: Capsule())
-            .overlay(Capsule().stroke(stroke, lineWidth: 1))
-    }
+    private func chip(_ tag: String) -> some View { Chip(tag) { Text(tag) } }
 }
 
 private struct ChipFlow: Layout {
@@ -271,9 +272,9 @@ private struct SavedPage: View {
                 let verified = discover.saved.compactMap(\.entry)
                 let gone = discover.saved.filter { $0.entry == nil }
                 if discover.saved.isEmpty {
-                    StudioEmptyState(title: "NOTHING SAVED",
+                    StudioEmptyState(title: "Nothing saved",
                                      message: discover.snapshot == nil
-                                        ? "Players you save appear here. The player directory isn’t available yet, so there’s nothing to save."
+                                        ? "Players you save appear here. The catalogue isn’t available yet, so there’s nothing to save."
                                         : "Players you save appear here, so you can come back to their setups.",
                                      action: ("Browse Player Setups", { discover.openFront() }))
                         .frame(maxWidth: .infinity)
@@ -285,8 +286,8 @@ private struct SavedPage: View {
                                 HStack(spacing: 12) {
                                     Image(systemName: "bookmark.slash").foregroundStyle(palette.secondary).accessibilityHidden(true)
                                     VStack(alignment: .leading, spacing: 3) {
-                                        Text("No longer in the directory").font(.system(size: 14)).foregroundStyle(palette.text)
-                                        Text("This saved setup isn’t in the signed catalog any more, so its details can’t be shown.").font(StudioTypography.help).foregroundStyle(palette.secondary)
+                                        Text("No longer in the catalogue").font(.system(size: 14)).foregroundStyle(palette.text)
+                                        Text("This saved setup isn’t in the signed catalogue any more, so its details can’t be shown.").font(StudioTypography.help).foregroundStyle(palette.secondary)
                                     }
                                     Spacer(minLength: 8)
                                     Button("Remove") { discover.setSaved(item.id, false) }.glassAction()
@@ -319,32 +320,36 @@ private struct PlayerDetailPage: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 20) {
                 Button { discover.open(.home) } label: { Label("Player Setups", systemImage: "chevron.left").font(.system(size: 13, weight: .semibold)) }
-                    .buttonStyle(.plain).foregroundStyle(palette.link).frame(height: 28)
+                    .buttonStyle(.plain).foregroundStyle(palette.link).frame(height: 28).padding(.top, -6).padding(.bottom, -12)
                     .keyboardShortcut("[", modifiers: .command)
                     .help("Back to Player Setups (⌘[)")
                 if let entry = discover.entry(entryID) {
                     PlayerHero(entry: entry, saved: discover.isSaved(entry.id), image: artwork.image(for: entry.artMap),
                                canTry: discover.studio.session != nil && !discover.studio.isReadOnly,
-                               canCompare: discover.studio.session != nil && discover.canCompare(entry.id),
-                               tryIt: { discover.tryEntry(entry) }, compare: { discover.compareInExpert(entry) },
+                               tryIt: { discover.tryEntry(entry) },
                                toggleSaved: { discover.setSaved(entry.id, !discover.isSaved(entry.id)) })
-                    // Two columns (1.25 : 1, as drawn) when there's room; one column at the minimum window size.
+                    let changes = ChangesPanel(discover: discover, canCompare: discover.studio.session != nil && discover.canCompare(entry.id),
+                                               compare: { discover.compareInExpert(entry) })
+                    // Two equal columns, as drawn, when there's room; one column at the minimum window size.
                     Group {
                         if width >= 760 {
+                            // The panels in both columns end on one line, as drawn.
                             HStack(alignment: .top, spacing: 16) {
-                                VStack(spacing: 16) { StoryPanel(entry: entry); ChangesPanel(discover: discover) }.frame(maxWidth: .infinity)
-                                InSetupPanel(entry: entry, discover: discover).frame(width: (width - 16) / 2.25)
+                                VStack(spacing: 16) { StoryPanel(entry: entry); InSetupPanel(entry: entry, discover: discover) }.frame(maxWidth: .infinity)
+                                changes.frame(maxWidth: .infinity, maxHeight: .infinity)
                             }
+                            .fixedSize(horizontal: false, vertical: true)
                         } else {
-                            VStack(spacing: 16) { StoryPanel(entry: entry); ChangesPanel(discover: discover); InSetupPanel(entry: entry, discover: discover) }
+                            VStack(spacing: 16) { StoryPanel(entry: entry); changes; InSetupPanel(entry: entry, discover: discover) }
                         }
                     }
                     .frame(maxWidth: .infinity)
                     .onGeometryChange(for: CGFloat.self, of: { $0.size.width }) { width = $0 }
+                    PlayerProvenance(entry: entry)
                 } else {
-                    StudioEmptyState(title: "NOT IN THE DIRECTORY", message: "This setup isn’t in the signed catalog any more.",
+                    StudioEmptyState(title: "Not in the catalogue", message: "This setup isn’t in the signed catalogue any more.",
                                      action: ("Browse Player Setups", { discover.open(.home) }))
                         .frame(maxWidth: .infinity)
                 }
@@ -360,9 +365,7 @@ private struct PlayerHero: View {
     var saved: Bool
     var image: NSImage?
     var canTry: Bool
-    var canCompare: Bool
     var tryIt: () -> Void
-    var compare: () -> Void
     var toggleSaved: () -> Void
     // Text sits on the scrim over the art, so it keeps the dark-appearance inks in both appearances.
     private let ink = Palette.dark
@@ -380,7 +383,7 @@ private struct PlayerHero: View {
             }
             .padding(.horizontal, 28).padding(.bottom, 24)
         }
-        .frame(height: 250)
+        .frame(height: 240)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(Color.white.opacity(0.08), lineWidth: 1))
         .shapeAudit(.container, .rounded(24), "player hero")
@@ -390,15 +393,15 @@ private struct PlayerHero: View {
         HStack(alignment: .bottom, spacing: 18) {
             Text(PlayerInitials.of(entry.player)).font(.stencil(34)).foregroundStyle(ink.accent)
                 .frame(width: 78, height: 78)
-                .background(Palette.hex(0x1b1f17), in: Circle())
-                .overlay(Circle().strokeBorder(Palette.hex(0x0d0f0c), lineWidth: 3))
+                .background(ink.tileFill, in: Circle())
+                .overlay(Circle().strokeBorder(ink.ground, lineWidth: 3))
                 .overlay(Circle().stroke(ink.accent.opacity(0.6), lineWidth: 1))
                 .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 6) {
-                Eyebrow(text: [entry.era, entry.role].compactMap { $0 }.joined(separator: " · "), color: Palette.hex(0xf2d394))
+            VStack(alignment: .leading, spacing: 8) {
+                Eyebrow(text: [entry.team, entry.era].compactMap { $0 }.joined(separator: " · "), color: ink.accent)
                 Text(entry.player.uppercased()).font(.stencil(56)).tracking(1.1).foregroundStyle(ink.heading).lineLimit(1).minimumScaleFactor(0.6)
                     .accessibilityLabel(entry.player).accessibilityAddTraits(.isHeader)
-                Text(entry.feel).font(.system(size: 14)).italic().foregroundStyle(Palette.hex(0xe2dbc9)).lineLimit(2)
+                Text(entry.feel).font(.system(size: 14)).italic().foregroundStyle(ink.chipText).lineLimit(2)
             }
         }
     }
@@ -408,9 +411,6 @@ private struct PlayerHero: View {
             HStack(spacing: 8) {
                 Button("Try This Setup", action: tryIt).prominentAction().actionControlSize().disabled(!canTry)
                     .help("Review this setup line by line. Trying it makes a new loadout; your others stay as they are.")
-                // Available once their setup is downloaded and reviewed below; comparing writes nothing.
-                Button("Compare in Expert", action: compare).glassAction().actionControlSize().disabled(!canCompare)
-                    .help("See their values beside yours in Expert, setting by setting.")
                 Button(action: toggleSaved) {
                     Image(systemName: saved ? "bookmark.fill" : "bookmark").font(.system(size: 15)).frame(width: 16, height: 16)
                 }
@@ -429,9 +429,9 @@ private struct DetailHeading: View {
     @Environment(\.palette) private var palette
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(title).font(.system(size: 15, weight: .semibold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
+            Text(title).font(.system(size: 17, weight: .semibold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
             Spacer(minLength: 8)
-            if let trailing { Text(trailing).font(StudioTypography.help).foregroundStyle(palette.secondary) }
+            if let trailing { Text(trailing).font(StudioTypography.help).foregroundStyle(palette.tertiary) }
         }
     }
 }
@@ -440,11 +440,12 @@ private struct StoryPanel: View {
     var entry: ConfigDirectoryEntry
     @Environment(\.palette) private var palette
     var body: some View {
-        ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: 18, leading: 20, bottom: 18, trailing: 20)) {
+        ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 20)) {
             VStack(alignment: .leading, spacing: 12) {
                 DetailHeading(title: "Story")
-                Text(entry.story).font(.system(size: 14)).lineSpacing(4).foregroundStyle(palette.dark ? Palette.hex(0xe2dbc9) : palette.text)
+                Text(entry.story).font(.system(size: 14)).lineSpacing(4).foregroundStyle(palette.text)
                     .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
+                if !entry.styleTags.isEmpty { FlowChips(tags: entry.styleTags) }
                 Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
                     GridRow {
                         fact("Era", entry.era)
@@ -454,17 +455,45 @@ private struct StoryPanel: View {
                     if let map = entry.favoriteMap { GridRow { fact("Favorite map", MapCatalog.displayName(map)) } }
                 }
                 .padding(.top, 4)
-                VStack(alignment: .leading, spacing: 6) {
-                    // One line when it fits; otherwise the credit line breaks after the source.
-                    ViewThatFits(in: .horizontal) {
-                        HStack(spacing: 8) { permission; Dot(); credit }
-                        VStack(alignment: .leading, spacing: 4) { permission; credit }
-                    }
-                    .font(StudioTypography.help)
-                    Text(provenanceNote).font(StudioTypography.help).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
-                    Link("Ask to remove or correct this setup", destination: ConfigDirectory.removalURL).font(StudioTypography.help).foregroundStyle(palette.link)
+            }
+        }
+    }
+    private func fact(_ key: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(key).font(.system(size: 11)).foregroundStyle(palette.tertiary)
+            Text(value).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.text).lineLimit(2)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// Where the setup came from, under the panels (the board's page footer): the signed entry, the
+/// source and credit, how it was copied, and the way to ask for a change.
+private struct PlayerProvenance: View {
+    var entry: ConfigDirectoryEntry
+    @Environment(\.palette) private var palette
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: 24) { details; Spacer(minLength: 0); removal }
+            VStack(alignment: .leading, spacing: 8) { details; removal }
+        }
+        .font(StudioTypography.help)
+        .padding(.top, 4)
+    }
+    private var removal: some View {
+        Link("Ask to remove or correct this setup", destination: ConfigDirectory.removalURL).foregroundStyle(palette.link).fixedSize()
+    }
+    private var details: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Label { Text("Signed catalogue entry") } icon: { Image(systemName: "checkmark.shield").font(.system(size: 13, weight: .semibold)) }
+                .font(.system(size: 12, weight: .semibold)).foregroundStyle(palette.positive).fixedSize()
+            VStack(alignment: .leading, spacing: 4) {
+                // One line when it fits; otherwise the credit line breaks after the source.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 8) { permission; Dot(); credit }
+                    VStack(alignment: .leading, spacing: 4) { permission; credit }
                 }
-                .padding(.top, 4)
+                Text(provenanceNote).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -480,7 +509,6 @@ private struct StoryPanel: View {
     }
     private var permission: some View {
         HStack(spacing: 8) {
-            Image(systemName: "link").foregroundStyle(palette.secondary).accessibilityHidden(true)
             Text("As published by \(entry.provenance.publishedBy)").foregroundStyle(palette.secondary)
             Dot()
             Link("Source", destination: entry.sourceURL).foregroundStyle(palette.link)
@@ -488,19 +516,7 @@ private struct StoryPanel: View {
         .fixedSize()
     }
     private var credit: some View {
-        HStack(spacing: 8) {
-            Text("Credit: \(entry.credit)").foregroundStyle(palette.secondary)
-            Dot()
-            Text("Signed catalog entry").foregroundStyle(palette.secondary)
-        }
-        .fixedSize()
-    }
-    private func fact(_ key: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(key).font(.system(size: 11)).foregroundStyle(palette.tertiary)
-            Text(value).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.text).lineLimit(2)
-        }
-        .accessibilityElement(children: .combine)
+        Text("Credit: \(entry.credit)").foregroundStyle(palette.secondary).fixedSize()
     }
 }
 
@@ -511,29 +527,47 @@ private struct Dot: View {
 
 private struct ChangesPanel: View {
     @ObservedObject var discover: ConfigDiscoverModel
+    var canCompare: Bool
+    var compare: () -> Void
     @Environment(\.palette) private var palette
+    /// The panel's title, what it compares with, and Compare beside them (comparing writes nothing).
+    private func heading(_ comparedWith: String?) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("What changes for you").font(.system(size: 17, weight: .semibold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
+                if let comparedWith { Text("Compared with \(comparedWith)").font(StudioTypography.help).foregroundStyle(palette.tertiary) }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            // Available once their setup is downloaded and checked; comparing writes nothing.
+            Button("Compare", action: compare).glassAction().actionControlSize().disabled(!canCompare)
+                .help("See their values beside yours in Expert, setting by setting.")
+        }
+    }
     var body: some View {
-        ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: 18, leading: 20, bottom: 8, trailing: 20)) {
+        ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: 20, leading: 20, bottom: 8, trailing: 20)) {
+            // Fills the height its row gives it, so it ends level with the panels beside it.
+            VStack(alignment: .leading, spacing: 0) { content }.frame(maxHeight: .infinity, alignment: .top)
+        }
+    }
+    @ViewBuilder private var content: some View {
             switch discover.detail?.phase {
             case .ready(let summary):
-                DetailHeading(title: "What changes for you", trailing: summary.comparedWith.map { "Compared with \($0)" }).padding(.bottom, 6)
+                heading(summary.comparedWith).padding(.bottom, 6)
                 ForEach(Array(summary.changes.enumerated()), id: \.element.id) { index, change in
                     HStack(alignment: .top, spacing: 12) {
                         Image(systemName: change.locked ? "lock" : "arrow.left.arrow.right").font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(change.locked ? palette.chipIcon : palette.accent)
                             .frame(width: 30, height: 30)
-                            .background(change.locked ? (palette.dark ? Color.white.opacity(0.06) : palette.crate) : palette.selection,
-                                        in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                            .background(change.locked ? palette.button : palette.selection, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 3) {
                             Text(change.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text)
-                            Text(change.detail).font(StudioTypography.help).foregroundStyle(palette.secondary)
+                            Text(change.detail).font(.system(size: 13)).foregroundStyle(palette.secondary)
                         }
                         .fixedSize(horizontal: false, vertical: true)
                     }
-                    .padding(.vertical, 12)
+                    .padding(.vertical, 6)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .overlay(alignment: .top) { if index > 0 { Rectangle().fill(palette.separator).frame(height: 1) } }
                     .accessibilityElement(children: .combine)
                 }
                 if summary.more > 0 {
@@ -541,15 +575,14 @@ private struct ChangesPanel: View {
                         .font(StudioTypography.help).foregroundStyle(palette.tertiary).padding(.bottom, 10)
                 }
             case .failed(let message):
-                DetailHeading(title: "What changes for you").padding(.bottom, 8)
+                heading(nil).padding(.bottom, 8)
                 StudioBanner(title: "This setup couldn’t be checked.", detail: message, tone: .negative)
-                Button("Try Again") { if let id = discover.detail?.entryID { discover.loadDetail(id) } }.glassAction().padding(.vertical, 10)
+                Button("Try Again") { if let id = discover.detail?.entryID { discover.loadDetail(id) } }.glassAction().actionControlSize().padding(.vertical, 10)
             default:
-                DetailHeading(title: "What changes for you").padding(.bottom, 8)
+                heading(nil).padding(.bottom, 8)
                 HStack(spacing: 10) { ProgressView().controlSize(.small); Text("Checking what this setup changes…").font(.system(size: 13)).foregroundStyle(palette.secondary) }
                     .padding(.vertical, 12).accessibilityElement(children: .combine)
             }
-        }
     }
 }
 
@@ -558,7 +591,7 @@ private struct InSetupPanel: View {
     @ObservedObject var discover: ConfigDiscoverModel
     @Environment(\.palette) private var palette
     var body: some View {
-        ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: 18, leading: 20, bottom: 18, trailing: 20)) {
+        ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 20)) {
             VStack(alignment: .leading, spacing: 14) {
                 DetailHeading(title: "In this setup")
                 if case .ready(let summary)? = discover.detail?.phase {
@@ -571,7 +604,6 @@ private struct InSetupPanel: View {
                 } else {
                     Text("Counts appear once the setup is checked.").font(StudioTypography.help).foregroundStyle(palette.secondary)
                 }
-                if !entry.styleTags.isEmpty { FlowChips(tags: entry.styleTags) }
                 if entry.platform == .windows {
                     Text("Made on Windows. Display and driver choices stay with this Mac.")
                         .font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)

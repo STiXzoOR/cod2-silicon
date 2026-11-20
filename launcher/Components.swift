@@ -999,3 +999,12 @@ struct CheckboxRow<Label: View>: View {
     init(isOn: Binding<Bool>, @ViewBuilder label: () -> Label) { _isOn = isOn; self.label = label() }
     var body: some View { Toggle(isOn: $isOn) { label }.toggleStyle(.checkbox).tint(palette.control) }
 }
+
+// MARK: - r037-configs
+
+/// The Configs column's and Discover's small tiles and initials discs (launcher.css `.ctile`,
+/// `.pcard .ini`): a dark olive fill with a faint edge in dark, the crate in light.
+extension Palette {
+    var tileFill: Color { dark ? Self.hex(0x1b1f17) : crate }
+    var tileStroke: Color { dark ? .white.opacity(0.09) : wellStroke }
+}

@@ -2,7 +2,7 @@ import Foundation
 import CryptoKit
 
 // A signed, synthetic player directory for the review harness and focused tests, never the
-// app. Bracketed placeholder names only (Design Rules: placeholders, never people); the key is
+// app. Invented sample names only (Design Rules: sample people are made up, never real players); the key is
 // generated per run and the documentation-only `.invalid` host never resolves.
 
 struct DirectoryFixtureFetcher: ConfigImportTextFetcher {
@@ -19,7 +19,7 @@ enum DirectoryFixture {
     /// A Windows-made setup with something in every review section: plain settings, a locked
     /// brightness, risky lines, a password, a file it runs, a Windows-only choice and a no-op.
     static let firstConfig = """
-    // [Player 1]'s config, sample review data
+    // vargr's config, sample review data
     unbindall
     bind MOUSE5 "weapnext"
     bind F "+melee"
@@ -32,7 +32,7 @@ enum DirectoryFixture {
     seta r_gamma "1.5"
     seta r_vsync "1"
     seta r_mode "-1"
-    seta name "[Player 1]"
+    seta name "vargr"
     seta rconpassword "sample-secret"
     connect 203.0.113.90:28960
     exec practice.cfg
@@ -44,19 +44,19 @@ enum DirectoryFixture {
         let platform: ConfigDirectoryPlatform, config: String
     }
     static let players: [Player] = [
-        .init(id: "player-1", name: "[Player 1]", team: "[Team]", era: "2005–2008", role: "Rifle", feel: "Precise and unhurried.",
-              tags: ["Classic era", "High frame rate"], map: "mp_toujane", platform: .windows, config: firstConfig),
-        .init(id: "player-2", name: "[Player 2]", team: "[Team]", era: "2005–2008", role: "Sniper", feel: "Patient, then sudden.",
+        .init(id: "player-1", name: "vargr", team: "Team Northwind", era: "2005–2008", role: "Rifle", feel: "Low sensitivity, steady rifle",
+              tags: ["Classic era", "Sharp image"], map: "mp_toujane", platform: .windows, config: firstConfig),
+        .init(id: "player-2", name: "Mako", team: "Team Northwind", era: "2005–2008", role: "Sniper", feel: "Patient, then sudden.",
               tags: ["Classic era"], map: "mp_carentan", platform: .windows,
               config: "seta sensitivity \"1.8\"\nseta r_gamma \"1.6\"\nseta com_maxfps \"125\"\n"),
-        .init(id: "player-3", name: "[Player 3]", team: "[Team]", era: "2005–2008", role: "SMG", feel: "Fast hands, crisp picture.",
-              tags: ["Classic era", "High frame rate"], map: "mp_leningrad", platform: .native,
+        .init(id: "player-3", name: "wren", team: "Team Northwind", era: "2005–2008", role: "SMG", feel: "Fast hands, crisp picture.",
+              tags: ["Classic era", "Sharp image"], map: "mp_leningrad", platform: .native,
               config: "seta sensitivity \"3.2\"\nseta com_maxfps \"333\"\nseta r_picmip \"0\"\n"),
-        .init(id: "player-4", name: "[Player 4]", team: "[Team]", era: "2009–2012", role: "Rifle · SMG", feel: "Jumps first, shoots second.",
-              tags: ["CoD2x era", "High frame rate"], map: "mp_matmata", platform: .native,
+        .init(id: "player-4", name: "rook", team: "Team Northwind", era: "2009–2012", role: "Rifle · SMG", feel: "Jumps first, shoots second.",
+              tags: ["CoD2x era", "Sharp image"], map: "mp_matmata", platform: .native,
               config: "seta com_maxfps \"333\"\nseta cg_drawFPS \"Simple\"\nseta cg_chatHeight \"0\"\n"),
-        .init(id: "player-5", name: "[Player 5]", team: nil, era: "2009–2012", role: "Support", feel: "Calm, clean screen.",
-              tags: ["CoD2x era", "High frame rate"], map: "mp_railyard", platform: .windows,
+        .init(id: "player-5", name: "Tamsin", team: nil, era: "2009–2012", role: "Support", feel: "Calm, clean screen.",
+              tags: ["CoD2x era", "Sharp image"], map: "mp_railyard", platform: .windows,
               config: "seta sensitivity \"2.4\"\nseta com_maxfps \"333\"\n"),
     ]
 
@@ -69,7 +69,7 @@ enum DirectoryFixture {
             let config = base.appendingPathComponent("entries/\(player.id)/config_mp.cfg")
             responses[config] = .init(data: data, finalURL: config, contentType: "text/plain")
             return ConfigDirectoryEntry(id: player.id, player: player.name, team: player.team, era: player.era, role: player.role,
-                feel: player.feel, story: "[Two or three sentences from the player or the catalog editor about how they played, and why this setup looks the way it does.] Sample review data, not a real player.",
+                feel: player.feel, story: "\(player.name) played \(player.role.lowercased()) for \(player.team ?? "no team") in these years. The setup is slow and quiet on purpose: a low sensitivity for holding long lines, and only the HUD a round needs. Sample review data, not a real player.",
                 styleTags: player.tags, favoriteMap: player.map, credit: player.name, sourceURL: base.appendingPathComponent("entries/\(player.id)"),
                 provenance: .init(publishedBy: "configs.example", retrievedAt: "2026-10-09", attribution: .listed,
                                   changes: "Passwords, chat lines and the player’s name were left out."),
