@@ -53,10 +53,11 @@ struct Palette {
         chipText: hex(0x33312a), chipIcon: hex(0x55523f), glassStroke: .white.opacity(0.75), glassFill: hex(0xfcf8ee).opacity(0.56),
         track: hex(0x504628).opacity(0.16), dark: false)
 
-    /// Colours for Quake ^0–^9 codes, tuned per appearance for legibility.
+    /// The game's own name colours (^1 to ^6 in a server or player name), with values that stay
+    /// readable on each ground (the design's --game-* tokens). ^0 is the game's black, lifted so it shows.
     func quake(_ code: Int) -> Color {
-        let darkCodes: [Int: UInt32] = [0: 0x8a8a80, 1: 0xff7a6b, 2: 0x86d993, 3: 0xf2d35b, 4: 0x7fb0ff, 5: 0x62d4e8, 6: 0xe895ea]
-        let lightCodes: [Int: UInt32] = [0: 0x5f5f58, 1: 0xb3261e, 2: 0x2f7a3e, 3: 0x7d5c00, 4: 0x2a5db0, 5: 0x006a76, 6: 0x8e3a91]
+        let darkCodes: [Int: UInt32] = [0: 0x8a8a80, 1: 0xd9765c, 2: 0x8fbf7a, 3: 0xd9b25c, 4: 0x7fa6e6, 5: 0x7fb6d9, 6: 0xc59ad9]
+        let lightCodes: [Int: UInt32] = [0: 0x5f5f58, 1: 0xa8412a, 2: 0x3b7429, 3: 0x85600c, 4: 0x2c5ba6, 5: 0x1c6a90, 6: 0x77469a]
         guard let value = (dark ? darkCodes : lightCodes)[code] else { return text }
         return Self.hex(value)
     }
@@ -201,12 +202,19 @@ enum LauncherFonts {
 }
 
 extension Font {
-    /// Big Shoulders Stencil Display for display titles, eyebrows and numerals.
+    /// Big Shoulders Stencil Display: only the wordmark, a featured name on art, empty-state headings,
+    /// numerals of 28 points and up, and one eyebrow a page. Never a page title, a column head or a value in a row.
     static func stencil(_ size: CGFloat, heavy: Bool = true) -> Font {
         let name = heavy ? LauncherFonts.stencilHeavy : LauncherFonts.stencilBold
         if NSFont(name: name, size: size) != nil { return .custom(name, fixedSize: size) }
         return .system(size: size, weight: heavy ? .black : .heavy).width(.condensed)
     }
+    /// A group label or a column head (.t-label): SF 11 semibold in the tertiary colour, written in
+    /// sentence case as in a Mac sidebar or table. Never tracked capitals.
+    static var groupLabel: Font { .system(size: 11, weight: .semibold) }
+    /// A data value in a row or card (.val): SF 17 semibold with tabular figures. The stencil face is
+    /// for numerals of 28 points and up only.
+    static var value: Font { .system(size: 17, weight: .semibold).monospacedDigit() }
     /// Courier Prime for timestamps, addresses, file names and the CD key.
     static func typewriter(_ size: CGFloat, bold: Bool = false) -> Font {
         let name = bold ? LauncherFonts.typewriterBold : LauncherFonts.typewriter
@@ -283,6 +291,9 @@ extension View {
     @ViewBuilder func capsuleControls() -> some View {
         if #available(macOS 14.0, *) { self.buttonBorderShape(.capsule) } else { self }
     }
+    /// Two to four short options in content: the native segmented control as a capsule, with a neutral
+    /// selected segment as on macOS. Filled gold is kept for the one main action of a view.
+    func segmentedChoice() -> some View { modifier(SegmentedChoice()) }
     /// The one button size for bars, cards and the inspector (36 points).
     @ViewBuilder func actionControlSize() -> some View {
         if #available(macOS 14.0, *) { self.controlSize(.extraLarge) } else { self.controlSize(.large) }
@@ -293,6 +304,13 @@ private extension View {
     /// Glass buttons default to rounded rectangles below the large size; every button here is a capsule or a circle.
     @available(macOS 26.0, *)
     func capsuleBorder(circle: Bool = false) -> some View { buttonBorderShape(circle ? .circle : .capsule) }
+}
+
+private struct SegmentedChoice: ViewModifier {
+    @Environment(\.palette) private var palette
+    func body(content: Content) -> some View {
+        content.pickerStyle(.segmented).labelsHidden().fixedSize().capsuleControls().tint(palette.segmentSelected)
+    }
 }
 
 struct GlassContainer<Content: View>: View {
@@ -428,6 +446,8 @@ extension Palette {
     var press: Color { dark ? .white.opacity(0.09) : Self.hex(0x3c3214).opacity(0.09) }
     /// The inner top highlight on glass and selected pills (--glass-hi).
     var glassHighlight: Color { dark ? .white.opacity(0.17) : .white.opacity(0.6) }
+    /// The selected segment of a segmented control: a neutral fill that carries the system's white label.
+    var segmentSelected: Color { dark ? Self.hex(0x4b4d45) : Self.hex(0x615e51) }
     /// Text drawn straight on map art or the setup scene (--ink-on-art).
     var inkOnArt: Color { dark ? Self.hex(0xf3ecdc) : Self.hex(0x1f2214) }
 }

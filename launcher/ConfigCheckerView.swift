@@ -373,7 +373,7 @@ private struct CheckerLines: View {
                         Text("All Lines").tag(false)
                         Text("Only Marked").tag(true)
                     }
-                    .pickerStyle(.segmented).labelsHidden().fixedSize()
+                    .segmentedChoice()
                 }
                 .padding(.horizontal, 18)
                 Rectangle().fill(palette.separator).frame(height: 1)

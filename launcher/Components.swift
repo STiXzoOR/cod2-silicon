@@ -50,6 +50,20 @@ struct ContentPanel<Content: View>: View {
     }
 }
 
+/// A group label or a column head (.t-label, .colhead): SF 11 semibold, tertiary, sentence case. Write
+/// the text in sentence case; this never capitalises or tracks it.
+struct GroupLabel: View {
+    var text: String
+    /// A label above a group is a header for VoiceOver; a column head inside a table row is not.
+    var header = true
+    @Environment(\.palette) private var palette
+    init(_ text: String, header: Bool = true) { self.text = text; self.header = header }
+    var body: some View {
+        Text(text).font(.groupLabel).foregroundStyle(palette.tertiary).lineLimit(1)
+            .accessibilityAddTraits(header ? .isHeader : [])
+    }
+}
+
 /// A panel's title with an optional link-style action on the right (“Show all”, “Release Notes”).
 struct PanelHeading: View {
     var title: String
@@ -58,7 +72,7 @@ struct PanelHeading: View {
     @Environment(\.palette) private var palette
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(title).font(.system(size: 17, weight: .semibold)).foregroundStyle(palette.dark ? Palette.hex(0xefe9db) : palette.heading).accessibilityAddTraits(.isHeader)
+            Text(title).font(.system(size: 17, weight: .semibold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
             Spacer()
             if let action, let perform { Button(action, action: perform).quietAction().padding(.horizontal, -6) }
         }
@@ -281,7 +295,7 @@ struct SettingsRow<Control: View>: View {
         HStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 8) {
-                    Text(title).font(typewriter ? .typewriter(14) : .system(size: 14)).foregroundStyle(palette.dark ? Palette.hex(0xe6dfcf) : palette.text).lineLimit(titleLines)
+                    Text(title).font(typewriter ? .typewriter(14) : .system(size: 14)).foregroundStyle(palette.text).lineLimit(titleLines)
                         .fixedSize(horizontal: false, vertical: titleLines > 1)
 
                 }
@@ -612,8 +626,8 @@ struct Badge: View {
     @Environment(\.palette) private var palette
     init(_ text: String, tone: BadgeTone = .neutral) { self.text = text; self.tone = tone }
     var body: some View {
-        let color = tone == .accent ? palette.accent : tone == .negative ? palette.negative : (palette.dark ? Palette.hex(0xbdb5a1) : palette.secondary)
-        Text(text).font(.system(size: 10.5, weight: .semibold)).lineLimit(1).fixedSize()
+        let color = tone == .accent ? palette.accent : tone == .negative ? palette.negative : palette.secondary
+        Text(text).font(.system(size: 11, weight: .semibold)).lineLimit(1).fixedSize()
             .foregroundStyle(color)
             .padding(.horizontal, 7).frame(height: 18)
             .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(tone == .accent ? palette.selectionStroke : tone == .negative ? palette.negative : palette.track, lineWidth: 1))
@@ -761,7 +775,7 @@ struct ScopeSwitch<Value: Hashable>: View {
         Picker(label, selection: $selection) {
             ForEach(Array(options.enumerated()), id: \.offset) { _, option in Text(option.title).tag(option.value) }
         }
-        .pickerStyle(.segmented).labelsHidden().fixedSize().capsuleControls()
+        .segmentedChoice()
         .accessibilityLabel(label)
     }
 }
