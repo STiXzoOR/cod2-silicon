@@ -681,7 +681,8 @@ struct MediaEntry: Identifiable {
         do {
             try rememberData()
             let gameEngine = chosenEngine
-            let executable = gameEngine.executable(in: gameBundle, renderer: gameEngine.renderer(settings.renderer, in: gameBundle))
+            let renderer = gameEngine.renderer(settings.renderer, in: gameBundle)
+            let executable = gameEngine.executable(in: gameBundle, renderer: renderer)
             guard FileManager.default.isExecutableFile(atPath: executable.path) else { throw LauncherError(message: "The game helper is missing. Rebuild or reinstall this app.") }
             // CoD2x's menus and icons for a CoD2x game, none for the original 1.3. Missing files never stop a game.
             _ = CoD2xFiles.prepare(for: gameEngine, home: home, dataPath: dataPath)
@@ -715,7 +716,7 @@ struct MediaEntry: Identifiable {
             let loadout = ConfigDocument.launchLoadout(home: home, profileID: configLaunch?.profileID)
             let plan = try GameLaunchPlan(settings: settings, dataPath: dataPath, homePath: home.path, link: pendingLink,
                 demo: demo?.deletingPathExtension().lastPathComponent, forwarded: forwardedArguments, configStudio: configLaunch, connection: connectionLaunch,
-                loadout: { loadout?.effectiveSetting(named: $0) })
+                loadout: { loadout?.effectiveSetting(named: $0) }, metal: renderer == .metal)
             let process = Process(); process.executableURL = executable; process.arguments = plan.arguments
             process.currentDirectoryURL = home
             var environment = ProcessInfo.processInfo.environment

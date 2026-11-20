@@ -120,6 +120,30 @@ import Foundation
         precondition(GameEngine.original.executable(in: game, renderer: .metal).lastPathComponent == "cod2_macos_stock_metal")
         let olderSettings = try JSONDecoder().decode(GameSettings.self, from: Data(#"{"fps":200,"renderer":"vulkan"}"#.utf8))
         precondition(olderSettings.renderer == .metal && olderSettings.fps == 200, "a renderer this version doesn't know falls back without losing the rest")
+        // Render scale: a Metal-only percentage, passed only below full size and only to the Metal game.
+        precondition(GameSettings().renderScale == 100 && olderSettings.renderScale == 100, "settings without the render scale read as full size")
+        let oddScale = try JSONDecoder().decode(GameSettings.self, from: Data(#"{"fps":200,"renderScale":60}"#.utf8))
+        precondition(oddScale.renderScale == 100 && oddScale.fps == 200, "a render scale not on the list reads as full size")
+        let listedScale = try JSONDecoder().decode(GameSettings.self, from: Data(#"{"renderScale":67}"#.utf8))
+        precondition(listedScale.renderScale == 67)
+        let flat: ([(String, String)]) -> [String] = { $0.map { "\($0.0) \($0.1)" } }
+        let fullDvars = flat(try GameSettings().launchDvars(migrated: false))
+        let fullMetal = flat(try GameSettings().launchDvars(migrated: false, metal: true))
+        precondition(fullMetal == fullDvars, "Full adds nothing")
+        var scaled = GameSettings(); scaled.renderScale = 75
+        let scaledMetal = flat(try scaled.launchDvars(migrated: false, metal: true))
+        precondition(scaledMetal == fullDvars + ["r_renderScale 75"], "75% on Metal adds exactly one r_renderScale 75")
+        let scaledMigrated = flat(try scaled.launchDvars(migrated: true, metal: true)), fullMigrated = flat(try GameSettings().launchDvars(migrated: true))
+        precondition(scaledMigrated == fullMigrated + ["r_renderScale 75"], "with loadouts too")
+        let scaledGL = flat(try scaled.launchDvars(migrated: false, metal: false))
+        precondition(scaledGL == fullDvars, "OpenGL adds nothing")
+        let scaledConfig = try scaled.launchConfig(migrated: false)
+        precondition(!scaledConfig.lowercased().contains("r_renderscale"), "launcher.cfg never carries the render scale")
+        let scaledPlan = try GameLaunchPlan(settings: scaled, dataPath: "/Game", homePath: "/Home", metal: true)
+        precondition(scaledPlan.arguments.joined(separator: " ").contains("+set r_renderScale \"75\""))
+        let scaledGLPlan = try GameLaunchPlan(settings: scaled, dataPath: "/Game", homePath: "/Home")
+        let fullPlan = try GameLaunchPlan(settings: GameSettings(), dataPath: "/Game", homePath: "/Home", metal: true)
+        precondition(scaledGLPlan.arguments == fullPlan.arguments, "Full or OpenGL: the command line is unchanged")
 
         // Original 1.3 joins stock 1.3 servers only; CoD2x joins both.
         var codx = stock; codx.fields["shortversion"] = "1.4.6.8"
