@@ -9,7 +9,7 @@ extension Snapshots {
     /// SetAbout), their states, this unit's sheets (captured as -sheet.png) and alerts. Light variants come with every run.
     static let settingsScreens = [
         "settings", "settings-running", "settings-original", "settings-original-missing",
-        "settings-display", "settings-display-windowed", "settings-display-restored",
+        "settings-display", "settings-display-scale", "settings-display-opengl", "settings-display-windowed", "settings-display-restored",
         "settings-game-data", "settings-game-data-missing", "settings-game-data-building", "settings-set-up-again",
         "settings-cod2x-installed", "settings-cod2x-downloading", "settings-cod2x-error", "settings-sheet-replace-key",
         "settings-privacy", "settings-privacy-sent", "settings-reports", "settings-delete-summaries",
@@ -30,6 +30,9 @@ extension Snapshots {
                      "Hide CoD2 Unbound while the game is running", "Appearance", "Refresh the server list when Servers opens", "Open Configs"],
         "settings-legacy-display-adjusted": ["Resolution changed from 6016 × 3384 to 5120 × 2880", "Larger sizes are sharper and slower"],
         "settings-display": ["Preview: the game fills the display", "Mode", "Resolution, vertical sync and picture quality belong to each loadout", "Open Configs", "Restore Defaults"],
+        "settings-display-scale": ["Preview: the game fills the display", "Graphics", "Render scale", "Draws the 3D picture with fewer pixels, then scales it up to fit.",
+                                   "The game has no control for these four"],
+        "settings-display-opengl": ["Graphics", "Render scale", "Needs Metal. OpenGL always draws the 3D picture at full size.", "The game has no control for these four"],
         "settings-game-data": ["Show in Finder", "Change…", "Replace…", "Rebuild", "Set Up Again…", "Game versions installed"],
         "settings-privacy": ["Send crash reports to CoD2 Unbound", "See What’s Sent…", "Send CoD2x crash reports to the CoD2x project",
                              "Match summaries", "Delete Summaries…", "Master servers"],

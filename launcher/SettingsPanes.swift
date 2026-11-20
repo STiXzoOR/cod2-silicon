@@ -107,6 +107,7 @@ struct DisplayPane: View {
                         FormRow("Graphics", detail: "Metal is how macOS draws today. OpenGL is the older way, kept in case something looks wrong.") {
                             ScopeSwitch("Graphics", selection: $model.settings.renderer, options: [(.metal, "Metal"), (.openGL, "OpenGL")])
                         }
+                        renderScaleRow
                     }
                     if legacy {
                         VStack(alignment: .leading, spacing: 6) {
@@ -119,7 +120,7 @@ struct DisplayPane: View {
                     }
                 }
                 if !legacy {
-                    Text("The game has no control for these \(model.offersRenderers ? "three" : "two"), so they are set here and apply to every loadout.")
+                    Text("The game has no control for these \(model.offersRenderers ? "four" : "two"), so they are set here and apply to every loadout.")
                         .font(.system(size: 12)).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true).padding(.leading, 6)
                 }
                 }
@@ -165,9 +166,21 @@ struct DisplayPane: View {
         }
         .onAppear { customFPS = !FrameCap.isPreset(model.settings.fps); model.refreshDisplay() }
     }
+    /// Only the Metal game can draw below full size. With OpenGL the row dims and shows Full, and the
+    /// stored choice waits for the player's return to Metal.
+    @ViewBuilder private var renderScaleRow: some View {
+        let metal = model.drawsWithMetal
+        FormRow("Render scale", detail: metal ? "Draws the 3D picture with fewer pixels, then scales it up to fit. The HUD, text and menus stay sharp. Meant for 4K and 5K displays."
+                                              : "Needs Metal. OpenGL always draws the 3D picture at full size.") {
+            PopUpButton("Render scale", selection: Binding(get: { metal ? model.settings.renderScale : 100 }, set: { model.settings.renderScale = $0 }),
+                        options: GameSettings.renderScales.map { ($0, $0 == 100 ? "Full" : "\($0)%") })
+                .disabled(!metal)
+        }
+        .opacity(metal ? 1 : 0.45)
+    }
     private var atDefaults: Bool {
         let d = model.defaultSettings, s = model.settings
-        let display = s.fullscreen == d.fullscreen && s.renderer == d.renderer && (!legacy || (s.resolution == d.resolution && s.vsync == d.vsync && s.anisotropy == d.anisotropy))
+        let display = s.fullscreen == d.fullscreen && s.renderer == d.renderer && s.renderScale == d.renderScale && (!legacy || (s.resolution == d.resolution && s.vsync == d.vsync && s.anisotropy == d.anisotropy))
         return display && (!legacy || (s.fps == d.fps && s.rawMouse == d.rawMouse && s.sensitivity == d.sensitivity && s.dpi == d.dpi && s.volume == d.volume))
     }
     private func restore() {
@@ -178,7 +191,7 @@ struct DisplayPane: View {
     private func undoRestore() {
         guard let previous = beforeRestore else { model.settingsFeedback = nil; return }
         var settings = model.settings
-        settings.fullscreen = previous.fullscreen; settings.renderer = previous.renderer
+        settings.fullscreen = previous.fullscreen; settings.renderer = previous.renderer; settings.renderScale = previous.renderScale
         if legacy { settings.resolution = previous.resolution; settings.vsync = previous.vsync; settings.anisotropy = previous.anisotropy; settings.fps = previous.fps; settings.rawMouse = previous.rawMouse; settings.sensitivity = previous.sensitivity; settings.dpi = previous.dpi; settings.volume = previous.volume }
         model.settings = settings
         customFPS = !FrameCap.isPreset(settings.fps)
@@ -240,10 +253,15 @@ struct DisplayPreview: View {
                 Text(model.usesLoadouts ? modeTitle.uppercased() : SettingsText.resolution(model.settings.resolution)).font(.stencil(windowed ? 20 : 26)).foregroundStyle(palette.accent)
                     .lineLimit(1).minimumScaleFactor(0.6)
                 Text(caption(windowed: windowed, size: size)).font(.system(size: 11)).foregroundStyle(palette.secondary)
+                if let reduced = reducedScale {
+                    Text("3D picture at \(reduced)%").font(.system(size: 11, weight: .semibold)).foregroundStyle(palette.accent).padding(.top, 2)
+                }
             }
             .frame(width: window.width - 8)
         }
     }
+    /// The render scale when the next game draws its 3D picture below full size (Metal only).
+    private var reducedScale: Int? { model.drawsWithMetal && model.settings.renderScale != 100 ? model.settings.renderScale : nil }
     private var modeTitle: String { LauncherModel.displayModes.first { $0.value == model.settings.fullscreen }?.title ?? "Full Screen" }
     private func caption(windowed: Bool, size: (width: Int, height: Int)) -> String {
         if model.usesLoadouts { return windowed ? "beside your other apps" : "fills the display" }
@@ -254,8 +272,9 @@ struct DisplayPreview: View {
     private func spoken(windowed: Bool, size: (width: Int, height: Int)) -> String {
         let mode = LauncherModel.displayModes.first { $0.value == model.settings.fullscreen }?.title.lowercased() ?? "full screen"
         let how = windowed ? "the game in a window" : "the game fills the display"
-        if model.usesLoadouts { return "Preview: \(how), \(mode), on \(model.mainDisplay?.name ?? "the main display")" }
-        return "Preview: \(how), \(size.width) by \(size.height), \(mode), on \(model.mainDisplay?.name ?? "the main display")"
+        let scaled = reducedScale.map { ", with the 3D picture drawn at \($0)%" } ?? ""
+        if model.usesLoadouts { return "Preview: \(how), \(mode), on \(model.mainDisplay?.name ?? "the main display")" + scaled }
+        return "Preview: \(how), \(size.width) by \(size.height), \(mode), on \(model.mainDisplay?.name ?? "the main display")" + scaled
     }
 }
 

@@ -252,7 +252,7 @@ extension KeyStore {
         let previous = settings, defaults = defaultSettings
         resolutionAdjustment = nil
         var restored = settings
-        restored.fullscreen = defaults.fullscreen; restored.renderer = defaults.renderer
+        restored.fullscreen = defaults.fullscreen; restored.renderer = defaults.renderer; restored.renderScale = defaults.renderScale
         if !usesLoadouts {
             restored.resolution = defaults.resolution; restored.vsync = defaults.vsync; restored.anisotropy = defaults.anisotropy
             restored.fps = defaults.fps; restored.rawMouse = defaults.rawMouse; restored.sensitivity = defaults.sensitivity
@@ -745,6 +745,9 @@ extension KeyStore {
             settings.resolution = "6016x3384"; normalizeResolution(); savedSettings = settings
         case "settings-display": settingsPane = .display; settings.resolution = "2560x1440"; savedSettings = settings
         case "settings-display-restored": settingsPane = .display; settingsFeedback = .init(pane: .display, text: "Defaults restored.", undo: true)
+        case "settings-display-scale": settingsPane = .display; settings.resolution = "2560x1440"; settings.renderScale = 75; savedSettings = settings
+        // OpenGL keeps the stored 75% but the row shows Full, dimmed.
+        case "settings-display-opengl": settingsPane = .display; settings.resolution = "2560x1440"; settings.renderer = .openGL; settings.renderScale = 75; savedSettings = settings
         case "settings-display-windowed": settingsPane = .display; settings.fullscreen = "windowed"; settings.resolution = "1920x1080"; savedSettings = settings
         case "settings-game-data": settingsPane = .gameData
         case "settings-game-data-missing": settingsPane = .gameData; gameData.found = false; gameData.keyEnding = nil; keyVerified = false; approximate = true

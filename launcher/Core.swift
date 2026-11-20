@@ -202,14 +202,14 @@ struct GameLaunchPlan {
     /// loadout: the value the game's profile config gives a dvar; with it, what that config leaves
     /// unset is supplied from GameSettings.loadoutDefaults.
     init(settings: GameSettings, dataPath: String, homePath: String, link: LaunchLink? = nil, demo: String? = nil, forwarded: [String] = [], configStudio: ConfigStudioLaunch? = nil, connection: ConfigConnectionLaunch? = nil,
-         loadout: ((String) -> String?)? = nil) throws {
+         loadout: ((String) -> String?)? = nil, metal: Bool = false) throws {
         guard GameSettings.safeValue(dataPath), GameSettings.safeValue(homePath) else { throw LauncherError(message: "Game paths contain unsupported characters.") }
         // The engine plays its three intro films when com_introPlayed is false and then records them as
         // played. Only a plain launch to the game menu shows them: a server link, a demo or forwarded
         // engine arguments start straight away and leave the films for the next plain launch.
         playsIntroFilms = !settings.introFilmsPlayed && link == nil && demo == nil && forwarded.isEmpty
         let introPlayed = playsIntroFilms ? "0" : "1"
-        var args = try settings.launchDvars(migrated: configStudio != nil).flatMap {
+        var args = try settings.launchDvars(migrated: configStudio != nil, metal: metal).flatMap {
             ["+set", $0.0, "\"\($0.0.lowercased() == "com_introplayed" ? introPlayed : $0.1)\""]
         }
         if let loadout {
@@ -972,6 +972,9 @@ struct GameSettings: Codable, Sendable, Equatable {
     var engine = GameEngine.cod2x
     /// Metal unless the player chose OpenGL.
     var renderer = GameRenderer.metal
+    /// Settings › Display › Render scale: the share of the display's pixels the Metal game draws its 3D
+    /// picture with, in percent (`r_renderScale`). 100 is full size; OpenGL always draws at full size.
+    var renderScale = 100
     /// Settings › Privacy: crash reports to this project's Sentry, and CoD2x's own to CoD2x. Off until turned on.
     var sendCrashReports = false
     var sendCoD2xReports = false
@@ -994,6 +997,8 @@ struct GameSettings: Codable, Sendable, Equatable {
     var introFilmsPlayed = false
     // MARK: - end ship-settings
     static let anisotropyLevels = [2, 4, 8, 16]
+    /// The render scales Settings › Display offers, largest first. Anything else reads as full size.
+    static let renderScales = [100, 85, 75, 67, 50]
     var cm360: Double? { MouseMath.centimetresPer360(dpi: dpi, sensitivity: sensitivity) }
     init() {}
     // Settings saved by older launchers lack newer keys; keep their values and default the rest.
@@ -1014,6 +1019,7 @@ struct GameSettings: Codable, Sendable, Equatable {
         // An engine this version doesn't know (from a newer launcher) falls back without losing the rest.
         engine = (try? c.decodeIfPresent(GameEngine.self, forKey: .engine)) ?? d.engine
         renderer = (try? c.decodeIfPresent(GameRenderer.self, forKey: .renderer)) ?? d.renderer
+        renderScale = (try? c.decodeIfPresent(Int.self, forKey: .renderScale)).flatMap { Self.renderScales.contains($0) ? $0 : nil } ?? d.renderScale
         sendCrashReports = (try? c.decodeIfPresent(Bool.self, forKey: .sendCrashReports)) ?? d.sendCrashReports
         sendCoD2xReports = (try? c.decodeIfPresent(Bool.self, forKey: .sendCoD2xReports)) ?? d.sendCoD2xReports
         crashReportsAsked = (try? c.decodeIfPresent(Bool.self, forKey: .crashReportsAsked)) ?? d.crashReportsAsked
@@ -1094,9 +1100,16 @@ struct GameSettings: Codable, Sendable, Equatable {
     }
     func config() throws -> String { try dvars().map { "seta \($0.0) \"\($0.1)\"" }.joined(separator: "\n") + "\n" }
     func arguments() throws -> [String] { try dvars().flatMap { ["+set", $0.0, "\"\($0.1)\""] } }
-    func launchDvars(migrated: Bool) throws -> [(String, String)] {
+    /// metal: the game about to start draws with Metal. Only then, and only below full size, is the render
+    /// scale passed; a Full or OpenGL start gets exactly the command line it had before the setting existed.
+    /// launcher.cfg is written without it (`launchConfig` passes false): the scale belongs to one start of
+    /// one renderer, never to a file the game might execute and archive.
+    func launchDvars(migrated: Bool, metal: Bool = false) throws -> [(String, String)] {
         let values = try dvars()
-        return migrated ? values.filter { Self.machineDvarNames.contains($0.0.lowercased()) } : values
+        return (migrated ? values.filter { Self.machineDvarNames.contains($0.0.lowercased()) } : values) + renderScaleDvars(metal: metal)
+    }
+    func renderScaleDvars(metal: Bool) -> [(String, String)] {
+        metal && renderScale != 100 && Self.renderScales.contains(renderScale) ? [("r_renderScale", String(renderScale))] : []
     }
     func launchConfig(migrated: Bool) throws -> String {
         try launchDvars(migrated: migrated).map { "seta \($0.0) \"\($0.1)\"" }.joined(separator: "\n") + "\n"
