@@ -16,6 +16,10 @@ was called CoD2 Silicon, and the entries from before then still use that name.
 - About says which of the two the next game draws with, and credits mtld3d,
   the library the Metal engines draw through. Its licence and the licences
   of what it is built from are in Acknowledgements and inside the app.
+- **Render scale**, in Settings › Display. With Metal, the game can draw the
+  3D picture with fewer pixels and scale it up to fit: Full, 85%, 75%, 67% or
+  50%. The HUD, text and menus are still drawn at the display's full size. It
+  is meant for 4K and 5K displays. OpenGL always draws at full size.
 
 ## [0.3.7] - 2026-11-20
 

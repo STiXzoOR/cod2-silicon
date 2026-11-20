@@ -546,7 +546,14 @@ extern int RB_SceneTarget_Plain(void);
 extern int RB_SceneTarget_FrameEnd(void);
 extern int RB_SceneTarget_Select(int scene);
 extern void RB_SceneTarget_Resolve(void);
+extern int RB_SceneTarget_Scaled(void);
+extern void RB_SceneTarget_ResolveToTexture(void);
+extern int R_SceneScaled(void);
+extern int R_SceneWidth(void);
+extern int R_SceneHeight(void);
 static void RB_SceneTargetBind(int scene);
+static void RB_SceneEnd(void);
+static void RB_SceneEndBefore2D(void);
 static void RB_ForgetSamplerImage(const GfxImage *image);
 static void RB_SceneCopyFlush(void);
 static int rb_sceneCopyPending;
@@ -618,6 +625,7 @@ const char *RB_Cod2xFilm_D3D9(const Cod2xFilmPass *pass)
     void *copy, *copySurface;
     float values[9];
 
+    RB_SceneEndBefore2D();
     RB_SceneCopyFlush();
     RB_SetRenderTarget(R_RENDERTARGET_FRAME_BUFFER);
     width = (unsigned)dxState.renderTargetWidth;
@@ -1002,10 +1010,8 @@ static void RB_EndFrame_real(void)
         extern void R_CapturePendingScreenshotBeforePresent(void);
 #if COD2_MAC_D3D9
         /* A scene that never reached its late post effects is resolved here. */
-        if (RB_SceneTarget_InScene()) {
-            RB_SceneTarget_Resolve();
-            RB_SceneTargetBind(0);
-        }
+        if (RB_SceneTarget_InScene())
+            RB_SceneEnd();
         rb_sceneResolved = 0;
         if (RB_SceneTarget_FrameEnd()) {
             dxState.renderTargetId = (GfxRenderTargetId)-1;
@@ -1174,6 +1180,9 @@ static void RB_SetClipPlanesCmd(GfxRenderCommandExecState *execState)
 
 static void RB_StretchRawCmd(GfxRenderCommandExecState *execState)
 {
+#if COD2_MAC_D3D9
+    RB_SceneEndBefore2D(); /* render scale: this is drawn in the display's pixels */
+#endif
     byte *cmd = (byte *)execState->cmd;
     int x = ((GfxCmdStretchRaw *)cmd)->x;
     int y = ((GfxCmdStretchRaw *)cmd)->y;
@@ -1817,6 +1826,15 @@ static void RB_BeginViewCmd(GfxRenderCommandExecState *execState)
 
     backEnd.width = ((const vidConfig_t *)imp_vidConfig)->width;
     backEnd.height = ((const vidConfig_t *)imp_vidConfig)->height;
+#if COD2_MAC_D3D9
+    /* The sun's visibility is a count of the pixels of a 16-pixel square that pass the
+     * depth test, measured against a count taken when the renderer started: the square
+     * is 16 of the scene's pixels, whatever their size on the display (render scale). */
+    if (R_SceneScaled()) {
+        backEnd.width = R_SceneWidth();
+        backEnd.height = R_SceneHeight();
+    }
+#endif
 
     if (!dxs->viewportBehavior)
         RB_UpdateViewportConstants();
@@ -1900,6 +1918,7 @@ static void RB_ForgetSamplerImage(const GfxImage *image)
 static void RB_SceneCopyFlush(void)
 {
     extern void RB_ScreenPass_Copy(void *device, void *texture, unsigned width, unsigned height);
+    extern void RB_ScreenPass_Stretch(void *device, void *texture, unsigned width, unsigned height);
     void *device = dx.device;
 
     if (!rb_sceneCopyPending)
@@ -1910,6 +1929,13 @@ static void RB_SceneCopyFlush(void)
     RB_SetRenderTarget(R_RENDERTARGET_FRAME_BUFFER);
     ((HRESULT (*)(void *, unsigned, const void *, unsigned, unsigned, float, unsigned))(*(void ***)device)[43])(
         device, 0, NULL, 1, 0xff000000u, 1.0f, 0);
+    if (RB_SceneTarget_Scaled()) {
+        /* Render scale: the picture is smaller than the back buffer, and this is where it
+         * is made to fill it, in the draw that was a copy. */
+        RB_ScreenPass_Stretch(device, dx.renderTargets[R_RENDERTARGET_RESOLVED_SCENE].image->texture.map,
+                              (unsigned)dxState.renderTargetWidth, (unsigned)dxState.renderTargetHeight);
+        return;
+    }
     RB_ScreenPass_Copy(device, dx.renderTargets[R_RENDERTARGET_RESOLVED_SCENE].image->texture.map,
                        (unsigned)dx.renderTargets[R_RENDERTARGET_RESOLVED_SCENE].width,
                        (unsigned)dx.renderTargets[R_RENDERTARGET_RESOLVED_SCENE].height);
@@ -1933,6 +1959,12 @@ static int RB_GlowSetupQuarter(void)
     unsigned width = (unsigned)dx.renderTargets[R_RENDERTARGET_RESOLVED_SCENE].width >> 2;
     unsigned height = (unsigned)dx.renderTargets[R_RENDERTARGET_RESOLVED_SCENE].height >> 2;
     void *surface;
+
+    if (RB_SceneTarget_Scaled()) {
+        /* The reduced targets follow the display, not the scene: keep the step below a halving. */
+        width = (unsigned)dx.renderTargets[R_RENDERTARGET_BLURRED_SCREEN].width * 2;
+        height = (unsigned)dx.renderTargets[R_RENDERTARGET_BLURRED_SCREEN].height * 2;
+    }
 
     if (R_ReducedTargetPicmip() != 3 || backEnd.resolvedSceneTarget != R_RENDERTARGET_RESOLVED_SCENE)
         return 0;
@@ -2010,6 +2042,37 @@ static void RB_SceneTargetBind(int scene)
             device, 0, NULL, 7, 0xff000000u, 1.0f, 0);
     }
 }
+
+/* The scene is over and nothing more will read it apart: its picture goes into the back
+ * buffer. At full size that is the resolve. With a render scale the samples are
+ * resolved into the resolved-scene texture, which is the scene's size, and that texture
+ * is drawn over the back buffer (RB_SceneCopyFlush). */
+static void RB_SceneEnd(void)
+{
+    if (tess.indexCount || tess.optimizedIndexCount)
+        RB_EndSurface();
+    if (!RB_SceneTarget_Scaled()) {
+        RB_SceneTarget_Resolve();
+        RB_SceneTargetBind(0);
+        return;
+    }
+    RB_SceneTarget_ResolveToTexture();
+    RB_SceneTargetBind(0);
+    rb_sceneCopyPending = 1;
+    RB_SceneCopyFlush();
+}
+
+/* With a render scale, what is drawn in the display's pixels (the HUD, menus, text, a
+ * film, the saved screen) must not land in the scene's smaller target. The shader
+ * path's scene ends at its late post effects, before any of that. The Direct3D 7 path
+ * has none, and neither has a view that does not fill the screen: there the first such
+ * command ends the scene. At full size the scene is left open to the end of the frame,
+ * as before. */
+static void RB_SceneEndBefore2D(void)
+{
+    if (RB_SceneTarget_Scaled() && RB_SceneTarget_InScene())
+        RB_SceneEnd();
+}
 #endif
 
 static void RB_SetRenderTargetCmd(GfxRenderCommandExecState *execState)
@@ -2027,9 +2090,10 @@ static void RB_SetRenderTargetCmd(GfxRenderCommandExecState *execState)
     /* Only the scene's own commands select the frame buffer this way: the scene begins.
      * Once it has been resolved, anything more this frame goes onto the resolved picture. */
     if (((GfxCmdSetRenderTarget *)cmd)->renderTargetId == R_RENDERTARGET_FRAME_BUFFER && !rb_sceneResolved &&
-        (!RB_SceneTarget_Plain() || (r_rendererInUse->current.integer != 2 && dx.hasSeparateAlphaBlend &&
-                                     r_glow->current.enabled && !r_fullbright->current.enabled)))
-        RB_SceneTargetBind(1); /* without anti-aliasing, only in the frames glow reads the scene */
+        (!RB_SceneTarget_Plain() || RB_SceneTarget_Scaled() ||
+         (r_rendererInUse->current.integer != 2 && dx.hasSeparateAlphaBlend && r_glow->current.enabled &&
+          !r_fullbright->current.enabled)))
+        RB_SceneTargetBind(1); /* without anti-aliasing, only in the frames glow reads the scene, or with a render scale */
 #endif
     RB_SetRenderTarget(((GfxCmdSetRenderTarget *)cmd)->renderTargetId);
 #if defined(COD2_X64)
@@ -3050,6 +3114,9 @@ static void RB_DrawTrianglesCmd(GfxRenderCommandExecState *execState)
 
 static void RB_SaveScreenCmd(GfxRenderCommandExecState *execState)
 {
+#if COD2_MAC_D3D9
+    RB_SceneEndBefore2D(); /* render scale: this is drawn in the display's pixels */
+#endif
     DxState *dxs = &dxState;
     char *dx;
     void *imageSurface;
@@ -3879,6 +3946,9 @@ void RB_DrawStretchPic(const Material *material, float x, float y, float w, floa
 
 static void RB_StretchPicCmd(GfxRenderCommandExecState *execState)
 {
+#if COD2_MAC_D3D9
+    RB_SceneEndBefore2D(); /* render scale: this is drawn in the display's pixels */
+#endif
     byte *cmd = (byte *)execState->cmd;
     unsigned int byteCount;
 
@@ -4455,6 +4525,9 @@ static void RB_DrawFullScreenColoredQuadCmd(GfxRenderCommandExecState *execState
 
 static void RB_BlendSavedScreenCmd(GfxRenderCommandExecState *execState)
 {
+#if COD2_MAC_D3D9
+    RB_SceneEndBefore2D(); /* render scale: this is drawn in the display's pixels */
+#endif
     byte *cmd;
     char *rgp;
     int elapsed, fadeFrames;
@@ -4814,6 +4887,9 @@ static void RB_BACKEND_REGPARM3_SSE_ABI RB_DrawTextWithCursor(const char *text, 
 
 static void RB_DrawTextCmd(GfxRenderCommandExecState *execState)
 {
+#if COD2_MAC_D3D9
+    RB_SceneEndBefore2D(); /* render scale: this is drawn in the display's pixels */
+#endif
     const GfxCmdDrawText *cmd = (const GfxCmdDrawText *)execState->cmd;
 
     const char *text = cmd->text;
@@ -4935,8 +5011,7 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
     }
 #if COD2_MAC_D3D9
     else if (frameBufferTarget == R_RENDERTARGET_FRAME_BUFFER && RB_SceneTarget_InScene()) {
-        RB_SceneTarget_Resolve();
-        RB_SceneTargetBind(0);
+        RB_SceneEnd();
     }
 #endif
 
@@ -5273,6 +5348,9 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
 
 static void RB_StretchPicRotateCmd(GfxRenderCommandExecState *execState)
 {
+#if COD2_MAC_D3D9
+    RB_SceneEndBefore2D(); /* render scale: this is drawn in the display's pixels */
+#endif
     byte *cmd;
     char *t = (char *)&tess;
     const Material *material;
@@ -5340,6 +5418,9 @@ static void RB_StretchPicRotateCmd(GfxRenderCommandExecState *execState)
 
 static void RB_DrawQuadPicCmd(GfxRenderCommandExecState *execState)
 {
+#if COD2_MAC_D3D9
+    RB_SceneEndBefore2D(); /* render scale: this is drawn in the display's pixels */
+#endif
     byte *cmd;
     char *t = (char *)&tess;
     const Material *material;

@@ -27,6 +27,13 @@
  * and the back buffer is entered once. Frames without glow draw into the back
  * buffer as the game does.
  *
+ * Render scale (r_renderScale below 100): the scene and everything that reads it
+ * are made smaller than the display (r_rendertarget.c: R_SceneWidth), and the
+ * resolved picture is stretched over the back buffer where it would have been
+ * copied, before glow, the HUD and the menus, which stay at the display's size.
+ * The scene then always has a target of its own, with or without anti-aliasing,
+ * because its depth buffer no longer fits the back buffer.
+ *
  * rb_backend.c decides when the scene starts and ends; this file owns the
  * surfaces and swaps them in and out of the engine's frame buffer record. */
 #if COD2_MAC_D3D9
@@ -54,8 +61,12 @@ static void *s_device;
 static void *s_sceneColor;              /* made here: the scene's multisampled colour */
 static void *s_sceneDepth, *s_backBuffer; /* the engine's: the scene's depth, the device's back buffer */
 static void **s_colorSlot, **s_depthSlot; /* the engine's frame buffer record */
+static int *s_widthSlot, *s_heightSlot;
 static int s_inScene;
 static int s_plain; /* one sample a pixel: the scene's target is the engine's resolved-scene texture */
+static void *s_resolved; /* the engine's resolved-scene texture's surface (not owned) */
+static int s_sceneWidth, s_sceneHeight, s_backWidth, s_backHeight;
+static int s_scaled; /* the scene is smaller than the back buffer */
 typedef struct {
     void *texture, *surface;
     unsigned width, height;
@@ -84,25 +95,33 @@ void RB_SceneTarget_Release(void)
     if (s_sceneColor) {
         *s_colorSlot = s_backBuffer;
         *s_depthSlot = s_sceneDepth;
+        if (s_scaled) {
+            *s_widthSlot = s_backWidth;
+            *s_heightSlot = s_backHeight;
+        }
         ((ReleaseFn)VT(s_sceneColor)[UNK_Release])(s_sceneColor);
     }
     ScratchRelease(&s_scratch[0]);
     ScratchRelease(&s_scratch[1]);
     ScratchRelease(&s_scratch[2]);
-    s_sceneColor = s_sceneDepth = s_backBuffer = NULL;
+    s_sceneColor = s_sceneDepth = s_backBuffer = s_resolved = NULL;
     s_colorSlot = s_depthSlot = NULL;
-    s_inScene = s_plain = 0;
+    s_widthSlot = s_heightSlot = NULL;
+    s_inScene = s_plain = s_scaled = 0;
 }
 
 /* Called once the engine has the back buffer in *colorSlot and the scene's depth
  * buffer in *depthSlot. `resolved` is the surface of the engine's resolved-scene
- * texture, or NULL. Returns 0 if the target is wanted and cannot be made. */
-int RB_SceneTarget_Create(void *device, void **colorSlot, void **depthSlot, int width, int height, DWORD format,
-                          DWORD samples, DWORD quality, void *resolved)
+ * texture, or NULL. *widthSlot by *heightSlot is the back buffer's size as the
+ * engine's record has it; width by height is the scene's, which is smaller with
+ * a render scale. Returns 0 if the target is wanted and cannot be made. */
+int RB_SceneTarget_Create(void *device, void **colorSlot, void **depthSlot, int *widthSlot, int *heightSlot, int width,
+                          int height, DWORD format, DWORD samples, DWORD quality, void *resolved)
 {
     RB_SceneTarget_Release();
     if (!RB_SceneTarget_Wanted() || (samples <= 1 && !resolved))
         return 1;
+    s_scaled = resolved && (width != *widthSlot || height != *heightSlot);
     if (samples <= 1) {
         s_sceneColor = resolved;
         ((ReleaseFn)VT(resolved)[UNK_AddRef])(resolved);
@@ -111,16 +130,30 @@ int RB_SceneTarget_Create(void *device, void **colorSlot, void **depthSlot, int 
                                                                           format, samples, quality, 0, &s_sceneColor,
                                                                           NULL) < 0) {
         s_sceneColor = NULL;
+        s_scaled = 0;
         return 0;
     }
     s_device = device;
     s_colorSlot = colorSlot;
     s_depthSlot = depthSlot;
+    s_widthSlot = widthSlot;
+    s_heightSlot = heightSlot;
+    s_backWidth = *widthSlot;
+    s_backHeight = *heightSlot;
+    s_sceneWidth = width;
+    s_sceneHeight = height;
+    s_resolved = resolved;
     s_backBuffer = *colorSlot;
     s_sceneDepth = *depthSlot;
-    if (!s_plain)
+    if (!s_plain || s_scaled)
         *depthSlot = NULL; /* a frame starts outside the scene */
     return 1;
+}
+
+/* Is the scene smaller than the back buffer (r_renderScale)? */
+int RB_SceneTarget_Scaled(void)
+{
+    return s_scaled;
 }
 
 /* Is the scene's target the resolved-scene texture itself (no anti-aliasing)? */
@@ -133,7 +166,7 @@ int RB_SceneTarget_Plain(void)
  * there after the scene may bind it to tell the sky from the world. NULL otherwise. */
 void *RB_SceneTarget_PlainDepth(void)
 {
-    return s_plain ? s_sceneDepth : NULL;
+    return s_plain && !s_scaled ? s_sceneDepth : NULL;
 }
 
 /* The frame is over. Without anti-aliasing the next one starts on the back buffer with
@@ -141,7 +174,7 @@ void *RB_SceneTarget_PlainDepth(void)
  * Returns 1 if that changed the engine's record. */
 int RB_SceneTarget_FrameEnd(void)
 {
-    if (!s_plain || s_inScene || *s_depthSlot == s_sceneDepth)
+    if (!s_plain || s_scaled || s_inScene || *s_depthSlot == s_sceneDepth)
         return 0;
     *s_colorSlot = s_backBuffer;
     *s_depthSlot = s_sceneDepth;
@@ -162,6 +195,10 @@ int RB_SceneTarget_Select(int scene)
     s_inScene = scene;
     *s_colorSlot = scene ? s_sceneColor : s_backBuffer;
     *s_depthSlot = scene ? s_sceneDepth : NULL;
+    if (s_scaled) {
+        *s_widthSlot = scene ? s_sceneWidth : s_backWidth;
+        *s_heightSlot = scene ? s_sceneHeight : s_backHeight;
+    }
     return 1;
 }
 
@@ -170,6 +207,16 @@ void RB_SceneTarget_Resolve(void)
 {
     if (s_sceneColor)
         ((StretchRectFn)VT(s_device)[DEV_StretchRect])(s_device, s_sceneColor, NULL, s_backBuffer, NULL, 2);
+}
+
+/* With a render scale: the scene's samples, resolved into the resolved-scene texture,
+ * which is the scene's size, so this is the plain resolve it is at full size. The
+ * caller then draws that texture over the back buffer. Without anti-aliasing the scene
+ * was drawn into that texture and there is nothing to do. */
+void RB_SceneTarget_ResolveToTexture(void)
+{
+    if (s_sceneColor && !s_plain && s_resolved)
+        ((StretchRectFn)VT(s_device)[DEV_StretchRect])(s_device, s_sceneColor, NULL, s_resolved, NULL, 2);
 }
 
 /* A render-target texture of this size and format, kept in `slot` and made again when

@@ -986,7 +986,12 @@ void R_RenderScene(const refdef_t *refdef)
                  * two passes are drawn once more first, depth alone (0x100), the second
                  * marked as the last (0x200: rb_backend.c). */
                 extern int RB_FxLayer_DepthPassWanted(void);
+                extern int R_SceneScaled(void);
                 if (RB_FxLayer_DepthPassWanted()) {
+                    /* The layer draws only under a target of the scene's size, which the
+                     * back buffer is not with a render scale: enter the scene first. */
+                    if (R_SceneScaled())
+                        R_AddCmdSetRenderTarget((GfxRenderTargetId)0);
                     R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount, (MaterialTechniqueType)(1 | 0x100));
                     R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount, (MaterialTechniqueType)(6 | 0x100 | 0x200));
                 }
@@ -1021,7 +1026,10 @@ void R_RenderScene(const refdef_t *refdef)
                  * Direct3D 7 branch above does. With dynamic shadows on, their prepass
                  * serves (rb_backend.c). */
                 extern int RB_FxLayer_DepthPassWanted(void);
+                extern int R_SceneScaled(void);
                 if (RB_FxLayer_DepthPassWanted()) {
+                    if (R_SceneScaled()) /* as in the Direct3D 7 branch above */
+                        R_AddCmdSetRenderTarget((GfxRenderTargetId)0);
                     R_AddCmdBeginView(scene.viewCount, &scene.def, viewParms, lodParms);
                     R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount,
                         (MaterialTechniqueType)(TECHNIQUE_DEPTH_PREPASS | 0x100 | 0x200));

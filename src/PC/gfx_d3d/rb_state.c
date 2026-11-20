@@ -735,6 +735,36 @@ void RB_InitSceneViewport(void)
     be->sceneViewport.height = vc->height;
 }
 
+#if COD2_MAC_D3D9
+/* Render scale. The engine keeps the scene's viewport in display pixels. While the
+ * target bound is one of the scene's own, made smaller than the display
+ * (r_rendertarget.c: R_SceneWidth), the viewport is put onto it edge by edge, so that
+ * one covering the display covers the target exactly and two that meet still meet.
+ * The back buffer is the display's size and is left alone, and so is the shadow
+ * cookie's target, whose viewport is its own. */
+static void RB_SceneScaleViewport(GfxViewport *viewport)
+{
+    extern int R_SceneScaled(void);
+    const vidConfig_t *vc = (const vidConfig_t *)imp_vidConfig;
+    int targetWidth = dxState.renderTargetWidth, targetHeight = dxState.renderTargetHeight;
+    int x0, y0, x1, y1;
+
+    if (!R_SceneScaled() || (targetWidth == vc->width && targetHeight == vc->height))
+        return;
+    if (dxState.renderTargetId != R_RENDERTARGET_FRAME_BUFFER && dxState.renderTargetId != R_RENDERTARGET_DYNAMICSHADOWS &&
+        dxState.renderTargetId != R_RENDERTARGET_FLOAT_Z)
+        return;
+    x0 = (viewport->x * targetWidth + vc->width / 2) / vc->width;
+    y0 = (viewport->y * targetHeight + vc->height / 2) / vc->height;
+    x1 = ((viewport->x + viewport->width) * targetWidth + vc->width / 2) / vc->width;
+    y1 = ((viewport->y + viewport->height) * targetHeight + vc->height / 2) / vc->height;
+    viewport->x = x0;
+    viewport->y = y0;
+    viewport->width = x1 > x0 ? x1 - x0 : 1;
+    viewport->height = y1 > y0 ? y1 - y0 : 1;
+}
+#endif
+
 Bool RB_GetViewport(GfxViewport *outViewport)
 {
     if (dxState.viewportBehavior == GFX_USE_VIEWPORT_FULL) {
@@ -748,6 +778,9 @@ Bool RB_GetViewport(GfxViewport *outViewport)
         outViewport->y = be->sceneViewport.y;
         outViewport->width = be->sceneViewport.width;
         outViewport->height = be->sceneViewport.height;
+#if COD2_MAC_D3D9
+        RB_SceneScaleViewport(outViewport);
+#endif
     }
 
     return 1;
@@ -1033,6 +1066,9 @@ void RB_UpdateViewportConstants(void)
         viewport.height = dxState.renderTargetHeight;
     } else {
         viewport = backEnd.sceneViewport;
+#if COD2_MAC_D3D9
+        RB_SceneScaleViewport(&viewport);
+#endif
     }
 
 #if defined(COD2_X64)
@@ -1388,6 +1424,9 @@ void RB_UpdateViewport(void)
         viewport.height = dxState.renderTargetHeight;
     } else {
         viewport = be->sceneViewport;
+#if COD2_MAC_D3D9
+        RB_SceneScaleViewport(&viewport);
+#endif
     }
 
     dxState.viewportIsNull = 0;

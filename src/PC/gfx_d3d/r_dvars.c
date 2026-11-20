@@ -476,6 +476,12 @@ void R_RegisterDvars(void)
     ri.Dvar_RegisterInt("r_glowSkyFromDepth", 1, 0, 1, 0);
     /* Above 1600 lines, work glow and blur out from the picture at half size (takes a vid_restart). */
     ri.Dvar_RegisterInt("r_glowHalfRes", 1, 0, 1, 0);
+    /* Render scale: the 3D scene is drawn at this percentage of the display each way and
+     * stretched to fill it before glow, the HUD and the menus, which keep the display's
+     * size (r_rendertarget.c: R_SceneWidth; rb_scenetarget.c). 100 draws it as before.
+     * The launcher sets it (Settings > Display); it is not saved to a config. Takes a
+     * vid_restart, and needs r_sceneTarget 1. */
+    ri.Dvar_RegisterInt("r_renderScale", 100, 50, 100, 0);
 #endif
 
     r_lockPvs = ri.Dvar_RegisterBool("r_lockPvs", 0, 0x2080);

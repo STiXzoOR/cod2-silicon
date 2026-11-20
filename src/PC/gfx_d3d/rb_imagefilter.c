@@ -532,7 +532,20 @@ void RB_GlowFilterImage(float *radius)
         return;
     }
 
+#if COD2_MAC_D3D9
+    {
+        /* The radius is in the display's pixels and the glow targets follow the display.
+         * The resolved scene is smaller than it with a render scale (r_rendertarget.c). */
+        extern int R_SceneScaled(void);
+        extern int R_SceneWidth(void);
+        float sceneWidth = (float)DX_RT_WIDTH(R_RENDERTARGET_RESOLVED_SCENE);
+        if (R_SceneScaled())
+            sceneWidth *= (float)((const vidConfig_t *)vidConfig)->width / (float)R_SceneWidth();
+        scaleRatio = (float)DX_RT_WIDTH(R_RENDERTARGET_GLOW_0) / sceneWidth;
+    }
+#else
     scaleRatio = (float)DX_RT_WIDTH(R_RENDERTARGET_GLOW_0) / (float)DX_RT_WIDTH(R_RENDERTARGET_RESOLVED_SCENE);
+#endif
 
     radiusX *= scaleRatio;
     radius[0] = radiusX;

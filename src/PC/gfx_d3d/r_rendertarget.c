@@ -159,6 +159,54 @@ int R_ReducedTargetPicmip(void)
     return VIDCONFIG()->height > 1600 && Dvar_GetInt("r_glowHalfRes") ? 3 : 2;
 }
 #define R_REDUCED_PICMIP R_ReducedTargetPicmip()
+
+/* Render scale: the size the 3D scene is drawn at. r_renderScale is a percentage of the
+ * display each way, 50 to 100; at 100, or when the scene has no target of its own
+ * (r_sceneTarget 0), it is the display's size and nothing below changes anything.
+ * Worked out when the targets are made, so a change takes a vid_restart. The scene's
+ * targets, its depth buffers and the pictures made from it (rb_scenetarget.c) are this
+ * size; the back buffer, the saved screen and the reduced glow and blur targets are not. */
+static int s_sceneWidth, s_sceneHeight;
+
+static void R_ChooseSceneSize(void)
+{
+    extern int Dvar_GetInt(const char *name);
+    extern int RB_SceneTarget_Wanted(void);
+    const vidConfig_t *vidCfg = VIDCONFIG();
+    int percent = Dvar_GetInt("r_renderScale");
+
+    s_sceneWidth = vidCfg->width;
+    s_sceneHeight = vidCfg->height;
+    if (percent >= 100 || !RB_SceneTarget_Wanted())
+        return;
+    if (percent < 50)
+        percent = 50;
+    {
+        /* Whole pixels, and an even number of them: the effects layer halves this size. */
+        int width = ((vidCfg->width * percent + 50) / 100) & ~1;
+        int height = ((vidCfg->height * percent + 50) / 100) & ~1;
+        if (width >= 2 && height >= 2 && width < vidCfg->width && height < vidCfg->height) {
+            s_sceneWidth = width;
+            s_sceneHeight = height;
+        }
+    }
+}
+
+int R_SceneWidth(void)
+{
+    return s_sceneWidth;
+}
+
+int R_SceneHeight(void)
+{
+    return s_sceneHeight;
+}
+
+int R_SceneScaled(void)
+{
+    const vidConfig_t *vidCfg = VIDCONFIG();
+    return s_sceneWidth > 0 && (s_sceneWidth != vidCfg->width || s_sceneHeight != vidCfg->height);
+}
 #else
 #define R_REDUCED_PICMIP 2
 #endif
@@ -170,6 +218,15 @@ static void R_InitFullscreenRenderTargetImage(int imageProgId, int picmip, D3DFO
     int fullHeight = vidCfg->height;
     int width, height;
 
+#if COD2_MAC_D3D9
+    /* The pictures the scene is drawn into or copied to whole are the scene's size
+     * (render scale), and so is the depth buffer they share. The saved screen is a copy
+     * of the back buffer, and the reduced targets follow the display as before. */
+    if (picmip == 0 && renderTarget != &((DxGlobals *)DX())->renderTargets[R_RENDERTARGET_SAVED_SCREEN]) {
+        fullWidth = s_sceneWidth;
+        fullHeight = s_sceneHeight;
+    }
+#endif
     width = fullWidth >> (byte)picmip;
     if (width <= 0)
         width = 1;
@@ -295,6 +352,9 @@ void R_InitRenderTargets(void)
     DX_PTR()->renderTargets[0].width = fullWidth;
     fullHeight = vidCfg->height;
     DX_PTR()->renderTargets[0].height = fullHeight;
+#if COD2_MAC_D3D9
+    R_ChooseSceneSize();
+#endif
 
     device = ((DxGlobals *)(dxPtr))->device;
     vtable = VTABLE(device);
@@ -323,6 +383,11 @@ void R_InitRenderTargets(void)
     vidCfg = VIDCONFIG();
     fullWidth = vidCfg->width;
     fullHeight = vidCfg->height;
+#if COD2_MAC_D3D9
+    /* The frame buffer's depth buffer is the scene's (rb_scenetarget.c). */
+    fullWidth = s_sceneWidth;
+    fullHeight = s_sceneHeight;
+#endif
 
     {
         byte *creatingTex = (byte *)imp_g_NoTextureID;
@@ -475,16 +540,20 @@ void R_InitRenderTargets(void)
     /* With anti-aliasing the scene gets a multisampled target of its own
      * (rb_scenetarget.c); the frame buffer set up above is then the resolved picture. */
     {
-        extern int RB_SceneTarget_Create(void *device, void **colorSlot, void **depthSlot, int width, int height,
-                                         unsigned format, unsigned samples, unsigned quality, void *resolved);
+        extern int RB_SceneTarget_Create(void *device, void **colorSlot, void **depthSlot, int *widthSlot,
+                                         int *heightSlot, int width, int height, unsigned format, unsigned samples,
+                                         unsigned quality, void *resolved);
         DxGlobals *globals = (DxGlobals *)DX();
         GfxRenderTarget *frameBuffer = &globals->renderTargets[R_RENDERTARGET_FRAME_BUFFER];
         if (!RB_SceneTarget_Create(globals->device, (void **)&frameBuffer->colorSurface,
-                                   (void **)&frameBuffer->depthStencilSurface, frameBuffer->width, frameBuffer->height,
+                                   (void **)&frameBuffer->depthStencilSurface, &frameBuffer->width,
+                                   &frameBuffer->height, s_sceneWidth, s_sceneHeight,
                                    (unsigned)globals->backBufferFormat, (unsigned)globals->multiSampleType,
                                    (unsigned)globals->multiSampleQuality, globals->renderTargets[2].colorSurface))
-            Com_Error(0, "Couldn't create a %i x %i multisampled render target\n", frameBuffer->width,
-                      frameBuffer->height);
+            Com_Error(0, "Couldn't create a %i x %i multisampled render target\n", s_sceneWidth, s_sceneHeight);
+        if (R_SceneScaled())
+            ((void (*)(int, const char *, ...)) * (void (**)())&ri)(0, "The 3D scene is drawn at %i x %i (r_renderScale)\n",
+                                                                    s_sceneWidth, s_sceneHeight);
     }
 #endif
 

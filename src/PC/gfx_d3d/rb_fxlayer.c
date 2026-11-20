@@ -832,7 +832,7 @@ void RB_ScreenPass_NonSkyAlpha(void *device, unsigned width, unsigned height)
 /* All of `texture` onto the bound target of the same size, as it is. Drawn as the
  * first thing on the back buffer in a frame, this costs less than a copy between the
  * two: the graphics chip then has no old contents to read in before drawing on. */
-void RB_ScreenPass_Copy(void *device, void *texture, unsigned width, unsigned height)
+static void ScreenPassCopy(void *device, void *texture, unsigned width, unsigned height, DWORD filter)
 {
     static const DWORD values[] = { 2, 2, 2, 2, 1, 1 }; /* select the texture; second stage off */
     Saved saved;
@@ -846,9 +846,22 @@ void RB_ScreenPass_Copy(void *device, void *texture, unsigned width, unsigned he
     CALL(SetObjectFn, device, DEV_SetPixelShader)(device, NULL);
     for (i = 0; i < COUNT(passStages); i++)
         CALL(SetStageFn, device, DEV_SetTextureStageState)(device, passStages[i][0], passStages[i][1], values[i]);
-    PassTexture(0, texture, 1);
+    PassTexture(0, texture, filter);
     PassDraw(0.0f, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1.0f, 1.0f);
     PassEnd(&saved);
+}
+
+void RB_ScreenPass_Copy(void *device, void *texture, unsigned width, unsigned height)
+{
+    ScreenPassCopy(device, texture, width, height, 1);
+}
+
+/* All of `texture`, whatever its size, over the whole of the bound target, which is
+ * `width` by `height`: the scene drawn at a render scale, made to fill the back buffer.
+ * Each pixel is weighed from the four texels around it. */
+void RB_ScreenPass_Stretch(void *device, void *texture, unsigned width, unsigned height)
+{
+    ScreenPassCopy(device, texture, width, height, 2);
 }
 
 /* The engine's float-Z texture, if the effects about to be drawn feather against it. */
