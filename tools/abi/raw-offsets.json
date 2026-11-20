@@ -3388,6 +3388,20 @@
     "reason": "Probe measured GfxStaticModelSurfaceCached.xsurf8: two leading int32 fields keep the pointer at8 on both ABIs."
   },
   {
+    "file": "src/PC/gfx_d3d/r_staticmodelcache.c",
+    "text": "memcpy(dstColor, srcColor, 4);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "XVertexInfo64, GfxVertex64, GfxSModelCachedVertexDx7[vertex]24 and vec3_t12 are pointer-free vertex payloads; attribute offsets/copies and GPU lock byte sizes are independent of pointers."
+  },
+  {
+    "file": "src/PC/gfx_d3d/r_staticmodelcache.c",
+    "text": "memcpy(dst2 + 0x18, src2 + 0x18, 4);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "XVertexInfo64, GfxVertex64, GfxSModelCachedVertexDx7[vertex]24 and vec3_t12 are pointer-free vertex payloads; attribute offsets/copies and GPU lock byte sizes are independent of pointers."
+  },
+  {
     "file": "src/PC/gfx_d3d/r_utils.c",
     "text": "strncpy(appendPos, *(char **)(table + entryOff), charLimit - contentsLen - 1);",
     "count": 1,
@@ -3673,6 +3687,13 @@
     "count": 1,
     "classification": "safe",
     "reason": "These command headers, counts, inline matrix/vector payloads and uint16 byteCount fields contain no pointers before the addressed data. Native command allocation alignment is handled separately."
+  },
+  {
+    "file": "src/PC/gfx_d3d/rb_backend.c",
+    "text": "!(*(byte *)((char *)&backEnd.sceneDef.entities[entityIndex] + 5) & 1))))",
+    "count": 1,
+    "classification": "safe",
+    "reason": "GfxEntity begins reType (0) and renderFxFlags (4), both four-byte scalars ahead of every pointer member, so byte 5 is bits 8 to 15 of renderFxFlags in the i386 and the LP64 layout alike."
   },
   {
     "file": "src/PC/gfx_d3d/rb_debug.c",
@@ -8176,6 +8197,20 @@
     "reason": "Both width and value are int counters in CL_Cod2xKillfeedLineWidth; (value + 15) / 16 rounds encoded icon width up to a cell count. A same-named byte-buffer variable elsewhere in the translation unit triggers the scanner."
   },
   {
+    "file": "src/PC/client_mp/cl_console_mp.c",
+    "text": "#define CON_MATCH_VALUE_OFFSET 340.0f",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Screen distance in pixels between a console match's name and its value in the CoD2x build's wider list; a float, not a byte offset."
+  },
+  {
+    "file": "src/PC/client_mp/cl_console_mp.c",
+    "text": "#define CON_MATCH_VALUE_OFFSET 200.0f",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Screen distance in pixels between a console match's name and its value, as the original draws it; a float, not a byte offset."
+  },
+  {
     "file": "src/PC/game_mp/g_cod2x_script.c",
     "text": "const char *value = colon + 1, *valueEnd = line + length;",
     "count": 1,
@@ -8244,6 +8279,13 @@
     "count": 1,
     "classification": "safe",
     "reason": "Copies res four-byte RGBA pixels per row out of the padded cubemap buffer; row/border arithmetic uses pixel coordinates and does not depend on native object layout."
+  },
+  {
+    "file": "src/PC/gfx_d3d/r_screenshot.c",
+    "text": "rgba = (byte *)malloc((size_t)width * height * 4);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Byte buffer for a read-back picture at four bytes a pixel (RGBA); independent of pointer size."
   },
   {
     "file": "src/PC/qcommon/cod2x_demo.c",
@@ -8629,5 +8671,12 @@
     "count": 1,
     "classification": "safe",
     "reason": "Locale parsing first requires at least five characters and an underscore at byte 2, then reads the two-character country code at byte 3."
+  },
+  {
+    "file": "src/platform/mac_d3d9.c",
+    "text": "for (slash = strchr(cache + 1, '/'); slash; slash = strchr(slash + 1, '/')) {",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Character-string cursor stepping one character past each path separator; not engine object storage."
   }
 ]
