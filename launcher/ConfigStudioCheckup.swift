@@ -308,7 +308,7 @@ struct ConfigAppliedSuggestion: Identifiable {
         let figures = parts.joined(separator: " · ") + "."
         guard match.frameQuantilesAreExact else {
             let pause = limit.map { "\(Self.figure($0)) ms" } ?? "a long time"
-            return .init(area: .movement, value: "PAUSES", detail: "Some frames took \(pause) or more, long enough to feel like a freeze.",
+            return .init(area: .movement, value: "Pauses", detail: "Some frames took \(pause) or more, long enough to feel like a freeze.",
                          status: "Long pauses", tone: .caution, figures: figures)
         }
         guard let under = match.framesUnderCap, match.capSampleFrames > 0 else {
@@ -318,16 +318,16 @@ struct ConfigAppliedSuggestion: Identifiable {
         let share = Double(under) / Double(match.capSampleFrames)
         let slow = Swift.max(1, Int(((1 - share) * 100).rounded()))
         if share >= 0.99 {
-            return .init(area: .movement, value: "STEADY", detail: share == 1 ? "Your Mac kept up with your frame rate cap the whole match."
+            return .init(area: .movement, value: "Steady", detail: share == 1 ? "Your Mac kept up with your frame rate cap the whole match."
                                                                        : "Your Mac kept up with your frame rate cap for almost the whole match.",
                          status: "Smooth", tone: .positive, figures: figures)
         }
         if share >= 0.95 {
-            return .init(area: .movement, value: "SOME DIPS",
+            return .init(area: .movement, value: "Some dips",
                          detail: "Now and then your Mac fell below your frame rate cap, about \(slow) in every 100 frames. Jumps can feel different when it does.",
                          status: "Watch", tone: .caution, figures: figures)
         }
-        return .init(area: .movement, value: "UNEVEN",
+        return .init(area: .movement, value: "Uneven",
                      detail: "Your Mac often fell below your frame rate cap, about \(slow) in every 100 frames, so jumps and aim felt less even.",
                      status: "Could be better", tone: .caution, figures: figures)
     }
@@ -352,7 +352,7 @@ struct ConfigAppliedSuggestion: Identifiable {
         } else {
             missing = "Missing server updates: Not measured."
         }
-        let value = measured.map { "\(Int($0.rounded())) MS" } ?? "—"
+        let value = measured.map { "\(Int($0.rounded())) ms" } ?? "—"
         let figures = ping + " " + missing
         guard let loss else {
             return .init(area: .connection, value: value,
@@ -475,7 +475,7 @@ struct ConfigAppliedSuggestion: Identifiable {
                 let speed = studio.spec(named: "sensitivity").flatMap { studio.state($0).number }
                 let yaw = studio.spec(named: "m_yaw").flatMap { studio.state($0).number } ?? 0.022
                 let distance = dpi.flatMap { dpi in speed.flatMap { MouseMath.centimetresPer360(dpi: dpi, sensitivity: $0, yaw: yaw) } }
-                return .init(area: .aim, value: distance.map { MouseMath.label($0) + " CM" } ?? "—",
+                return .init(area: .aim, value: distance.map { MouseMath.label($0) + " cm" } ?? "—",
                              detail: distance == nil ? "Enter your mouse’s DPI in Settings › Aim & input to see how far you move it for a full turn."
                                                      : "How far you move the mouse for a full turn, at \(ConfigValues.format(dpi ?? 0)) DPI.",
                              status: distance == nil ? "Not measured" : "From settings", tone: distance == nil ? .unknown : .information,
@@ -494,10 +494,10 @@ struct ConfigAppliedSuggestion: Identifiable {
                 let worst = relevant.map(\.status).max { Self.rank($0) < Self.rank($1) } ?? .unknown
                 let title = rules.map { rules in report.rulesetIDs.compactMap { rules.ruleset(id: $0)?.title }.joined(separator: " + ") } ?? ""
                 switch worst {
-                case .ok: return .init(area: .visibility, value: "WITHIN RULES", detail: "Brightness and texture detail follow \(title).", status: "Good", tone: .positive)
-                case .violation: return .init(area: .visibility, value: "OUTSIDE RULES", detail: "Brightness or texture detail breaks \(title).", status: "Needs a change", tone: .negative)
+                case .ok: return .init(area: .visibility, value: "Within rules", detail: "Brightness and texture detail follow \(title).", status: "Good", tone: .positive)
+                case .violation: return .init(area: .visibility, value: "Outside rules", detail: "Brightness or texture detail breaks \(title).", status: "Needs a change", tone: .negative)
                 case .conflict: return .init(area: .visibility, value: "—", detail: "The chosen rules disagree about these settings.", status: "Rules disagree", tone: .caution)
-                case .warning: return .init(area: .visibility, value: "ADVISORY", detail: "\(title) recommends a different value.", status: "Watch", tone: .caution)
+                case .warning: return .init(area: .visibility, value: "Advisory", detail: "\(title) recommends a different value.", status: "Watch", tone: .caution)
                 case .unknown:
                     let open = relevant.filter { $0.status == .unknown }
                     let detail = holdBack != nil ? "Advanced binds or scripts prevent a judgement."

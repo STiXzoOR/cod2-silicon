@@ -36,22 +36,23 @@ struct ConfigHistoryView: View {
     private var timeline: some View {
         let entries = studio.visibleHistory
         return ZStack(alignment: .topLeading) {
-            Rectangle().fill(palette.separator.opacity(1.5)).frame(width: 2).padding(.leading, 27).padding(.vertical, 26).accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 2) {
+            // The rail runs through the round nodes, which sit 10 points into each row.
+            Rectangle().fill(palette.separator).frame(width: 2).padding(.leading, 24).padding(.vertical, 26).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 4) {
                 SnapshotRow(kind: .now, title: "How \(session.current?.profile.displayName ?? "this loadout") is set up now",
                             detail: session.current?.profile.isActive == true ? "Everything the next game will use." : "Everything the game uses when you choose this loadout.",
-                            source: "Now", time: session.history.first.map { StencilDate.dayAndTime($0.date) },
+                            source: "Now", time: session.history.first.map { HistoryDate.text($0.date) },
                             selected: studio.snapshotID == nil, focused: focused) { studio.snapshotID = nil }
                 ForEach(entries) { entry in
                     SnapshotRow(kind: .source(entry.source), title: studio.title(of: entry), detail: ConfigDiff.sentence(studio.changes(in: entry)),
-                                source: entry.source.title, time: StencilDate.dayAndTime(entry.date), selected: studio.snapshotID == entry.id, focused: focused) {
+                                source: entry.source.title, time: HistoryDate.text(entry.date), selected: studio.snapshotID == entry.id, focused: focused) {
                         studio.snapshotID = entry.id
                     }
                 }
                 if entries.isEmpty {
                     Text(studio.historyFilter == .all ? "No snapshots yet. Every change you save here adds one."
                                                       : "No snapshots from \(studio.historyFilter.title.lowercased()) yet.")
-                        .font(.system(size: 13)).foregroundStyle(palette.secondary).padding(.leading, 56).padding(.vertical, 12)
+                        .font(.system(size: 13)).foregroundStyle(palette.secondary).padding(.leading, 50).padding(.vertical, 12)
                 }
             }
         }
@@ -68,7 +69,7 @@ struct ConfigHistoryView: View {
 
     private var footnote: some View {
         Text("CoD2 Unbound keeps the last \(ConfigHistory.retention) snapshots of each loadout. This one has \(session.history.count) of \(ConfigHistory.retention). Older ones are removed on their own.")
-            .font(StudioTypography.help).foregroundStyle(palette.tertiary).padding(.horizontal, 6).fixedSize(horizontal: false, vertical: true)
+            .font(StudioTypography.help).monospacedDigit().foregroundStyle(palette.tertiary).padding(.horizontal, 4).fixedSize(horizontal: false, vertical: true)
     }
 }
 
@@ -99,31 +100,32 @@ private struct SnapshotRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(alignment: .top, spacing: 14) {
-                Image(systemName: kind.symbol).font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(kind == .now ? palette.prominentText : palette.chipIcon)
+            HStack(alignment: .top, spacing: 16) {
+                // “Now” is the selected node; the others are quiet panels with their source's symbol.
+                Image(systemName: kind.symbol).font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(kind == .now ? palette.accent : palette.chipIcon)
                     .frame(width: 30, height: 30)
-                    .background(Circle().fill(kind == .now ? palette.accent : (palette.dark ? Palette.hex(0x1d2119) : palette.crate)))
-                    .overlay(Circle().strokeBorder(kind == .now ? palette.accent : (palette.dark ? Color.white.opacity(0.14) : palette.wellStroke), lineWidth: 1))
+                    .background(Circle().fill(palette.panel))
+                    .background(Circle().fill(kind == .now ? palette.selection : .clear))
+                    .overlay(Circle().strokeBorder(kind == .now ? palette.selectionStroke : palette.wellStroke, lineWidth: 1))
                     .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 5) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(title).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.heading).fixedSize(horizontal: false, vertical: true)
-                    Text(detail).font(StudioTypography.help).foregroundStyle(palette.secondary).lineSpacing(2).fixedSize(horizontal: false, vertical: true)
+                    Text(detail).font(StudioTypography.help).foregroundStyle(palette.tertiary).lineSpacing(2).fixedSize(horizontal: false, vertical: true)
                     HStack(spacing: 8) {
-                        Text(source).font(.system(size: 11, weight: .semibold)).foregroundStyle(palette.chipText)
-                            .padding(.horizontal, 8).frame(height: 20)
-                            .overlay(Capsule().strokeBorder(palette.dark ? Color.white.opacity(0.14) : palette.wellStroke, lineWidth: 1))
-                        if let time { Text(time).font(.typewriter(12)).foregroundStyle(palette.address) }
+                        Badge(source)
+                        if let time { Text(time).font(StudioTypography.help).monospacedDigit().foregroundStyle(palette.tertiary) }
                     }
+                    .padding(.top, 2)
                 }
                 Spacer(minLength: 0)
             }
-            .padding(.vertical, 12).padding(.leading, 12).padding(.trailing, 14)
-            .background(selected ? palette.selection : .clear, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(selected ? (focused ? palette.accent : palette.selectionStroke) : .clear, lineWidth: selected && focused ? 2 : 1))
-            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .padding(.vertical, 10).padding(.leading, 10).padding(.trailing, 20)
+            .background(selected ? palette.selection : .clear, in: RoundedRectangle(cornerRadius: RowMetrics.radius, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: RowMetrics.radius, style: .continuous).strokeBorder(selected ? (focused ? palette.accent : palette.selectionStroke) : .clear, lineWidth: selected && focused ? 2 : 1))
+            .contentShape(RoundedRectangle(cornerRadius: RowMetrics.radius, style: .continuous))
         }
-        .buttonStyle(RowButtonStyle(radius: 16))
+        .buttonStyle(RowButtonStyle(radius: RowMetrics.radius))
         .accessibilityLabel("\(title), \(source)\(time.map { ", \($0)" } ?? "")")
         .accessibilityHint(detail)
         .accessibilityAddTraits(selected ? .isSelected : [])
@@ -142,13 +144,9 @@ private struct SnapshotInspector: View {
             if let entry {
                 past(entry)
             } else {
-                VStack(spacing: 10) {
-                    Text("THIS IS NOW").font(.stencil(24)).tracking(2.9).foregroundStyle(palette.dark ? Palette.hex(0xcfc6b1) : palette.secondary).accessibilityAddTraits(.isHeader)
-                    Text("Pick an earlier snapshot to see what has changed since then, or to go back to it.")
-                        .font(.system(size: 13)).foregroundStyle(palette.secondary).multilineTextAlignment(.center).lineSpacing(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .frame(maxWidth: .infinity).padding(.vertical, 60).padding(.horizontal, 10)
+                // An empty-state heading: the shared stencil heading and one line.
+                EmptyState("This is now", message: "Pick an earlier snapshot to see what has changed since then, or to go back to it.")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity).padding(.vertical, 20).padding(.horizontal, 8)
             }
         }
         .accessibilityElement(children: .contain)
@@ -159,16 +157,16 @@ private struct SnapshotInspector: View {
         let changes = studio.changesSince(entry)
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("COMPARE WITH NOW").font(.system(size: 11, weight: .semibold)).tracking(0.88).foregroundStyle(palette.tertiary)
-                Text(studio.title(of: entry)).font(.system(size: 16, weight: .bold)).foregroundStyle(palette.heading).fixedSize(horizontal: false, vertical: true)
+                GroupLabel("Compare with now", header: false)
+                Text(studio.title(of: entry)).font(.system(size: 17, weight: .semibold)).foregroundStyle(palette.heading).fixedSize(horizontal: false, vertical: true)
                     .accessibilityAddTraits(.isHeader)
-                Text(StencilDate.dayAndTime(entry.date)).font(.typewriter(12)).foregroundStyle(palette.address)
+                Text(HistoryDate.text(entry.date)).font(StudioTypography.help).monospacedDigit().foregroundStyle(palette.tertiary)
             }
             Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 0) {
                 GridRow {
-                    Text("SETTING").frame(maxWidth: .infinity, alignment: .leading); Text("THEN"); Text(""); Text("NOW")
+                    Text("Setting").frame(maxWidth: .infinity, alignment: .leading); Text("Then"); Text(""); Text("Now")
                 }
-                .font(.system(size: 11, weight: .semibold)).tracking(0.44).foregroundStyle(palette.tertiary).padding(.bottom, 4)
+                .font(.groupLabel).foregroundStyle(palette.tertiary).padding(.bottom, 8)
                 .accessibilityHidden(true)
                 if changes.isEmpty {
                     Divider().gridCellUnsizedAxes(.horizontal)
@@ -193,29 +191,41 @@ private struct SnapshotInspector: View {
             }
             Spacer(minLength: 0)
             if studio.restoredSnapshotID == entry.id {
-                Label("Restored. Your previous state is saved as a snapshot.", systemImage: "checkmark.circle")
-                    .font(.system(size: 13)).foregroundStyle(palette.positive)
-                    .padding(.vertical, 10).padding(.horizontal, 12).frame(maxWidth: .infinity, alignment: .leading)
-                    .background(palette.positive.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(palette.positive.opacity(0.35), lineWidth: 1))
+                Label("Restored. Your previous state is saved as a snapshot.", systemImage: "checkmark")
+                    .font(.system(size: 12, weight: .medium)).foregroundStyle(palette.positive).fixedSize(horizontal: false, vertical: true)
+                    .padding(.vertical, 12).padding(.horizontal, 16).frame(maxWidth: .infinity, alignment: .leading)
+                    .background(palette.well, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(palette.wellStroke, lineWidth: 1))
             }
             Text("Restoring saves how things are now as a new snapshot first, so you can always come back.")
-                .font(StudioTypography.help).foregroundStyle(palette.secondary).lineSpacing(2).fixedSize(horizontal: false, vertical: true)
-            HStack(spacing: 8) {
-                // Both compare the whole revision, advanced-bind companion included, with now.
-                Button { studio.restore(entry, undo: undo) } label: { Text("Restore This Snapshot").frame(maxWidth: .infinity) }
-                    .prominentAction().actionControlSize()
-                    .disabled(!studio.canRestore(entry, revision: .after))
-                Menu {
-                    Button("Restore the State Before This Change") { studio.restore(entry, revision: .before, undo: undo) }
-                        .disabled(!studio.canRestore(entry, revision: .before))
-                } label: { Image(systemName: "ellipsis") }
-                    .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
-                    .frame(width: ControlMetrics.action, height: ControlMetrics.action)
-                    .glassSurface(Circle(), interactive: true)
-                    .accessibilityLabel("More actions for this snapshot")
-            }
+                .font(StudioTypography.help).foregroundStyle(palette.tertiary).lineSpacing(2).fixedSize(horizontal: false, vertical: true)
+            // Restore on the right, More on the left as on the board; Restore stays first in the focus order.
+            // Both compare the whole revision, advanced-bind companion included, with now.
+            Button("Restore This Snapshot") { studio.restore(entry, undo: undo) }
+                .prominentAction().actionControlSize().fixedSize()
+                .disabled(!studio.canRestore(entry, revision: .after))
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .overlay(alignment: .leading) {
+                    Menu {
+                        Button("Restore the State Before This Change") { studio.restore(entry, revision: .before, undo: undo) }
+                            .disabled(!studio.canRestore(entry, revision: .before))
+                    } label: { Image(systemName: "ellipsis") }
+                        .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                        .frame(width: ControlMetrics.action, height: ControlMetrics.action)
+                        .glassSurface(Circle(), interactive: true)
+                        .accessibilityLabel("More actions for this snapshot")
+                }
         }
         .frame(maxHeight: .infinity, alignment: .top)
+    }
+}
+
+/// A snapshot's time in a sentence-case line (“6 Oct at 18:42”), as the History board writes it.
+private enum HistoryDate {
+    static func text(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_GB")
+        formatter.dateFormat = "d MMM 'at' HH:mm"
+        return formatter.string(from: date)
     }
 }
