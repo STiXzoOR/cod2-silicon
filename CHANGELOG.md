@@ -6,6 +6,58 @@ was called CoD2 Silicon, and the entries from before then still use that name.
 
 ## [Unreleased]
 
+## [0.3.7] - 2026-11-20
+
+A launcher release. Every screen was gone over against one set of design
+rules, so the same thing looks and reads the same wherever it appears.
+Nothing in the game changed, and nothing new was added.
+
+### Changed
+
+- **One look for the same thing everywhere.** Page titles are in the same
+  plain type on every page; the stencil lettering is kept for the app's name,
+  a map or player name over a picture, and large numbers. Labels above groups
+  and at the top of columns are in ordinary sentence case, not capitals.
+  Player counts, pings and other small numbers are easier to read.
+- **Gold means the main thing to do.** A view has one gold button. The
+  selected half of a two-way or three-way switch is now neutral, so it no
+  longer competes with it.
+- **Buttons are worded and sized the same way.** Title case throughout
+  ("Take Theirs", "Edit as Text", "Not Now"), one size in bars, cards and
+  sheets and a smaller one inside rows, and one main button per card with the
+  others beside it instead of a stack.
+- **Asking for a name looks the same every time.** Renaming a loadout, making
+  a new one and the password in Connect to Address use one field across the
+  sheet, as renaming a recording already did.
+- **Configs.** A loadout's page has a plain title, with whether it is in use
+  stated on every tab. In Expert, a yes/no setting is a switch on its own and
+  numbers have one kind of field. Binds, Check-up, History and the import
+  review were rebuilt on the same rows, banners and buttons as the rest of
+  the app. In Check a Config the line being flagged is always shown whole.
+- **Hosting.** A server's settings are rows with the help under each one at
+  full width; before, the help was squeezed into a narrow column.
+- **Setup.** The heading stays at one height from step to step, and progress
+  is shown once.
+- **Home and Library.** Last match shows ping and connection as rows. Demos
+  has column headings. The note that match summaries are kept on this Mac is
+  no longer green, which is for good news.
+- **Sidebar.** The shortcut hints beside Home, Servers, Library, Configs and
+  Settings are gone; the shortcuts still work and are listed in the View menu
+  and in Keyboard Shortcuts.
+- **Coloured server and player names** use colours that stay readable in both
+  the light and the dark appearance.
+
+### Fixed
+
+- In Check-up, a dial's status ("Could be better") no longer runs into its
+  title, and the last line of the page is no longer cut off.
+- In the import review, long explanations are no longer cut through the
+  middle.
+- In the server details panel, the button that fixes a setting for one server
+  was cut short in a narrow panel.
+- On Discover in the light appearance, the arrows on the featured banner
+  could not be seen.
+
 ## [0.3.6] - 2026-11-18
 
 ### Changed
