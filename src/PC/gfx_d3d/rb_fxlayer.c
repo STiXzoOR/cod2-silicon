@@ -198,6 +198,17 @@ static void *s_filmShader[3]; /* RB_ScreenPass_Film: everything, sky alone, sky 
 static float s_filmValues[11]; /* the settings those were written for */
 static int s_filmValued;
 static int s_sceneDepthDrawn; /* the prepass has put this frame's scene, models included, into its depth */
+/* When the film pass last had to tell the sky by the depth texture (milliseconds on the
+ * monotonic clock; 0 never). While that is recent, frames draw the scene's depth for it
+ * even if the layer has no use for one: RB_FxLayer_DepthPassWanted. */
+static uint64_t s_filmDepthAskedAt;
+
+static uint64_t NowMilliseconds(void)
+{
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return (uint64_t)now.tv_sec * 1000 + (uint64_t)now.tv_nsec / 1000000;
+}
 static void *s_redShader;    /* a texture's red channel in every channel */
 static int s_alphaPass;      /* the sprites that blend into alpha are being drawn a second time */
 static int s_alphaDrawn;     /* ...and the frame buffer's alpha is owed the result */
@@ -311,6 +322,7 @@ void RB_FxLayer_Release(void)
     Release(&s_filmShader[1]);
     Release(&s_filmShader[2]);
     s_filmValued = s_sceneDepthDrawn = 0;
+    s_filmDepthAskedAt = 0;
     Release(&s_redShader);
     Release(&s_gateShader);
     s_alphaPass = s_alphaDrawn = s_gate = 0;
@@ -945,11 +957,21 @@ const char *RB_ScreenPass_Film(void *device, void *source, void *depthIfNone, un
         }
         if (depth || boundDepth) {
             how = DEPTH_TEST;
-        } else if (s_sceneDepthTexture && s_sceneDepthDrawn) {
-            how = DEPTH_TEXTURE;
-        } else if (!told) {
-            told = 1;
-            fprintf(stderr, "r_filmTweakSkySaturation: no scene depth to tell the sky by; it takes r_filmTweakSaturation\n");
+        } else {
+            /* The scene's own depth buffer is out of reach here: it is multisampled, or
+             * of another size than the back buffer (render scale). The single-sample
+             * depth texture serves when this frame drew the scene into it. Soft
+             * particles and dynamic shadows do that; with both off nothing does unless
+             * it is asked for, so ask for the frames to come. The first frame after the
+             * setting is turned on takes the plain saturation. */
+            if (s_sceneDepthTexture)
+                s_filmDepthAskedAt = NowMilliseconds() | 1;
+            if (s_sceneDepthTexture && s_sceneDepthDrawn) {
+                how = DEPTH_TEXTURE;
+            } else if (!s_sceneDepthTexture && !told) {
+                told = 1;
+                fprintf(stderr, "r_filmTweakSkySaturation: no scene depth to tell the sky by; it takes r_filmTweakSaturation\n");
+            }
         }
         Release(&depth);
     }
@@ -1342,7 +1364,12 @@ void RB_FxLayer_DepthOnly(void *device, int on)
  * commands are made, so it goes by how the last frame's effects were drawn. */
 int RB_FxLayer_DepthPassWanted(void)
 {
-    return Setting() != 0 && s_sceneDepthTexture != NULL && s_mode != DIRECT;
+    if (Setting() == 0 || s_sceneDepthTexture == NULL)
+        return 0;
+    if (s_mode != DIRECT)
+        return 1;
+    /* Or for the film pass's sky (RB_ScreenPass_Film), while it keeps asking. */
+    return s_filmDepthAskedAt && NowMilliseconds() - s_filmDepthAskedAt < 500;
 }
 
 /* Bind the depth texture and start a pass that writes depth alone. Returns 0 when

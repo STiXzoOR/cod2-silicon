@@ -26,6 +26,13 @@ was called CoD2 Silicon, and the entries from before then still use that name.
   never shown can be explained afterwards. Like the rest of the record it
   stays on this Mac.
 
+### Fixed
+
+- With Metal, anti-aliasing on, and soft particles and dynamic shadows both
+  off, CoD2x's `r_filmTweakSkySaturation` had no effect: the sky took the
+  saturation of everything else. The sky is now told apart in that
+  combination too.
+
 ## [0.3.7] - 2026-11-20
 
 A launcher release. Every screen was gone over against one set of design
