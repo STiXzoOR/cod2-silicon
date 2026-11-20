@@ -4055,6 +4055,12 @@ void UI_RunMenuScript(const char **args)
         if (sortColumn > 0) {
             for (i = 0; i < sortColumn; i++) {
                 int profileIdx = uiInfo->playerProfileCount;
+#if defined(COD2_X64)
+                /* A folder whose name starts with a dot is hidden on these systems and is
+                 * never a player's profile (a launcher may keep its own files in one). */
+                if (fileList[i][0] == '.')
+                    continue;
+#endif
                 uiInfo->playerProfileName[profileIdx] = String_Alloc(fileList[i]);
                 uiInfo->playerProfileCount += 1;
             }

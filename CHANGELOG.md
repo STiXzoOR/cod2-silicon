@@ -52,6 +52,10 @@ in case something looks wrong.
 
 - Started from Finder, the game and a hosted server could open only 256
   files at once, a limit a large mod folder can reach. They now ask for 1024.
+- The game's Select Profile list showed a folder the launcher keeps for itself
+  beside your loadouts, and because of it the game could ask which profile to
+  use at every start even when there was only one. That folder is no longer
+  listed.
 
 ### Know before you install
 
