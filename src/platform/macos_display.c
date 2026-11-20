@@ -610,6 +610,16 @@ int MacDisplay_WindowVisible(void)
     return sdl_gl_window && MacWindow_IsVisible(sdl_gl_window);
 }
 
+/* For the match record (match_summary.c): bit 0, the window is on screen (not hidden,
+ * minimized or wholly covered); bit 1, it has the keyboard. */
+int MacDisplay_WindowState(void)
+{
+    if (!sdl_gl_window)
+        return 0;
+    return (MacWindow_IsVisible(sdl_gl_window) ? 1 : 0) |
+           (SDL_GetWindowFlags(sdl_gl_window) & SDL_WINDOW_INPUT_FOCUS ? 2 : 0);
+}
+
 void MacDisplay_PumpVisibility(void)
 {
     /* Mission Control briefly exposes thumbnails while animating. Latch the

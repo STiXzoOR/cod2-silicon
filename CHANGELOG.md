@@ -20,6 +20,11 @@ was called CoD2 Silicon, and the entries from before then still use that name.
   3D picture with fewer pixels and scale it up to fit: Full, 85%, 75%, 67% or
   50%. The HUD, text and menus are still drawn at the display's full size. It
   is meant for 4K and 5K displays. OpenGL always draws at full size.
+- The local match record now also notes whether the game's window was on
+  screen and had the keyboard, and how much memory the game held at the start,
+  at the end and at its highest, so a freeze or a match whose frames were
+  never shown can be explained afterwards. Like the rest of the record it
+  stays on this Mac.
 
 ## [0.3.7] - 2026-11-20
 

@@ -17,6 +17,9 @@
 #if defined(_WIN32)
 #define gmtime_r(timer, result) (gmtime_s((result), (timer)) ? NULL : (result))
 #endif
+#if defined(__APPLE__)
+#include <mach/mach.h>
+#endif
 
 extern const dvar_t *fs_homepath;
 extern const dvar_t *com_maxfps;
@@ -32,11 +35,13 @@ static const char *const activityNames[FRAME_ACTIVITY_COUNT] = {
     "programUpload", "textureUpload", "textureCreate", "targetCreate",
     "resolve", "screenCopy", "present", "videoRestart", "draw"
 };
-enum { MATCH_HITCH_LIMIT = 8 };
+enum { MATCH_HITCH_LIMIT = 8, MATCH_HITCH_BYTES = 704, MATCH_SAMPLE_FRAMES = 32 };
 typedef struct {
     uint64_t at, frame;
     int msec;
     FrameActivity renderer;
+    int window;        /* MatchSummary_Window when the frame ended; -1 not known */
+    unsigned memoryMB; /* MatchSummary_MemoryMB then; 0 not known */
 } MatchHitch;
 
 enum { MATCH_HISTOGRAM_LIMIT = 10000, MATCH_RECORD_LIMIT = 200, MATCH_LINE_LIMIT = 8192 };
@@ -48,6 +53,11 @@ static struct {
     int frameMax, cap, pingMax;
     uint64_t hitchCount;
     MatchHitch hitches[MATCH_HITCH_LIMIT];
+    /* Taken every MATCH_SAMPLE_FRAMES frames: how often the window was not on screen
+     * or did not have the keyboard, and what the game held in memory. A match whose
+     * frames were never shown, or whose memory grew, can then be told from the record. */
+    uint64_t windowSamples, windowHidden, windowInactive;
+    unsigned memoryStartMB, memoryPeakMB;
     FrameActivity renderer;
     char map[64], mode[32], address[256], serverInfo[8192], systemInfo[8192];
 } match;
@@ -57,6 +67,33 @@ static uint64_t MatchSummary_Milliseconds(void)
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
     return (uint64_t)now.tv_sec * 1000 + (uint64_t)now.tv_nsec / 1000000;
+}
+
+/* Bit 0: the game's window is on screen; bit 1: it has the keyboard. -1 where the
+ * platform does not say. */
+static int MatchSummary_Window(void)
+{
+#if defined(__APPLE__)
+    extern int MacDisplay_WindowState(void);
+    return MacDisplay_WindowState();
+#else
+    return -1;
+#endif
+}
+
+/* What the game holds in memory, in megabytes, as Activity Monitor counts it (the
+ * physical footprint). 0 where the platform does not say. */
+static unsigned MatchSummary_MemoryMB(void)
+{
+#if defined(__APPLE__)
+    task_vm_info_data_t info;
+    mach_msg_type_number_t count = TASK_VM_INFO_COUNT;
+    if (task_info(mach_task_self(), TASK_VM_INFO, (task_info_t)&info, &count) != KERN_SUCCESS)
+        return 0;
+    return (unsigned)(info.phys_footprint >> 20);
+#else
+    return 0;
+#endif
 }
 
 void MatchSummary_Init(void)
@@ -85,6 +122,7 @@ static void MatchSummary_Begin(void)
     snprintf(match.map, sizeof(match.map), "%s", Info_ValueForKey(match.serverInfo, "mapname"));
     snprintf(match.mode, sizeof(match.mode), "%s", Info_ValueForKey(match.serverInfo, "g_gametype"));
     snprintf(match.address, sizeof(match.address), "%s", NET_AdrToString(clc->serverAddress));
+    match.memoryStartMB = match.memoryPeakMB = MatchSummary_MemoryMB();
 }
 
 void MatchSummary_Frame(int rawMsec, int frameBudgetMsec, int capFPS)
@@ -104,8 +142,23 @@ void MatchSummary_Frame(int rawMsec, int frameBudgetMsec, int capFPS)
         match.renderer.count[i] += activity.count[i];
         match.renderer.usec[i] += activity.usec[i];
     }
+    if (match.frames % MATCH_SAMPLE_FRAMES == 1) {
+        int window = MatchSummary_Window();
+        unsigned memoryMB = MatchSummary_MemoryMB();
+        if (window >= 0) {
+            ++match.windowSamples;
+            if (!(window & 1))
+                ++match.windowHidden;
+            if (!(window & 2))
+                ++match.windowInactive;
+        }
+        if (memoryMB > match.memoryPeakMB)
+            match.memoryPeakMB = memoryMB;
+    }
     if (rawMsec > 100) {
         uint64_t at = MatchSummary_Milliseconds() - match.started;
+        int window = MatchSummary_Window();
+        unsigned memoryMB = MatchSummary_MemoryMB();
         /* Every hitch goes to the existing engine log. Keep the first eight
          * in the bounded match record too, with an explicit omitted count. */
         fprintf(stderr, "CoD2 slow frame: matchMS=%llu frame=%llu msec=%d",
@@ -114,9 +167,15 @@ void MatchSummary_Frame(int rawMsec, int frameBudgetMsec, int capFPS)
             if (activity.count[i])
                 fprintf(stderr, " %s=%u/%.3fms", activityNames[i], activity.count[i], activity.usec[i] / 1000.0);
         }
+        if (window >= 0)
+            fprintf(stderr, " window=%s%s", window & 1 ? "shown" : "hidden", window & 2 ? "" : ",inactive");
+        if (memoryMB)
+            fprintf(stderr, " memoryMB=%u", memoryMB);
         fputc('\n', stderr);
+        if (memoryMB > match.memoryPeakMB)
+            match.memoryPeakMB = memoryMB;
         if (match.hitchCount < MATCH_HITCH_LIMIT)
-            match.hitches[match.hitchCount] = (MatchHitch){at, match.frames, rawMsec, activity};
+            match.hitches[match.hitchCount] = (MatchHitch){at, match.frames, rawMsec, activity, window, memoryMB};
         ++match.hitchCount;
     }
     ++match.histogram[rawMsec < MATCH_HISTOGRAM_LIMIT ? rawMsec : MATCH_HISTOGRAM_LIMIT];
@@ -254,11 +313,22 @@ static void MatchSummary_Record(FILE *file, const char *reason)
     fprintf(file, ",\"packetLossSource\":\"netchan sequence gaps\",\"snapshotsReceived\":%llu", (unsigned long long)match.snapshots);
     fputs(",\"rendererActivity\":", file);
     MatchSummary_Renderer(file, &match.renderer);
+    if (match.windowSamples)
+        fprintf(file, ",\"windowSamples\":%llu,\"windowHiddenSamples\":%llu,\"windowInactiveSamples\":%llu",
+                (unsigned long long)match.windowSamples, (unsigned long long)match.windowHidden,
+                (unsigned long long)match.windowInactive);
+    if (match.memoryStartMB) {
+        unsigned endMB = MatchSummary_MemoryMB();
+        if (endMB > match.memoryPeakMB)
+            match.memoryPeakMB = endMB;
+        fprintf(file, ",\"memoryStartMB\":%u,\"memoryEndMB\":%u,\"memoryPeakMB\":%u", match.memoryStartMB, endMB,
+                match.memoryPeakMB);
+    }
     /* Leave room for escaped server metadata in the existing 8192-byte record
-     * limit. A hitch is at most 640 bytes even at maximum counter widths. */
+     * limit. A hitch is at most MATCH_HITCH_BYTES even at maximum counter widths. */
     long used = ftell(file) - recordStart;
     unsigned kept = used >= 0 && used < MATCH_LINE_LIMIT - 256 ?
-        (unsigned)(MATCH_LINE_LIMIT - 256 - used) / 640 : 0;
+        (unsigned)(MATCH_LINE_LIMIT - 256 - used) / MATCH_HITCH_BYTES : 0;
     if (kept > MATCH_HITCH_LIMIT) kept = MATCH_HITCH_LIMIT;
     if (kept > match.hitchCount) kept = (unsigned)match.hitchCount;
     fprintf(file, ",\"hitchCount\":%llu,\"hitchesOmitted\":%llu,\"hitches\":[",
@@ -270,6 +340,11 @@ static void MatchSummary_Record(FILE *file, const char *reason)
         fprintf(file, "{\"atMS\":%llu,\"frame\":%llu,\"msec\":%d,\"renderer\":",
                 (unsigned long long)hitch->at, (unsigned long long)hitch->frame, hitch->msec);
         MatchSummary_Renderer(file, &hitch->renderer);
+        if (hitch->window >= 0)
+            fprintf(file, ",\"windowShown\":%s,\"windowActive\":%s", hitch->window & 1 ? "true" : "false",
+                    hitch->window & 2 ? "true" : "false");
+        if (hitch->memoryMB)
+            fprintf(file, ",\"memoryMB\":%u", hitch->memoryMB);
         fputc('}', file);
     }
     fputs("]}\n", file);
