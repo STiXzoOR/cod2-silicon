@@ -25,7 +25,7 @@ struct KeyboardShortcutsSheet: View {
     var body: some View {
         SheetScaffold(icon: .symbol("keyboard"), title: "Keyboard shortcuts", message: "Every shortcut is also in the menu bar.", width: 560,
                       actions: [.primary("Done") { model.dismissSheet() }]) {
-            Grid(horizontalSpacing: 22, verticalSpacing: 0) {
+            Grid(horizontalSpacing: 22, verticalSpacing: 4) {
                 ForEach(0..<(Self.items.count + 1) / 2, id: \.self) { row in
                     GridRow {
                         cell(Self.items[row * 2])
@@ -40,7 +40,7 @@ struct KeyboardShortcutsSheet: View {
             Text(item.name).font(.system(size: 13)).foregroundStyle(palette.text).frame(maxWidth: .infinity, alignment: .leading)
             ShortcutKeys(item.keys)
         }
-        .frame(height: 32)
+        .frame(height: 30)
         .overlay(alignment: .bottom) { Rectangle().fill(palette.separator).frame(height: 1) }
         .accessibilityElement(children: .combine)
     }
@@ -55,29 +55,34 @@ struct CrashReportsQuestionSheet: View {
     var body: some View {
         SheetScaffold(icon: .symbol("ladybug"), title: "Send crash reports to CoD2 Unbound?",
                       message: "New in this version. If the game crashes or stops responding, the launcher can send this project a report of what went wrong. The choice is yours.",
-                      width: 560,
-                      actions: [SheetAction(title: "See What’s Sent…", role: .leading) { detailsShown = true },
-                                .cancel("Don’t Send") { model.answerCrashReports(send: false); model.dismissSheet() },
+                      actions: [.cancel("Don’t Send") { model.answerCrashReports(send: false); model.dismissSheet() },
                                 SheetAction(title: "Send Crash Reports", role: .primary, returnKey: false) { model.answerCrashReports(send: true); model.dismissSheet() }]) {
-            VStack(alignment: .leading, spacing: 12) {
-                VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 16) {
+                // One row per fact, each with its symbol tile, in the sheet's well (SheetCrashAsk board).
+                FormGroup {
                     ForEach(Array(CrashReportsQuestion.rows.enumerated()), id: \.offset) { _, item in
-                        HStack(alignment: .top, spacing: 12) {
-                            Image(systemName: item.symbol).font(.system(size: 14, weight: .medium)).foregroundStyle(palette.accent).frame(width: 22).accessibilityHidden(true)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(item.title).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.text)
-                                Text(item.detail).font(.system(size: 12)).foregroundStyle(palette.secondary).lineSpacing(1).fixedSize(horizontal: false, vertical: true)
+                        HStack(alignment: .top, spacing: 14) {
+                            Image(systemName: item.symbol).font(.system(size: 14, weight: .medium)).foregroundStyle(palette.accent)
+                                .frame(width: 30, height: 30)
+                                .background(palette.selection, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                                .accessibilityHidden(true)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(item.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text)
+                                Text(item.detail).font(.system(size: 12)).foregroundStyle(palette.tertiary).lineSpacing(1.5).fixedSize(horizontal: false, vertical: true)
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
+                        .padding(.horizontal, 16).padding(.vertical, 11)
+                        .overlay(alignment: .top) { Rectangle().fill(palette.separator).frame(height: 1) }
                         .accessibilityElement(children: .combine).accessibilityAddTraits(.isStaticText)
                     }
                 }
-                .padding(14).frame(maxWidth: .infinity, alignment: .leading)
-                .background(palette.well, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(palette.wellStroke, lineWidth: 1))
-                Text(CrashReportsQuestion.changeLater).font(.system(size: 12)).foregroundStyle(palette.secondary)
+                Text(CrashReportsQuestion.changeLater).font(.system(size: 12)).foregroundStyle(palette.tertiary).padding(.leading, 6)
             }
-            .popover(isPresented: $detailsShown, arrowEdge: .bottom) { CrashReportContents(model: model) }
+        } note: {
+            // A link-like action on the left of the bar, as on the board.
+            Button("See What’s Sent…") { detailsShown = true }.quietAction().padding(.horizontal, -6)
+                .popover(isPresented: $detailsShown, arrowEdge: .bottom) { CrashReportContents(model: model) }
         }
     }
 }

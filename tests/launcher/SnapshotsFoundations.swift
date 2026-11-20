@@ -27,7 +27,7 @@ struct FoundationsGallery: View {
         let palette = Palette.of(scheme, contrast: contrast)
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                PageHeader(eyebrow: "Design system", title: "Foundations", subtitle: "Every shared building block, in this appearance.")
+                PageHeader(title: "Foundations", subtitle: "Every shared building block, in this appearance.")
                     .padding(.leading, 6)
                 HStack(alignment: .top, spacing: 20) {
                     VStack(alignment: .leading, spacing: 20) { forms; feedback }
@@ -45,7 +45,7 @@ struct FoundationsGallery: View {
 
     private func tile<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         ContentPanel {
-            Eyebrow(text: title, size: 12).padding(.bottom, 14).accessibilityAddTraits(.isHeader)
+            GroupLabel(title).padding(.bottom, 14)
             VStack(alignment: .leading, spacing: 14) { content() }
         }
     }
@@ -82,7 +82,7 @@ struct FoundationsGallery: View {
             }
             HStack(spacing: 8) { Badge("Stock 1.3"); Badge("CoD2x 1.4", tone: .accent); Badge("Locked", tone: .negative) }
             HStack(spacing: 8) {
-                Chip("18 of 24 players") { Text("18").font(.stencil(15)).foregroundStyle(Palette.of(scheme, contrast: contrast).accent); Text("of 24") }
+                Chip("18 of 24 players") { Text("18/24").monospacedDigit() }
                 Chip("Toujane") { Image(systemName: "map"); Text("Toujane") }
             }
             Chip("Display 2560 × 1440", size: .large, glass: true, action: {}) { Image(systemName: "display"); Text("2560 × 1440 · Borderless") }
@@ -91,6 +91,11 @@ struct FoundationsGallery: View {
                 ShortcutKeys(["⇧", "⌘", "↩"])
                 HStack(spacing: 6) { ForEach(1...4, id: \.self) { PingBars(level: $0) } }
             }
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text("38").font(.value).foregroundStyle(Palette.of(scheme, contrast: contrast).heading)
+                Text("ms").font(.system(size: 12)).foregroundStyle(Palette.of(scheme, contrast: contrast).tertiary)
+            }
+            .accessibilityElement(children: .combine)
             ProgressBar("Building shaders", value: 0.62)
             ProgressBar("Contacting master servers", value: nil)
         }
@@ -121,6 +126,7 @@ struct FoundationsGallery: View {
                     .popover(isPresented: .constant(popover), arrowEdge: .bottom) { popoverBody }
             }
             ScopeSwitch("Server scope", selection: $scope, options: [("All", "All"), ("Favorites", "Favorites"), ("Recent", "Recent")])
+            Picker("Display mode", selection: $mode) { Text("Borderless").tag("borderless"); Text("Window").tag("windowed") }.segmentedChoice()
             Checkbox("Hide empty servers", isOn: $hideEmpty)
             HStack(spacing: 12) {
                 Text("Vertical sync").font(.system(size: 13))

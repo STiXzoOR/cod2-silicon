@@ -29,7 +29,8 @@ struct LibraryView: View {
             .quickLookPreview($quickLookURL, in: model.media.map(\.url))
             .sheet(item: $model.renamingMedia) { MediaRenameSheet(model: model, entry: $0).sheetShapeAudit() }
             .toolbar {
-                ToolbarItem(placement: .principal) {
+                // The page's switch sits at the left of the toolbar, as on Servers and Configs.
+                ToolbarItem(placement: .navigation) {
                     ScopeSwitch("Library section", selection: $model.libraryTab, options: LibraryTab.allCases.map { ($0, $0.rawValue) })
                 }
             }
@@ -131,7 +132,7 @@ private struct LibraryTabContent: View {
             Spacer(minLength: 16)
             if tab == .matches && showingMatches {
                 Label("Kept on this Mac · the last \(MatchSummaries.recordLimit) matches", systemImage: "lock")
-                    .font(.system(size: 12, weight: .medium)).foregroundStyle(palette.positive)
+                    .font(.system(size: 12)).foregroundStyle(palette.secondary)
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel("Kept on this Mac. The last \(MatchSummaries.recordLimit) matches")
                     .accessibilityAddTraits(.isStaticText)
@@ -151,15 +152,15 @@ private struct LibraryTabContent: View {
     @ViewBuilder private var banner: some View {
         if let message = model.mediaMessage, tab != .matches, !(model.mediaError && model.media.isEmpty) {
             if model.mediaError {
-                Banner(.error, message: message) { Button("Refresh", action: model.loadMedia).glassAction() }
+                Banner(.error, message: message) { Button("Refresh", action: model.loadMedia).glassAction().controlSize(.large) }
             } else if model.trashedMedia != nil {
                 Banner(.neutral, symbol: "trash", message: message) {
-                    Button("Undo", action: model.undoTrash).glassAction()
-                    SymbolButton("xmark", label: "Dismiss") { model.mediaMessage = nil; model.trashedMedia = nil }
+                    Button("Undo", action: model.undoTrash).glassAction().controlSize(.large)
+                    SymbolButton("xmark", label: "Dismiss") { model.mediaMessage = nil; model.trashedMedia = nil }.controlSize(.large)
                 }
             } else {
                 Banner(.neutral, symbol: "checkmark.circle", message: message) {
-                    SymbolButton("xmark", label: "Dismiss") { model.mediaMessage = nil }
+                    SymbolButton("xmark", label: "Dismiss") { model.mediaMessage = nil }.controlSize(.large)
                 }
             }
         }
@@ -195,7 +196,7 @@ private struct LibraryTabContent: View {
             VStack(alignment: .leading, spacing: 4) {
                 if !model.settings.matchSummariesEnabled {
                     Banner(.neutral, symbol: "pause.circle", message: "Match summaries are off, so new matches aren’t added. These stay on this Mac until you delete them.") {
-                        Button("Turn On in Settings…") { model.openSettings(.privacy) }.glassAction()
+                        Button("Turn On in Settings…") { model.openSettings(.privacy) }.glassAction().controlSize(.large)
                     }
                     .padding(.bottom, 14)
                 }
@@ -226,6 +227,7 @@ private struct LibraryTabContent: View {
                 .padding(.top, 130)
             }
         } else {
+            DemoColumnHeader()
             LazyVStack(spacing: 4) {
                 ForEach(model.media) { entry in
                     let isSelected = entry.url == model.selectedMedia
@@ -326,7 +328,6 @@ private struct MatchColumns {
 
 private struct MatchColumnHeader: View {
     var columns: MatchColumns
-    @Environment(\.palette) private var palette
     var body: some View {
         HStack(spacing: 16) {
             title("Map").frame(width: 80, alignment: .leading)
@@ -335,11 +336,27 @@ private struct MatchColumnHeader: View {
             title("Connection").frame(width: columns.connection, alignment: .trailing)
             Color.clear.frame(width: columns.action, height: 1)
         }
-        .padding(.leading, 10).padding(.trailing, 20).padding(.bottom, 8)
+        .padding(.leading, RowMetrics.inset).padding(.trailing, RowMetrics.buttonTrailing(.large)).padding(.bottom, 8)
         .accessibilityHidden(true)
     }
-    private func title(_ text: String) -> some View {
-        Text(text.uppercased()).font(.stencil(12, heavy: false)).tracking(12 * 0.22).foregroundStyle(palette.tertiary).lineLimit(1)
+    private func title(_ text: String) -> some View { GroupLabel(text, header: false) }
+}
+
+/// The Demos columns (Library board): Map, Recording, Recorded and Size over the rows.
+private struct DemoColumnHeader: View {
+    var body: some View {
+        HStack(spacing: 16) {
+            GroupLabel("Map", header: false).frame(width: 80, alignment: .leading)
+            GroupLabel("Recording", header: false).frame(maxWidth: .infinity, alignment: .leading)
+            GroupLabel("Recorded", header: false).frame(width: 130, alignment: .trailing)
+            GroupLabel("Size", header: false).frame(width: 70, alignment: .trailing)
+            // Room for Play and the More button, measured from a hidden Play.
+            Label { Text("Play") } icon: { Image(systemName: "play.fill").font(.system(size: 11)) }
+                .font(.system(size: 13, weight: .semibold)).padding(.horizontal, 14).hidden().frame(height: 1)
+            Color.clear.frame(width: 28, height: 1)
+        }
+        .padding(.leading, RowMetrics.inset).padding(.trailing, RowMetrics.buttonTrailing(.large)).padding(.bottom, 8)
+        .accessibilityHidden(true)
     }
 }
 
@@ -365,12 +382,12 @@ private struct MatchRow: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(facts.spoken)
             .accessibilityAddTraits(.isStaticText)
-            Button("Check-up", action: checkup).glassAction()
+            Button("Check-up", action: checkup).glassAction().controlSize(.large)
                 .frame(width: columns.action, alignment: .trailing)
                 .accessibilityLabel("Check-up for \(facts.title)")
                 .help("Open Check-up for this match")
         }
-        .padding(.vertical, RowMetrics.inset).padding(.leading, RowMetrics.inset).padding(.trailing, RowMetrics.buttonTrailing(.regular))
+        .padding(.vertical, RowMetrics.inset).padding(.leading, RowMetrics.inset).padding(.trailing, RowMetrics.buttonTrailing(.large))
         .background(hovering ? palette.hover : .clear, in: RoundedRectangle(cornerRadius: RowMetrics.radius, style: .continuous))
         .shapeAudit(.container, .rounded(RowMetrics.radius), "match row")
         .onHover { hovering = $0 }
@@ -378,7 +395,7 @@ private struct MatchRow: View {
     }
     private func figure(_ value: String?, unit: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 4) {
-            Text(value ?? "—").font(.stencil(24)).foregroundStyle(palette.numeral).monospacedDigit()
+            Text(value ?? "—").font(.value).foregroundStyle(palette.heading)
             Text(unit).font(.system(size: 12)).foregroundStyle(palette.tertiary).lineLimit(1)
         }
     }
@@ -395,7 +412,7 @@ private struct RecordingSteps: View {
             ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
                 if index > 0 { Rectangle().fill(palette.separator).frame(height: 1) }
                 HStack(spacing: 14) {
-                    Text(step.0).font(.stencil(20)).foregroundStyle(palette.accent).frame(width: 16)
+                    Text(step.0).font(.system(size: 15, weight: .semibold)).monospacedDigit().foregroundStyle(palette.accent).frame(width: 16)
                     Text(step.1).font(.system(size: 14)).foregroundStyle(palette.text)
                     Text(step.2).font(.typewriter(12)).foregroundStyle(palette.chipText)
                         .padding(.horizontal, 12).frame(height: 26)
@@ -427,7 +444,7 @@ private struct MediaRenameSheet: View {
         _name = State(initialValue: entry.url.deletingPathExtension().lastPathComponent)
     }
     var body: some View {
-        SheetScaffold(icon: .symbol("pencil"), title: "Rename recording", message: "Choose a name you’ll recognize in your library.",
+        SheetScaffold(icon: .symbol("pencil"), title: "Rename recording", message: "Choose a name you’ll recognize in your library.", width: 460,
                       actions: [.cancel { dismiss() },
                                 .primary("Rename", enabled: !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) {
                                     error = model.renameMedia(entry, to: name)
@@ -437,7 +454,7 @@ private struct MediaRenameSheet: View {
                 LauncherTextField("Recording name", text: $name, shape: .capsule, monospaced: true, invalid: error != nil, autofocus: true)
                 if let error {
                     Label(error, systemImage: "exclamationmark.triangle").font(.system(size: 12)).foregroundStyle(palette.negative)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .fixedSize(horizontal: false, vertical: true).padding(.leading, 8)
                 }
             }
         }
@@ -478,8 +495,8 @@ struct DemoRow: View {
             .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
             .accessibilityAction { select() }
             .accessibilityAction(named: "Play") { play() }
-            Button(action: play) { Label("Play", systemImage: "play.fill").font(.system(size: 13, weight: .semibold)) }
-                .glassAction()
+            Button(action: play) { Label { Text("Play") } icon: { Image(systemName: "play.fill").font(.system(size: 11)) } }
+                .glassAction().controlSize(.large)
                 .accessibilityLabel("Play \(name)")
             Button {
                 let entries = more()
@@ -493,7 +510,7 @@ struct DemoRow: View {
                 .accessibilityLabel("More actions for \(name)")
                 .help("More actions")
         }
-        .padding(.vertical, RowMetrics.inset).padding(.leading, RowMetrics.inset).padding(.trailing, RowMetrics.buttonTrailing(.regular))
+        .padding(.vertical, RowMetrics.inset).padding(.leading, RowMetrics.inset).padding(.trailing, RowMetrics.buttonTrailing(.large))
         .background(selected ? palette.selection : hovering ? palette.hover : .clear, in: RoundedRectangle(cornerRadius: RowMetrics.radius, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: RowMetrics.radius, style: .continuous)
             .strokeBorder(selected ? (focused ? palette.accent.opacity(0.75) : palette.selectionStroke) : .clear, lineWidth: selected && focused ? 2 : 1))

@@ -16,7 +16,7 @@ extension Snapshots {
                                                   "library-matches", "library-demos", "library-screenshots"]
     static let homeLibraryLabels: [String: [String]] = [
         "home": ["Launch on Northern Lights | Public", "Find a Server", "Jump back in", "All Recent", "Launch on Sunday Rifles · EU",
-                 "Last match", "All Matches", "Connection Steady", "Open Check-up", "What's New", "See All"],
+                 "Last match", "All Matches", "Connection Steady", "Open Check-up", "What’s New", "See All"],
         "home-news-all": ["What’s New", "Release Notes", "Done", "Open Configs: 14 more player setups"],
         "home-first": ["Find a Server", "Open Game Menu", "NOTHING PLAYED YET", "NOT MEASURED YET"],
         "home-address": ["Launch on 203.0.113.77:28960", "203.0.113.77:28960, Joined by address"],

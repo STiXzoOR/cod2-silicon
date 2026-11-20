@@ -18,21 +18,30 @@ struct SetupView: View {
     @ObservedObject var model: LauncherModel
     @Environment(\.palette) var palette
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    fileprivate enum Focus: Hashable { case folder, key, name, primary }
+    fileprivate enum Focus: Hashable { case folder, key, primary }
     @FocusState private var focus: Focus?
     @State private var dropTarget = false
+    /// Where this view's top sits in the window (below the title bar), so the steps keep the board's grid.
+    @State private var windowTop: CGFloat = 0
     static let panelWidth: CGFloat = 660
+    /// Every step after the welcome keeps its heading at one height (128 points from the window's top),
+    /// so nothing jumps as you move through setup; the welcome is centred above the bar.
+    static let headingTop: CGFloat = 128, barRoom: CGFloat = 84
 
     var body: some View {
         ZStack(alignment: .bottom) {
             GeometryReader { proxy in
+                let welcome = model.setupStep == .welcome
                 ScrollView {
                     VStack(spacing: 12) { content }
                         .frame(maxWidth: .infinity)
-                        .padding(.horizontal, 24).padding(.top, 40).padding(.bottom, 112)
-                        .frame(minHeight: proxy.size.height)
+                        .padding(.horizontal, 24)
+                        .padding(.top, welcome ? 16 : max(16, Self.headingTop - windowTop))
+                        .padding(.bottom, Self.barRoom + 16 + (welcome ? windowTop : 0))
+                        .frame(minHeight: proxy.size.height, alignment: welcome ? .center : .top)
                 }
                 .scrollBounceBehavior(.basedOnSize)
+                .onGeometryChange(for: CGFloat.self, of: { $0.frame(in: .global).minY }) { windowTop = max(0, $0) }
             }
             SetupBar(model: model, focus: $focus)
                 .padding(.bottom, 22).padding(.horizontal, 24)
@@ -55,7 +64,7 @@ struct SetupView: View {
         case .crash: focus = nil  // neither answer is the default
         case .data where model.dataPath.isEmpty || !model.dataError.isEmpty: focus = .folder
         case .key where !model.keyVerified || model.replacingKey: focus = .key
-        case .yours: focus = .name
+        case .yours: break  // the name field takes the focus itself (LauncherTextField's autofocus)
         default: focus = .primary
         }
     }
@@ -81,7 +90,7 @@ struct SetupView: View {
                 yoursPanel
             case .crash: head("Send crash reports?", "If the game crashes or stops responding, CoD2 Unbound can send this project a report of what went wrong. It is how problems on Macs like yours get found and fixed. The choice is yours.")
                 crashPanel
-            case .ready: head("You’re ready to play", "Your setup is saved. Review your choices below.")
+            case .ready: head("You’re ready to play", "Everything the game needs is in place.")
                 readyPanel
             }
             if !model.setupError.isEmpty {
@@ -94,7 +103,8 @@ struct SetupView: View {
     // MARK: Pieces
     func head(_ title: String, _ detail: String) -> some View {
         VStack(spacing: 12) {
-            Eyebrow(text: "Step \(model.setupStepNumber) of \(model.setupStepCount) · \(model.setupStep.title)")
+            // The bar shows the progress; the eyebrow names the step.
+            Eyebrow(text: model.setupStep.title)
             Text(title).font(.system(size: 30, weight: .bold)).foregroundStyle(palette.inkOnArt).multilineTextAlignment(.center)
                 .accessibilityAddTraits(.isHeader)
             Text(detail).font(.system(size: 15)).foregroundStyle(palette.inkOnArt.opacity(0.82)).multilineTextAlignment(.center)
@@ -264,7 +274,8 @@ struct SetupView: View {
         } else {
             let check = model.keyCheck
             // The 56-point capsule can't be concentric in the card's corner, so it sits 22 in; Paste rides
-            // inside its trailing end, concentric with it.
+            // inside its trailing end, concentric with it (the board's Paste beside a 56-point field would
+            // sit at a different height from it).
             panel(padding: 22) {
                 TextField("CD key", text: Binding(get: { KeyFormat.display(model.keyInput) }, set: { model.keyInput = KeyFormat.display($0); model.setupError = "" }),
                               prompt: Text("XXXX XXXX XXXX XXXX XXXX").foregroundColor(palette.tertiary))
@@ -348,16 +359,9 @@ struct SetupView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Name other players see").font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.secondary).padding(.leading, 6)
                 HStack(spacing: 12) {
-                    TextField("Name other players see", text: Binding(get: { model.setupName }, set: { value in
+                    LauncherTextField("In-game name", text: Binding(get: { model.setupName }, set: { value in
                         model.setupName = value; model.setupNameError = PlayerNameRules.problem(value)
-                    }), prompt: Text("Unknown Soldier").foregroundStyle(palette.tertiary))
-                        .textFieldStyle(.plain).font(.system(size: 13)).foregroundStyle(palette.text).focused($focus, equals: .name)
-                        .padding(.horizontal, 16).frame(height: 36)
-                        .background(palette.field, in: Capsule())
-                        .overlay(Capsule().strokeBorder(model.setupNameError != nil ? palette.negative : focus == .name ? palette.accent.opacity(0.75) : palette.wellStroke,
-                                                        lineWidth: focus == .name || model.setupNameError != nil ? 2 : 1))
-                        .shapeAudit(.field, .capsule, "name field")
-                        .accessibilityLabel("In-game name")
+                    }), prompt: "Unknown Soldier", shape: .capsule, invalid: model.setupNameError != nil, autofocus: true)
                         .onSubmit { model.nextSetup() }
                     HStack(spacing: 4) {
                         Text("Shows as").foregroundStyle(palette.secondary)
