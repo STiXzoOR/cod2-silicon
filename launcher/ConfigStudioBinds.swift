@@ -164,7 +164,11 @@ struct ConfigChainDraft: Equatable {
         case several, toggle, cycle
         var id: String { rawValue }
         var title: String {
-            switch self { case .several: "Runs several commands"; case .toggle: "Toggle"; case .cycle: "Cycle on each press" }
+            switch self {
+            case .several: "One press runs every action, top to bottom."
+            case .toggle: "Each press turns a setting to its next value, then back to the start."
+            case .cycle: "Each press moves to the next step, then back to the start."
+            }
         }
         var short: String { switch self { case .several: "Several"; case .toggle: "Toggle"; case .cycle: "Cycle" } }
     }

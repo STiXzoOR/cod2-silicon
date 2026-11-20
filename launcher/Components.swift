@@ -948,3 +948,15 @@ struct MapArtFrame: View {
         }
     }
 }
+
+// MARK: - r037-studio
+
+/// The shared checkbox (`Checkbox`: the native checkbox in the control colour) for a choice whose label is
+/// more than a line of text, such as a title with a line of detail under it in a review list.
+struct CheckboxRow<Label: View>: View {
+    @Binding var isOn: Bool
+    @ViewBuilder var label: Label
+    @Environment(\.palette) private var palette
+    init(isOn: Binding<Bool>, @ViewBuilder label: () -> Label) { _isOn = isOn; self.label = label() }
+    var body: some View { Toggle(isOn: $isOn) { label }.toggleStyle(.checkbox).tint(palette.control) }
+}
