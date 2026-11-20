@@ -69,7 +69,7 @@ struct SettingsWindowRoot: View {
                     Banner(.neutral, symbol: "gamecontroller", message: "Call of Duty 2 is running. Changes you make here apply the next time it starts.")
                 }
                 if let error = model.settingsSaveError {
-                    Banner(.error, message: error) { Button("Try Again", action: model.saveSettings).glassAction() }
+                    Banner(.error, message: error) { Button("Try Again", action: model.saveSettings).glassAction().controlSize(.large) }
                 }
             }
             .padding(.horizontal, 28).padding(.top, 16)
@@ -117,13 +117,14 @@ struct SettingsTabBar: View {
                 let selected = pane == selection
                 Button { selection = pane } label: {
                     VStack(spacing: 4) {
-                        Image(systemName: pane.symbol).font(.system(size: 17)).frame(height: 22)
+                        Image(systemName: pane.symbol).font(.system(size: 20, weight: .light)).frame(height: 22)
                         Text(pane.title).font(.system(size: 11, weight: selected ? .semibold : .regular)).lineLimit(1)
                     }
                     .foregroundStyle(selected ? palette.accent : palette.secondary)
                     .frame(width: 84, height: 50)
-                    .background(selected ? palette.selection : .clear, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    // The chosen pane: a neutral fill with its name in the accent (.ptab.on), as on a Mac settings toolbar.
+                    .background(selected ? palette.button : .clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
                 .buttonStyle(.plain)
                 // Like a settings toolbar, the tabs don't take the window's first keyboard focus; ⌃Tab steps through them.

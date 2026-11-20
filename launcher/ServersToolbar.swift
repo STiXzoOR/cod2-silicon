@@ -152,7 +152,6 @@ struct ServerFiltersPopover: View {
             FormGroup {
                 FormRow("Game version") {
                     ScopeSwitch("Game version", selection: $model.serverFilters.version, options: [(.all, "Any"), (.codx, "CoD2x"), (.stock, "Original 1.3")])
-                        .controlSize(.small)
                 }
                 FormRow("Game mode") {
                     PopUpButton("Game mode", selection: Binding(get: { filters.mode ?? "" }, set: { model.serverFilters.mode = $0.isEmpty ? nil : $0 }),
@@ -182,7 +181,7 @@ struct ServerFiltersPopover: View {
     }
 }
 
-/// “8 servers · updated 2 min ago” with Refresh (⌘R), which becomes Stop while refreshing.
+/// “8 servers · 2 min ago” with Refresh (⌘R), which becomes Stop while refreshing.
 struct ServersStatusPill: View {
     @ObservedObject var model: LauncherModel
     @Environment(\.palette) private var palette
