@@ -105,7 +105,7 @@ private extension View {
 
 // MARK: - Sidebar
 
-/// The sidebar (Side board): brand, the four pages with their shortcuts, starred servers, a labelled
+/// The sidebar (Side board): brand, the four pages, starred servers, a labelled
 /// Settings row, and the player's plate, which opens the player card.
 struct Sidebar: View {
     @ObservedObject var model: LauncherModel
@@ -117,7 +117,7 @@ struct Sidebar: View {
         })) {
             Section {
                 ForEach(LauncherPage.navigation) { page in
-                    SidebarRow(title: page.title, symbol: page.symbol, keys: "⌘\(page.shortcut)", spoken: "Command \(page.shortcut)")
+                    SidebarRow(title: page.title, symbol: page.symbol, spoken: "Command \(page.shortcut)")
                         .tag(page)
                 }
             }
@@ -136,7 +136,7 @@ struct Sidebar: View {
             VStack(spacing: 0) {
                 // Settings is its own window (⌘,): a visible row, so nobody has to know the shortcut.
                 Button { model.openSettings() } label: {
-                    SidebarRow(title: "Settings", symbol: "gearshape", keys: "⌘,", spoken: "Command comma")
+                    SidebarRow(title: "Settings", symbol: "gearshape", spoken: "Command comma")
                         .padding(.horizontal, 10).frame(height: 36).contentShape(Rectangle())
                 }
                 .buttonStyle(RowButtonStyle(radius: 10))
@@ -154,15 +154,14 @@ struct Sidebar: View {
     }
 }
 
-/// One sidebar row: symbol, title and its shortcut, read as “Home, Command 1”.
+/// One sidebar row: a symbol and a word, nothing else (the menu bar and the Keyboard shortcuts sheet
+/// teach the shortcut). VoiceOver still reads it with its shortcut, as “Home, Command 1”.
 private struct SidebarRow: View {
-    var title: String, symbol: String, keys: String, spoken: String
-    @Environment(\.palette) private var palette
+    var title: String, symbol: String, spoken: String
     var body: some View {
         HStack(spacing: 8) {
             Label(title, systemImage: symbol)
             Spacer(minLength: 6)
-            Text(keys).font(.system(size: 12)).foregroundStyle(palette.secondary).opacity(0.85).monospacedDigit()
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(title), \(spoken)")
@@ -182,7 +181,7 @@ private struct FavoriteRow: View {
             HStack(spacing: 8) {
                 Label { Text(name).lineLimit(1).truncationMode(.tail) } icon: { Image(systemName: "star.fill").foregroundStyle(palette.accent) }
                 Spacer(minLength: 6)
-                if let count { Text(count).font(.system(size: 12)).foregroundStyle(palette.secondary).monospacedDigit() }
+                if let count { Text(count).font(.system(size: 12)).foregroundStyle(palette.tertiary).monospacedDigit() }
             }
             .contentShape(Rectangle())
         }
@@ -241,8 +240,7 @@ struct PlayerPlate: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .modifier(PlayerTagPlate(fill: palette.dark ? Color.white.opacity(0.05) : Color.white.opacity(0.5),
-                                 stroke: palette.dark ? Color.white.opacity(0.07) : Color.white.opacity(0.8)))
+        .modifier(PlayerTagPlate(fill: palette.hover, stroke: palette.panelStroke))
         .disabled(model.onboard)
         .help("Your name, CD key and the loadout for your next game")
         .accessibilityLabel("\(plain), \(model.keyVerified ? "CD key verified" : "no CD key yet"). Open your player card")

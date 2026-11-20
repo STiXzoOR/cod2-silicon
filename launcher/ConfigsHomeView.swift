@@ -21,7 +21,7 @@ struct ConfigsHomePage: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     if grid, discover.snapshot != nil { back }
-                    DiscoverHeader(title: title, subtitle: subtitle) { CatalogueStatus(discover: discover) }
+                    DiscoverHeader(title: title, subtitle: subtitle) { EmptyView() }
                     content(wide: proxy.size.width >= 700)
                 }
                 .padding(.top, grid && discover.snapshot != nil ? 76 : 82).padding(.horizontal, StudioMetrics.pageInset).padding(.bottom, 24)
@@ -35,8 +35,8 @@ struct ConfigsHomePage: View {
     }
 
     private var title: String {
-        guard discover.snapshot != nil else { return "Player setups" }
-        return discover.searching ? "Results" : discover.browsing ? chosen.title : "Player setups"
+        guard discover.snapshot != nil else { return "Player Setups" }
+        return discover.searching ? "Results" : discover.browsing ? chosen.title : "Player Setups"
     }
     private var subtitle: String? {
         guard grid, let total = discover.snapshot?.index.entries.count, total > 0 else { return nil }
@@ -50,7 +50,7 @@ struct ConfigsHomePage: View {
     private var back: some View {
         Button { discover.openFront() } label: { Label("Player Setups", systemImage: "chevron.left").font(.system(size: 13, weight: .semibold)) }
             .buttonStyle(.plain).foregroundStyle(palette.link).frame(height: 28)
-            .padding(.bottom, -12)
+            .padding(.top, -6).padding(.bottom, -12)
             .help("Back to Player Setups")
     }
 
@@ -59,12 +59,16 @@ struct ConfigsHomePage: View {
         case .idle, .loading:
             loading
         case .unavailable(let message):
-            unreachable(title: "NO PLAYER SETUPS IN THIS BUILD", message: "\(message) Your own loadouts, Add a Config and Check a Config work without them.", retry: false)
+            unreachable(title: "No player setups in this build", message: "\(message) Your own loadouts, Add a Config and Check a Config work without them.", retry: false)
             promos(wide: wide)
+            Spacer(minLength: 0)
+            footer
         case .failed(let message):
-            unreachable(title: "THE CATALOGUE COULDN’T BE REACHED",
+            unreachable(title: "The catalogue couldn’t be reached",
                         message: "Player setups come from the catalogue on GitHub. \(message) Your own loadouts, Add a Config and Check a Config work without it.", retry: true)
             promos(wide: wide)
+            Spacer(minLength: 0)
+            footer
         case .loaded(let snapshot, let refreshError):
             if refreshError != nil {
                 Banner(.neutral, message: "Couldn’t reach the catalogue just now. Showing the copy saved\(discover.fetched.map { " on \($0.formatted(.dateTime.day().month(.wide)))" } ?? " on this Mac").") {
@@ -72,13 +76,13 @@ struct ConfigsHomePage: View {
                 }
             }
             if snapshot.index.entries.isEmpty {
-                StudioEmptyState(title: "NO SETUPS YET", message: "The catalogue doesn’t list any player setups yet. You can still bring in a config of your own.")
+                StudioEmptyState(title: "No setups yet", message: "The catalogue doesn’t list any player setups yet. You can still bring in a config of your own.")
                     .frame(maxWidth: .infinity)
                 promos(wide: wide)
             } else if grid {
                 if !discover.searching, discover.filters.count > 1 { filters }
                 if discover.setups.isEmpty {
-                    EmptyState("NO SETUP MATCHES “\(discover.query.trimmingCharacters(in: .whitespaces).uppercased())”",
+                    EmptyState("No setup matches “\(discover.query.trimmingCharacters(in: .whitespaces))”",
                                message: "Try a team, an era or where it was published. Search looks through \(snapshot.index.entries.count) setups.",
                                actionTitle: "Clear Search", prominent: false) { discover.query = "" }
                         .padding(.vertical, 40).frame(maxWidth: .infinity)
@@ -166,11 +170,9 @@ struct ConfigsHomePage: View {
             .padding(.top, 28).padding(.bottom, 8).frame(maxWidth: .infinity)
     }
     private var footer: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(alignment: .firstTextBaseline, spacing: 16) { provenance; Spacer(minLength: 12); links }
-            VStack(alignment: .leading, spacing: 6) { provenance; links }
-        }
-        .font(StudioTypography.help).padding(.top, 6)
+        // The note wraps beside the links, which keep their one line at the trailing edge.
+        HStack(alignment: .firstTextBaseline, spacing: 16) { provenance.frame(maxWidth: .infinity, alignment: .leading); links }
+            .font(StudioTypography.help).padding(.top, 6)
     }
     private var provenance: some View {
         Text("Setups are collected from public pages and credited to where they were published. Passwords and personal details are removed.")
@@ -185,19 +187,19 @@ struct ConfigsHomePage: View {
     }
 }
 
-/// “68 setups · updated today” with Refresh, beside the page's title.
-private struct CatalogueStatus: View {
+/// “68 setups · updated today” with Refresh: a toolbar pill, as Servers shows its list's count.
+struct CatalogueStatus: View {
     @ObservedObject var discover: ConfigDiscoverModel
     @Environment(\.palette) private var palette
     var body: some View {
         let loading: Bool = { if case .loading = discover.state { return true }; return false }()
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             Text(discover.status()).font(.system(size: 12)).monospacedDigit().foregroundStyle(palette.secondary).lineLimit(1).fixedSize()
                 .accessibilityAddTraits(.isStaticText)
+                .padding(.leading, 10)
             Button { Task { await discover.reload() } } label: {
-                Image(systemName: "arrow.clockwise").font(.system(size: 13, weight: .semibold)).frame(width: 16, height: 16)
+                Image(systemName: "arrow.clockwise").font(.system(size: 13, weight: .semibold)).frame(width: 18, height: 18)
             }
-            .glassAction(circle: true).actionControlSize()
             .disabled(loading)
             .accessibilityLabel("Refresh the catalogue").help("Check the catalogue for new setups")
         }
@@ -240,7 +242,9 @@ private struct FeaturedBanner: View {
             // The paging arrows sit together in the top corner, as a shelf's do beside its title, clear of the banner's own corner.
             .overlay(alignment: .topTrailing) {
                 if entries.count > 1 {
+                    // Glass over the art keeps the dark look in both appearances, so the arrows stay readable.
                     HStack(spacing: 8) { arrow("chevron.left", "Previous featured setup", -1); arrow("chevron.right", "Next featured setup", 1) }.padding(24)
+                        .environment(\.palette, .dark).environment(\.colorScheme, .dark)
                 }
             }
             .overlay(alignment: .bottom) { if entries.count > 1 { dots(position).padding(.bottom, 12) } }
@@ -254,14 +258,14 @@ private struct FeaturedBanner: View {
         HStack(alignment: .bottom, spacing: 18) {
             Text(PlayerInitials.of(entry.player)).font(.stencil(34)).foregroundStyle(ink.accent)
                 .frame(width: 78, height: 78)
-                .background(Palette.hex(0x1b1f17), in: Circle())
-                .overlay(Circle().strokeBorder(Palette.hex(0x0d0f0c), lineWidth: 3))
+                .background(ink.tileFill, in: Circle())
+                .overlay(Circle().strokeBorder(ink.ground, lineWidth: 3))
                 .overlay(Circle().stroke(ink.accent.opacity(0.6), lineWidth: 1))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 6) {
                 Eyebrow(text: (["Featured setup"] + entry.styleTags.prefix(1)).joined(separator: " · "), color: Palette.hex(0xf2d394))
                 Text(entry.player.uppercased()).font(.stencil(56)).tracking(1.1).foregroundStyle(ink.heading).lineLimit(1).minimumScaleFactor(0.5)
-                Text(entry.feel).font(.system(size: 14)).italic().foregroundStyle(Palette.hex(0xe2dbc9)).lineLimit(2)
+                Text(entry.feel).font(.system(size: 14)).italic().foregroundStyle(ink.chipText).lineLimit(2)
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Featured setup \(position + 1) of \(entries.count): \(entry.player)\(entry.team.map { ", \($0)" } ?? ""). \(entry.feel)")
@@ -390,7 +394,7 @@ struct SetupCard: View {
                     MapArtFrame(map: entry.artMap, image: image, size: .fill).frame(height: 104).frame(maxWidth: .infinity)
                     Text(PlayerInitials.of(entry.player)).font(.stencil(18)).foregroundStyle(palette.accent)
                         .frame(width: 40, height: 40)
-                        .background(palette.dark ? Palette.hex(0x1b1f17) : palette.crate, in: Circle())
+                        .background(palette.tileFill, in: Circle())
                         .overlay(Circle().strokeBorder(palette.panel, lineWidth: 2))
                         .overlay(Circle().stroke(palette.selectionStroke, lineWidth: 1).padding(-1))
                         .offset(x: 14, y: 18)
@@ -400,13 +404,13 @@ struct SetupCard: View {
                 VStack(alignment: .leading, spacing: 8) {
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: 6) {
-                            Text(entry.player).font(.system(size: 15, weight: .bold)).foregroundStyle(palette.heading).lineLimit(1)
+                            Text(entry.player).font(.system(size: 15, weight: .semibold)).foregroundStyle(palette.heading).lineLimit(1)
                             Spacer(minLength: 4)
                             if saved { Image(systemName: "bookmark.fill").font(.system(size: 11)).foregroundStyle(palette.accent).accessibilityHidden(true) }
                         }
                         Text([entry.team, entry.era].compactMap { $0 }.joined(separator: " · ")).font(StudioTypography.help).foregroundStyle(palette.secondary).lineLimit(1)
                     }
-                    Text(entry.feel).font(.system(size: 13)).foregroundStyle(palette.dark ? Palette.hex(0xe2dbc9) : palette.text).lineLimit(1)
+                    Text(entry.feel).font(.system(size: 13)).foregroundStyle(palette.chipText).lineLimit(1)
                     HStack(alignment: .top, spacing: 16) {
                         fact(entry.facts?.sensitivity, "sensitivity")
                         fact(size, "resolution")
@@ -436,7 +440,7 @@ struct SetupCard: View {
     }
     private func fact(_ value: String?, _ label: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(value ?? "—").font(.stencil(20)).monospacedDigit().foregroundStyle(palette.numeral).lineLimit(1)
+            Text(value ?? "—").font(.value).foregroundStyle(palette.heading).lineLimit(1)
             Text(label).font(StudioTypography.help).foregroundStyle(palette.secondary).lineLimit(1)
         }
     }
@@ -458,7 +462,7 @@ private struct TeamTile: View {
         let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
         Button(action: open) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(team.name).font(.system(size: 15, weight: .bold)).foregroundStyle(palette.heading).lineLimit(1)
+                Text(team.name).font(.system(size: 15, weight: .semibold)).foregroundStyle(palette.heading).lineLimit(1)
                 Text("\(team.count) setups").font(StudioTypography.help).monospacedDigit().foregroundStyle(palette.secondary)
             }
             .padding(.horizontal, 18).frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
@@ -488,7 +492,7 @@ private struct PromoBanner<Action: View>: View {
             Text(title).font(StudioTypography.groupTitle).foregroundStyle(palette.heading).fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
             Text(message).font(.system(size: 13)).foregroundStyle(palette.secondary).lineSpacing(2)
-                .fixedSize(horizontal: false, vertical: true).frame(maxWidth: 380, alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true).frame(maxWidth: 360, alignment: .leading)
             action.padding(.top, 6)
         }
         .padding(StudioMetrics.panelInset)

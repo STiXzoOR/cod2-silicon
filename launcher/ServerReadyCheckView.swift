@@ -103,18 +103,13 @@ struct ReadyCheckCard: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 if showDetails { detailsList(p) }
-                HStack(spacing: 6) {
-                    if p.canFix {
-                        Button("Fix") { confirmingFix = true }.glassAction().actionControlSize().disabled(locked)
-                            .accessibilityLabel("Fix for This Server Only")
-                            .help(locked ? "Quit the game first" : "Use the server’s values while you play here only. Your loadout doesn’t change.")
+                // The board's pair of buttons on one line; Details goes under them when the panel is too narrow for all three.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 6) { fixActions(p, address: address); Spacer(minLength: 0); if !p.exact.isEmpty { detailsButton } }
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 6) { fixActions(p, address: address) }
+                        if !p.exact.isEmpty { detailsButton }
                     }
-                    if let fitting {
-                        Button("Use “\(fitting.displayName)”") { check.useLoadout(fitting.id, model: model, address: address) }.quietAction().disabled(locked)
-                            .help("Your “\(fitting.displayName)” loadout already suits this server. Use it for this game only.")
-                    }
-                    Spacer(minLength: 0)
-                    if !p.exact.isEmpty { detailsButton }
                 }
             }
             .padding(.vertical, 12).padding(.horizontal, 14)
@@ -137,6 +132,17 @@ struct ReadyCheckCard: View {
                 }
             }
             .padding(.horizontal, 6)
+        }
+    }
+
+    @ViewBuilder private func fixActions(_ p: ReadyCheckPresentation, address: String) -> some View {
+        if p.canFix {
+            Button("Fix for This Server Only") { confirmingFix = true }.glassAction().controlSize(.large).disabled(locked)
+                .help(locked ? "Quit the game first" : "Use the server’s values while you play here only. Your loadout doesn’t change.")
+        }
+        if let fitting {
+            Button("Use “\(fitting.displayName)”") { check.useLoadout(fitting.id, model: model, address: address) }.quietAction().disabled(locked)
+                .help("Your “\(fitting.displayName)” loadout already suits this server. Use it for this game only.")
         }
     }
 

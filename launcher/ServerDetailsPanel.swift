@@ -26,7 +26,7 @@ struct ServerDetailsPanel: View {
             } else {
                 Spacer(minLength: 0)
                 VStack(spacing: 12) {
-                    Image(systemName: "dot.radiowaves.left.and.right").font(.system(size: 28, weight: .light)).foregroundStyle(palette.tertiary)
+                    Image(systemName: "dot.radiowaves.left.and.right").font(.system(size: 30, weight: .light)).foregroundStyle(palette.tertiary)
                         .accessibilityHidden(true)
                     Text("Select a server to see its map, rules and who’s playing.").font(.system(size: 13)).foregroundStyle(palette.secondary)
                         .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
@@ -59,7 +59,7 @@ struct ServerDetailsPanel: View {
             .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 6) {
                 Eyebrow(text: "\(MapCatalog.displayName(server.map)) · \(GameModes.long(server.gametype))", size: 12, tracking: 0.28)
-                QuakeName(name: server.name).font(.system(size: 19, weight: .bold)).lineLimit(2).accessibilityAddTraits(.isHeader)
+                QuakeName(name: server.name).font(.system(size: 20, weight: .bold)).lineLimit(2).accessibilityAddTraits(.isHeader)
                 HStack(spacing: 4) {
                     // Not selectable: AppKit's selectable-text view loops forever answering VoiceOver
                     // for a relabelled text (a stack overflow); Copy and ⇧⌘C copy the address.
@@ -85,7 +85,7 @@ struct ServerDetailsPanel: View {
     private func roster(_ server: GameServer) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline) {
-                Eyebrow(text: "Roster · \(server.playerCount) of \(server.maxPlayers)", size: 12, tracking: 0.24, color: palette.tertiary)
+                GroupLabel("Roster · \(server.playerCount) of \(server.maxPlayers)", header: false)
                 Spacer()
                 Text("Score · Ping").font(.system(size: 11)).foregroundStyle(palette.tertiary)
             }
@@ -128,7 +128,7 @@ struct ServerDetailsPanel: View {
                 .accessibilityLabel("\(unfixed ? "Launch anyway" : "Launch") on \(QuakeColors.plain(server.name))")
                 .help(unfixed ? "Launch with your loadout as it is; the server may correct or refuse it" : "Launch on this server (Return in the list, or double-click a row)")
                 Button { model.toggleFavorite(server) } label: {
-                    Image(systemName: favorite ? "star.fill" : "star").font(.system(size: 15)).foregroundStyle(palette.dark ? palette.accent : palette.link).frame(width: 16, height: 16)
+                    Image(systemName: favorite ? "star.fill" : "star").font(.system(size: 15)).foregroundStyle(palette.accent).frame(width: 16, height: 16)
                 }
                 .glassAction(circle: true).actionControlSize()
                 .accessibilityLabel(favorite ? "Remove from favorites" : "Add to favorites")

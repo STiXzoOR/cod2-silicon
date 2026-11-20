@@ -50,6 +50,20 @@ struct ContentPanel<Content: View>: View {
     }
 }
 
+/// A group label or a column head (.t-label, .colhead): SF 11 semibold, tertiary, sentence case. Write
+/// the text in sentence case; this never capitalises or tracks it.
+struct GroupLabel: View {
+    var text: String
+    /// A label above a group is a header for VoiceOver; a column head inside a table row is not.
+    var header = true
+    @Environment(\.palette) private var palette
+    init(_ text: String, header: Bool = true) { self.text = text; self.header = header }
+    var body: some View {
+        Text(text).font(.groupLabel).foregroundStyle(palette.tertiary).lineLimit(1)
+            .accessibilityAddTraits(header ? .isHeader : [])
+    }
+}
+
 /// A panel's title with an optional link-style action on the right (“Show all”, “Release Notes”).
 struct PanelHeading: View {
     var title: String
@@ -58,7 +72,7 @@ struct PanelHeading: View {
     @Environment(\.palette) private var palette
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(title).font(.system(size: 17, weight: .semibold)).foregroundStyle(palette.dark ? Palette.hex(0xefe9db) : palette.heading).accessibilityAddTraits(.isHeader)
+            Text(title).font(.system(size: 17, weight: .semibold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
             Spacer()
             if let action, let perform { Button(action, action: perform).quietAction().padding(.horizontal, -6) }
         }
@@ -281,7 +295,7 @@ struct SettingsRow<Control: View>: View {
         HStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 8) {
-                    Text(title).font(typewriter ? .typewriter(14) : .system(size: 14)).foregroundStyle(palette.dark ? Palette.hex(0xe6dfcf) : palette.text).lineLimit(titleLines)
+                    Text(title).font(typewriter ? .typewriter(14) : .system(size: 14)).foregroundStyle(palette.text).lineLimit(titleLines)
                         .fixedSize(horizontal: false, vertical: titleLines > 1)
 
                 }
@@ -612,8 +626,8 @@ struct Badge: View {
     @Environment(\.palette) private var palette
     init(_ text: String, tone: BadgeTone = .neutral) { self.text = text; self.tone = tone }
     var body: some View {
-        let color = tone == .accent ? palette.accent : tone == .negative ? palette.negative : (palette.dark ? Palette.hex(0xbdb5a1) : palette.secondary)
-        Text(text).font(.system(size: 10.5, weight: .semibold)).lineLimit(1).fixedSize()
+        let color = tone == .accent ? palette.accent : tone == .negative ? palette.negative : palette.secondary
+        Text(text).font(.system(size: 11, weight: .semibold)).lineLimit(1).fixedSize()
             .foregroundStyle(color)
             .padding(.horizontal, 7).frame(height: 18)
             .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(tone == .accent ? palette.selectionStroke : tone == .negative ? palette.negative : palette.track, lineWidth: 1))
@@ -761,7 +775,7 @@ struct ScopeSwitch<Value: Hashable>: View {
         Picker(label, selection: $selection) {
             ForEach(Array(options.enumerated()), id: \.offset) { _, option in Text(option.title).tag(option.value) }
         }
-        .pickerStyle(.segmented).labelsHidden().fixedSize().capsuleControls()
+        .segmentedChoice()
         .accessibilityLabel(label)
     }
 }
@@ -933,4 +947,64 @@ struct MapArtFrame: View {
             art.clipped()
         }
     }
+}
+
+// MARK: - r037-servers
+
+/// A form row in a narrow column (.row.wide with .row-top): the title and the control on one line, and
+/// the help under both at full width, so help never wraps into a narrow label column (Design Rules,
+/// “One row per setting”). Give the control the row's title as its VoiceOver name.
+struct FormWideRow<Trailing: View, Detail: View>: View {
+    var title: String
+    @ViewBuilder var trailing: Trailing
+    @ViewBuilder var detail: Detail
+    @Environment(\.palette) private var palette
+    @Environment(\.formContext) private var context
+    init(_ title: String, @ViewBuilder trailing: () -> Trailing, @ViewBuilder detail: () -> Detail) {
+        self.title = title; self.trailing = trailing(); self.detail = detail()
+    }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 14) {
+                // The title never wraps or shortens (.row-top .row-title is nowrap); the control gives way.
+                Text(title).font(.system(size: 14)).foregroundStyle(palette.text).lineLimit(1).fixedSize()
+                Spacer(minLength: 8)
+                trailing
+            }
+            .frame(minHeight: 28)
+            detail.font(.system(size: 12)).foregroundStyle(palette.tertiary).lineSpacing(1.5)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, FormMetrics.rowInset(context)).padding(.vertical, 9)
+        .frame(minHeight: FormMetrics.detailRowHeight)
+        .overlay(alignment: .top) { Rectangle().fill(palette.separator).frame(height: 1) }
+        .accessibilityElement(children: .contain)
+    }
+}
+extension FormWideRow where Detail == Text {
+    init(_ title: String, detail: String, @ViewBuilder trailing: () -> Trailing) {
+        self.init(title, trailing: trailing, detail: { Text(detail) })
+    }
+}
+
+// MARK: - r037-studio
+
+/// The shared checkbox (`Checkbox`: the native checkbox in the control colour) for a choice whose label is
+/// more than a line of text, such as a title with a line of detail under it in a review list.
+struct CheckboxRow<Label: View>: View {
+    @Binding var isOn: Bool
+    @ViewBuilder var label: Label
+    @Environment(\.palette) private var palette
+    init(isOn: Binding<Bool>, @ViewBuilder label: () -> Label) { _isOn = isOn; self.label = label() }
+    var body: some View { Toggle(isOn: $isOn) { label }.toggleStyle(.checkbox).tint(palette.control) }
+}
+
+// MARK: - r037-configs
+
+/// The Configs column's and Discover's small tiles and initials discs (launcher.css `.ctile`,
+/// `.pcard .ini`): a dark olive fill with a faint edge in dark, the crate in light.
+extension Palette {
+    var tileFill: Color { dark ? Self.hex(0x1b1f17) : crate }
+    var tileStroke: Color { dark ? .white.opacity(0.09) : wellStroke }
 }

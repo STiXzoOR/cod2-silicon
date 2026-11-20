@@ -869,13 +869,15 @@ final class Watchdog: @unchecked Sendable {
             return [Int(data[o]), Int(data[o + 1]), Int(data[o + 2])]
         }
         static func distance(_ a: [Int], _ b: [Int]) -> Int { zip(a, b).map { abs($0 - $1) }.reduce(0, +) }
-        /// "capsule" when the point 2 pt inside the top-leading corner matches the background beside the
-        /// button, "rounded rectangle" when it matches the fill; nil when fill and background are too alike.
+        /// "capsule" when the point 2 pt inside the top-leading corner matches the background just
+        /// outside that corner, "rounded rectangle" when it matches the fill; nil when fill and
+        /// background are too alike. The background is read beside the corner, not beside the
+        /// button's middle: over a picture the two differ.
         func shape(of frame: CGRect) -> String? {
             let fill = color(frame.minX + 4, frame.midY), outside = color(frame.minX - 3, frame.midY)
-            let corner = color(frame.minX + 2, frame.minY + 2)
+            let corner = color(frame.minX + 2, frame.minY + 2), beside = color(frame.minX - 3, frame.minY + 2)
             guard Self.distance(fill, outside) > 90 else { return nil }
-            return Self.distance(corner, outside) < Self.distance(corner, fill) ? "capsule" : "rounded rectangle"
+            return Self.distance(corner, beside) < Self.distance(corner, fill) ? "capsule" : "rounded rectangle"
         }
     }
 }

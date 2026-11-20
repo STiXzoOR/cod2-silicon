@@ -92,7 +92,7 @@ private struct HomeHero: View {
                 StencilTitle(text: "COD2 UNBOUND")
                 Text("You’re set up. Pick a server to join your first match, or open the game’s own menu.")
                     .font(.system(size: 16)).lineSpacing(5)
-                    .foregroundStyle(palette.dark ? Palette.hex(0xddd5c3) : Palette.hex(0x3a382e))
+                    .foregroundStyle(palette.inkOnArt)
                     .frame(maxWidth: 520, alignment: .leading).fixedSize(horizontal: false, vertical: true)
             }
             HStack(spacing: 14) { buttons }.padding(.top, 14)
@@ -155,7 +155,7 @@ struct StencilTitle: View {
         let natural = font.map { $0.ascender - $0.descender } ?? size * 1.2
         Text(text)
             .font(.stencil(size)).tracking(size * 0.02)
-            .foregroundStyle(palette.dark ? palette.heading : Palette.hex(0x1f2214))
+            .foregroundStyle(palette.inkOnArt)
             .lineLimit(1).minimumScaleFactor(0.5)
             .padding(.vertical, -(natural - size * 0.86) / 2)
             .shadow(color: .black.opacity(palette.dark ? 0.45 : 0), radius: 20, y: 6)
@@ -169,12 +169,12 @@ struct MetaLine: View {
     var body: some View {
         HStack(spacing: 14) {
             ForEach(items.indices, id: \.self) { index in
-                if index > 0 { Circle().fill(palette.dark ? Palette.hex(0x8c8573) : Palette.hex(0x8a8572)).frame(width: 4, height: 4).accessibilityHidden(true) }
+                if index > 0 { Circle().fill(palette.tertiary).frame(width: 4, height: 4).accessibilityHidden(true) }
                 items[index]
             }
         }
         .font(.system(size: 16))
-        .foregroundStyle(palette.dark ? Palette.hex(0xddd5c3) : Palette.hex(0x3a382e))
+        .foregroundStyle(palette.inkOnArt)
         .lineLimit(1)
         .accessibilityElement(children: .combine)
     }
@@ -242,8 +242,8 @@ struct HeroBackdrop: View {
 
 /// Colours of the text set over the hero, and the one that limits the scrim in each appearance.
 enum HeroInk {
-    static let dark: [UInt32] = [0xf3ecdc, 0xddd5c3, 0xe2bd72, 0xc9c1ad]   // title, meta, eyebrow, hint
-    static let light: [UInt32] = [0x1f2214, 0x3a382e, 0x6b4a12, 0x4d4a3f]
+    static let dark: [UInt32] = [0xf3ecdc, 0xf3ecdc, 0xe2bd72, 0xc9c1ad]   // title, meta (ink on art), eyebrow, hint
+    static let light: [UInt32] = [0x1f2214, 0x1f2214, 0x6b4a12, 0x4d4a3f]
     static let hint = (dark: Palette.hex(0xc9c1ad), light: Palette.hex(0x4d4a3f))
     static func luminance(_ value: UInt32) -> Double {
         ScrimMath.luminance(UInt8(value >> 16 & 255), UInt8(value >> 8 & 255), UInt8(value & 255))
@@ -525,10 +525,10 @@ private struct CardEmpty: View {
                 .accessibilityAddTraits(.isHeader)
             Text(message).font(.system(size: 13)).foregroundStyle(palette.secondary).multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
-            if let action { Button(action.title, action: action.run).glassAction().padding(.top, 2) }
+            if let action { Button(action.title, action: action.run).glassAction().controlSize(.large).padding(.top, 2) }
         }
         .frame(maxWidth: .infinity)
-        .padding(.horizontal, 10).padding(.top, 26)
+        .padding(.horizontal, 10).padding(.top, 22)
     }
 }
 
@@ -582,8 +582,13 @@ private struct RecentRow: View {
             MapArtFrame(map: server.knownMap ?? "mp_toujane", image: server.knownMap == nil ? nil : image, size: .card, radius: Concentric.radius(in: 16, inset: 7))
             VStack(alignment: .leading, spacing: 3) {
                 Text(name).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text).lineLimit(1)
-                // One line: a wrapped detail would make this row taller than the others in a narrow card.
-                Text(compactDetail.isEmpty ? subtitle : compactDetail).font(.system(size: 12)).foregroundStyle(palette.secondary).lineLimit(1)
+                // One line, the game type in full where it fits ("Team Deathmatch"), short in a narrow card ("TDM"):
+                // a wrapped detail would make this row taller than the others.
+                ViewThatFits(in: .horizontal) {
+                    Text(subtitle).fixedSize()
+                    Text(compactDetail.isEmpty ? subtitle : compactDetail).lineLimit(1)
+                }
+                .font(.system(size: 12)).foregroundStyle(palette.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             if let played {
@@ -599,13 +604,13 @@ private struct RecentRow: View {
             } else {
                 content.accessibilityElement(children: .ignore).accessibilityLabel(label).accessibilityAddTraits(.isStaticText)
             }
-            Button { model.connect(server) } label: { Label("Launch", systemImage: "play.fill").font(.system(size: 12, weight: .semibold)) }
-                .glassAction().controlSize(.small)
+            Button { model.connect(server) } label: { Label { Text("Launch") } icon: { Image(systemName: "play.fill").font(.system(size: 11)) } }
+                .glassAction().controlSize(.large)
                 .accessibilityLabel("Launch on \(name)")
                 .help("Launch and join \(name)")
         }
         // The Launch capsule sits as far from the row's end as from its top and bottom (art 48 + 2 × 7).
-        .padding(.vertical, 7).padding(.leading, 7).padding(.trailing, (48 + 14 - ControlMetrics.height(.small)) / 2)
+        .padding(.vertical, 7).padding(.leading, 7).padding(.trailing, (48 + 14 - ControlMetrics.height(.large)) / 2)
         .background(hovering && opens ? palette.hover : .clear, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .shapeAudit(.container, .rounded(16), "recent row")
         .onHover { hovering = $0 }
@@ -654,21 +659,19 @@ private struct LastMatchCard: View {
                     }
                 }
                 .accessibilityElement(children: .combine)
-                HStack(alignment: .top, spacing: 8) {
-                    figure(facts.ping.map(String.init), caption: "ms ping", spoken: facts.ping.map { "\($0) milliseconds ping" } ?? "Ping not measured")
-                    VStack(alignment: .leading, spacing: 5) {
-                        StatusLabel(facts.connection.kind, facts.connection.words).frame(height: 30)
-                        Text("connection").font(.system(size: 12)).foregroundStyle(palette.tertiary)
+                // How the match ran, one fact a line (the Home board's Last match card).
+                VStack(spacing: 0) {
+                    fact("Ping", spoken: facts.ping.map { "\($0) milliseconds ping" } ?? "Ping not measured") {
+                        Text(facts.ping.map { "\($0) ms" } ?? "Not measured").font(.system(size: 14, weight: .semibold)).monospacedDigit()
+                            .foregroundStyle(facts.ping == nil ? palette.secondary : palette.text)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .accessibilityElement(children: .ignore).accessibilityLabel("Connection \(facts.connection.words)").accessibilityAddTraits(.isStaticText)
+                    fact("Connection", spoken: "Connection \(facts.connection.words)") { StatusLabel(facts.connection.kind, facts.connection.words) }
                 }
             }
             Spacer(minLength: 8)
             HStack {
-                Text("Kept on this Mac.").font(.system(size: 12)).foregroundStyle(palette.tertiary)
                 Spacer(minLength: 8)
-                Button("Open Check-up") { model.openCheckup(match: facts.id) }.glassAction().controlSize(.small)
+                Button("Open Check-up") { model.openCheckup(match: facts.id) }.glassAction().controlSize(.large)
                     .disabled(!model.canNavigate)
                     .help("Open Check-up for this match")
             }
@@ -677,12 +680,14 @@ private struct LastMatchCard: View {
             Spacer(minLength: 0)
         }
     }
-    private func figure(_ value: String?, caption: String, spoken: String) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(value ?? "—").font(.stencil(30)).foregroundStyle(palette.numeral).monospacedDigit().frame(height: 30)
-            Text(caption).font(.system(size: 12)).foregroundStyle(palette.tertiary).lineLimit(1)
+    private func fact<Value: View>(_ title: String, spoken: String, @ViewBuilder value: () -> Value) -> some View {
+        HStack {
+            Text(title).font(.system(size: 13)).foregroundStyle(palette.secondary)
+            Spacer(minLength: 8)
+            value()
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: 34)
+        .overlay(alignment: .top) { Rectangle().fill(palette.separator).frame(height: 1) }
         .accessibilityElement(children: .ignore).accessibilityLabel(spoken).accessibilityAddTraits(.isStaticText)
     }
 }
@@ -693,7 +698,7 @@ private struct DispatchesCard: View {
     var body: some View {
         ContentPanel(radius: 20, padding: EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 20)) {
             // The card never runs past its edge: See All opens every line, in full, as a dialog.
-            PanelHeading(title: "What's New", action: "See All", perform: model.showNews)
+            PanelHeading(title: "What’s New", action: "See All", perform: model.showNews)
             // As many lines as the card has room for: three, else two, else this version's alone, with
             // shorter text before fewer lines. The last choice always fits.
             ViewThatFits(in: .vertical) {
@@ -761,7 +766,7 @@ struct HomeNewsSheet: View {
                         HStack(alignment: .center, spacing: 12) {
                             NewsLine(dispatch: dispatch, titleLines: nil, summaryLines: nil).accessibilityElement(children: .combine)
                             if model.canOpen(dispatch) {
-                                Button(model.openTitle(dispatch)) { model.dismissSheet(); model.open(dispatch) }.controlSize(.small).fixedSize()
+                                Button(model.openTitle(dispatch)) { model.dismissSheet(); model.open(dispatch) }.glassAction().controlSize(.regular).fixedSize()
                                     .accessibilityLabel("\(model.openTitle(dispatch)): \(dispatch.title)")
                             }
                         }
@@ -772,8 +777,8 @@ struct HomeNewsSheet: View {
                 .padding(.horizontal, 16)
             }
             .frame(maxHeight: 380)
-            .background(palette.well, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(palette.wellStroke, lineWidth: 1))
+            .background(palette.well, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(palette.wellStroke, lineWidth: 1))
         }
     }
 }

@@ -1185,28 +1185,28 @@ extension Snapshots {
         defer { window.orderOut(nil); window.close(); try? FileManager.default.removeItem(at: home) }
         guard let session = model.studio.session else { return false }
         let file = home.appendingPathComponent("main/players/Main/config_mp.cfg")
-        guard let compare = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label == "Compare in Expert" }) else {
+        guard let compare = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label == "Compare" }) else {
             print("FAIL: Compare in Expert is not on screen"); return false
         }
         activate(window, element: compare)
         try? await Task.sleep(for: .milliseconds(900))
-        guard model.studio.player?.name == "[Player 1]", model.studio.level == .expert, model.discover.page == nil else {
-            print("FAIL: Compare in Expert did not open Expert with [Player 1]"); return false
+        guard model.studio.player?.name == "vargr", model.studio.level == .expert, model.discover.page == nil else {
+            print("FAIL: Compare in Expert did not open Expert with vargr"); return false
         }
         model.studio.group = .frame
         try? await Task.sleep(for: .milliseconds(700))
         guard let before = try? Data(contentsOf: file),
-              let take = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label.hasPrefix("Take [Player 1]’s Frame rate cap") }) else {
+              let take = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label.hasPrefix("Take vargr’s Frame rate cap") }) else {
             print("FAIL: Take Theirs for Frame rate cap is not on screen"); return false
         }
         activate(window, element: take)
         try? await Task.sleep(for: .milliseconds(700))
         var expected = ConfigDocument(data: before, dialect: .cod2x)
         do { try expected.setSetting(named: "com_maxfps", value: "250") } catch { return false }
-        guard (try? Data(contentsOf: file)) == expected.serialized(), session.history.first?.summary == "Took Frame rate cap from [Player 1]" else {
+        guard (try? Data(contentsOf: file)) == expected.serialized(), session.history.first?.summary == "Took Frame rate cap from vargr" else {
             print("FAIL: Take Theirs did not write exactly the player's frame-rate cap"); return false
         }
-        print("PASS: clicking Compare in Expert and Take Theirs wrote `seta com_maxfps \"250\"` from [Player 1] as one History row")
+        print("PASS: clicking Compare in Expert and Take Theirs wrote `seta com_maxfps \"250\"` from vargr as one History row")
         return true
     }
 
@@ -1228,13 +1228,16 @@ extension Snapshots {
         defer { window.orderOut(nil); window.close() }
         guard let sheet = window.attachedSheet else { print("FAIL: the import review sheet is not attached"); return false }
         sheet.makeKey()
-        click(sheet, at: NSPoint(x: sheet.frame.width - 22 - 28, y: 16 + 18))
+        click(sheet, at: NSPoint(x: sheet.frame.width - 22 - 28, y: 22 + 18))
         try? await Task.sleep(for: .milliseconds(800))
-        let written = try? Data(contentsOf: players.appendingPathComponent("Player_1/config_mp.cfg"))
-        guard written == expected, (try? ConfigProfileStore(homeURL: home, dialect: .cod2x).history(id: "Player_1"))?.map(\.source) == [.import],
+        let written = try? Data(contentsOf: players.appendingPathComponent("vargr/config_mp.cfg"))
+        guard written == expected, (try? ConfigProfileStore(homeURL: home, dialect: .cod2x).history(id: "vargr"))?.map(\.source) == [.import],
               (try? Data(contentsOf: players.appendingPathComponent("Main/config_mp.cfg"))) == main,
               (try? Data(contentsOf: players.appendingPathComponent("active.txt"))) == active, model.discover.review == nil else {
-            print("FAIL: clicking Apply did not import exactly the reviewed lines (\(review.applyError ?? "no error shown"))"); return false
+            print("FAIL: clicking Apply did not import exactly the reviewed lines (\(review.applyError ?? "no error shown"); "
+                  + "new loadout \(written == nil ? "not written" : written == expected ? "as reviewed" : "differs"), "
+                  + "review \(model.discover.review == nil ? "closed" : "still open"), sheet \(sheet.frame.size), on top: \(sheet.attachedSheet.map { String(describing: type(of: $0)) } ?? "nothing"))")
+            return false
         }
         print("PASS: clicking the review's Apply button imported exactly the ticked lines into a new loadout as one Import transaction; Main and the active loadout are unchanged")
         return true
@@ -1336,9 +1339,9 @@ extension Snapshots {
         "configs-history": ["Restore This Snapshot"],
         "configs-binds-verify": ["Verify your keyboard", "Press the key just to the left of the space bar", "Cancel"],
         "configs-binds-learn": ["Learn your mouse buttons", "Press down on the scroll wheel", "I Don’t Have This Button"],
-        "configs-expert-player": ["Compare markers show [Player 1]’s values", "Take [Player 1]’s Mouse speed"],
-        "discover-player": ["Compare in Expert", "Try This Setup"],
-        "configs-checkup-measured": ["Your last match: Toujane, Search & Destroy", "Movement: STEADY", "Connection: 38 MS", "Show the movement figures", "Refresh match summaries"],
+        "configs-expert-player": ["Compare markers show vargr’s values", "Take vargr’s Mouse speed"],
+        "discover-player": ["Compare", "Try This Setup"],
+        "configs-checkup-measured": ["Your last match: Toujane, Search & Destroy", "Movement: Steady", "Connection: 38 ms", "Show the movement figures", "Refresh match summaries"],
         "configs-checkup-off": ["Match summaries are off", "Refresh match summaries"],
         "configs-checkup-error": ["Couldn’t read your match summaries", "Connection: no value, Not measured"],
         "configs-import-link": ["Config link", "Review"],
@@ -1353,7 +1356,7 @@ extension Snapshots {
         "configs-home": ["Featured setups", "See This Setup", "Next featured setup", "See all 3 Classic era setups", "Refresh the catalogue",
                          "Search players, teams or styles", "Check a Config", "Add a Config"],
         // Teams sit below the first screenful, and the page only builds what is in view.
-        "configs-home-end": ["[Team], 4 setups", "Check a Config", "Add a Config"],
+        "configs-home-end": ["Team Northwind, 4 setups", "Check a Config", "Add a Config"],
         "configs-home-all": ["Narrow the setups", "Player Setups", "Search players, teams or styles"],
         "configs-other-loadout": ["Use for Next Game", "Scrim"],
         "configs-delete-confirm": ["Delete the loadout “Scrim”?", "Delete Loadout", "Cancel"],
@@ -1361,7 +1364,7 @@ extension Snapshots {
         "configs-rename-sheet": ["Rename “Main”", "Loadout name", "Rename", "Cancel"],
         "configs-checkup-freezes": ["Your last match: Toujane, Search & Destroy"],
         "configs-checkup-freeze-legacy": ["Your last match: Toujane, Search & Destroy"],
-        "configs-checkup-match": ["Your match on Carentan, Search & Destroy", "Show Last Match", "Movement: STEADY"],
+        "configs-checkup-match": ["Your match on Carentan, Search & Destroy", "Show Last Match", "Movement: Steady"],
     ]
 
     /// Every Config Studio screen's accessibility tree in reading order, with unnamed controls as failures.
@@ -1413,9 +1416,12 @@ extension Snapshots {
         var press = false
         /// The click opens an alert on the window's sheet; the sheet alone isn't the overlay.
         var nested = false
+        /// The control sits below the fold: the page scrolls to its end first, as a popover opens
+        /// only from a control that is on screen.
+        var reveal = false
     }
     static let overlayCases: [Overlay] = [
-        Overlay(name: "configs-jump", screen: "configs-guided", target: { $0.role == "AXButton" && $0.label == "Jump to Any Setting" }, after: { window in
+        Overlay(name: "configs-jump", screen: "configs-guided", target: { $0.role == "AXButton" && $0.label.hasPrefix("Jump to Any Setting") }, after: { window in
             // Type “fps” the way VoiceOver would set a field's value.
             if let field = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXTextField" && $0.label == "Setting name or console name" }) {
                 AccessibilityTree.setValue(field, "fps")
@@ -1425,7 +1431,7 @@ extension Snapshots {
         Overlay(name: "configs-new-loadout", screen: "configs-guided", target: { $0.role == "AXButton" && $0.label == "New Loadout" }),
         Overlay(name: "configs-expert-note", screen: "configs-expert", target: { $0.role == "AXButton" && $0.label == "Edit the note on Mouse speed" }),
         Overlay(name: "configs-binds-keyboard", screen: "configs-binds-visual", target: { $0.role == "AXButton" && $0.label.hasPrefix("Magic Keyboard") }),
-        Overlay(name: "configs-binds-pointer", screen: "configs-binds-visual", target: { $0.role == "AXButton" && $0.label.hasPrefix("Mouse ·") }),
+        Overlay(name: "configs-binds-pointer", screen: "configs-binds-visual", target: { $0.role == "AXButton" && $0.label.hasPrefix("Mouse ·") }, reveal: true),
         Overlay(name: "configs-binds-confirm", screen: "configs-binds-advanced",
                 prepare: { model in model.studio.binds.updateDraft { $0.steps[0].text = "good luck" } },
                 target: { $0.role == "AXButton" && $0.label == "Save Bind" }),
@@ -1442,6 +1448,14 @@ extension Snapshots {
                 guard let (_, window, home) = await open(overlay.screen, dark: dark, setup: overlay.prepare) else { return false }
                 defer { try? FileManager.default.removeItem(at: home) }
                 let name = "\(overlay.name)-\(dark ? "dark" : "light")"
+                if overlay.reveal, let content = window.contentView,
+                   let scroll = views(NSScrollView.self, in: content).max(by: {
+                       ($0.documentView?.bounds.height ?? 0) - $0.contentSize.height < ($1.documentView?.bounds.height ?? 0) - $1.contentSize.height
+                   }), let document = scroll.documentView {
+                    scroll.contentView.scroll(to: NSPoint(x: 0, y: max(0, document.bounds.height - scroll.contentSize.height)))
+                    scroll.reflectScrolledClipView(scroll.contentView)
+                    try? await Task.sleep(for: .milliseconds(300))
+                }
                 guard let target = AccessibilityTree.elements(of: window).first(where: overlay.target) else {
                     print("FAIL: \(name): the control that opens it isn't in the accessibility tree"); ok = false
                     window.orderOut(nil); window.close(); continue
@@ -1704,7 +1718,7 @@ extension Snapshots {
         let before = disk(), count = session.history.count
         guard await chooseMoreAction(window, "Rename “Main”") else { return false }
         try? await Task.sleep(for: .milliseconds(900))
-        guard window.attachedSheet != nil, sheetElement("AXTextField", "Name") != nil, sheetElement("AXButton", "Rename") != nil else {
+        guard window.attachedSheet != nil, sheetElement("AXTextField", "Loadout name") != nil, sheetElement("AXButton", "Rename") != nil else {
             print("FAIL: Rename “Main”… did not open the rename sheet"); return false
         }
         // The sheet focuses its name field: select its text and type over it with key events, as a
@@ -1723,13 +1737,13 @@ extension Snapshots {
         let renamed = disk()
         guard model.studio.metadata?.displayName == "Scrim Night", renamed[0] == before[0], renamed[2] == before[2], renamed[1] != before[1],
               session.history.count == count + 1, session.history.first?.summary == "Renamed to Scrim Night", window.attachedSheet == nil else {
-            print("FAIL: Rename did not change only the display name (\(model.studio.metadata?.displayName ?? "none"); field “\(sheetElement("AXTextField", "Name")?.value ?? "gone")”, "
+            print("FAIL: Rename did not change only the display name (\(model.studio.metadata?.displayName ?? "none"); field “\(sheetElement("AXTextField", "Loadout name")?.value ?? "gone")”, "
                   + "sheet \(window.attachedSheet != nil ? "open" : "closed"), failure \(model.studio.failure?.message ?? "none"))"); return false
         }
         print("PASS: More Actions › Rename wrote only the display name, Scrim Night, as one History row; config and active loadout unchanged")
         guard await chooseMoreAction(window, "Rename “Scrim Night”") else { return false }
         try? await Task.sleep(for: .milliseconds(900))
-        guard let again = sheetElement("AXTextField", "Name"), let cancel = sheetElement("AXButton", "Cancel") else { print("FAIL: the rename sheet did not reopen"); return false }
+        guard let again = sheetElement("AXTextField", "Loadout name"), let cancel = sheetElement("AXButton", "Cancel") else { print("FAIL: the rename sheet did not reopen"); return false }
         _ = again
         typeName("Discarded")
         try? await Task.sleep(for: .milliseconds(300))

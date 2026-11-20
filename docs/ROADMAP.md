@@ -53,6 +53,15 @@ was tested and what was not.
 The [0.3.1 verification](macos-port/release-0.3.1-verification.md) says what
 was tested and what was not.
 
+## 0.3.7 — One look across the launcher (released 0.3.7)
+
+- **Every screen follows one set of design rules**: the same titles, labels,
+  buttons, switches and form rows on every page, sheet and Settings pane.
+  Nothing in the game changed and nothing new was added.
+
+The [0.3.7 verification](macos-port/release-0.3.7-verification.md) says what
+was tested and what was not.
+
 ## 0.3.6 — A new name: CoD2 Unbound (released 0.3.6)
 
 - **CoD2 Silicon became CoD2 Unbound**, with a new icon, mark and lettering.

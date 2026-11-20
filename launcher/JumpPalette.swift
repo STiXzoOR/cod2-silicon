@@ -163,9 +163,8 @@ struct JumpToPalette: View {
                         ForEach(JumpItem.Section.allCases, id: \.self) { section in
                             let rows = items.enumerated().filter { $0.element.section == section }
                             if !rows.isEmpty {
-                                Text(section.rawValue).font(.system(size: 11, weight: .semibold)).foregroundStyle(palette.secondary)
+                                GroupLabel(section.rawValue)
                                     .padding(.horizontal, 12).padding(.top, 8).padding(.bottom, 4)
-                                    .accessibilityAddTraits(.isHeader)
                                 ForEach(rows, id: \.element.id) { index, item in row(item, selected: index == selection).id(index) }
                             }
                         }
@@ -192,8 +191,8 @@ struct JumpToPalette: View {
                 }
             }
             .padding(.horizontal, 12).frame(height: 40)
-            .background(selected ? palette.selection : .clear, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(selected ? palette.selectionStroke : .clear, lineWidth: 1))
+            .background(selected ? palette.selection : .clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(selected ? palette.selectionStroke : .clear, lineWidth: 1))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -207,7 +206,7 @@ struct JumpToPalette: View {
             HStack(spacing: 5) { KeyCap("↩"); Text("to open") }
             Spacer(minLength: 0)
         }
-        .font(.system(size: 12)).foregroundStyle(palette.secondary)
+        .font(.system(size: 12)).foregroundStyle(palette.tertiary)
         .padding(.horizontal, 14).frame(height: 44)
         .overlay(alignment: .top) { Rectangle().fill(palette.separator).frame(height: 1) }
         .accessibilityElement(children: .combine)

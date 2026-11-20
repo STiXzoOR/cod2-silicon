@@ -147,7 +147,7 @@ private struct GroupMenu: View {
         Picker("Setting group", selection: Binding(get: { studio.group }, set: { studio.group = $0; studio.filter = nil; studio.search = "" })) {
             ForEach(ConfigPurposeGroup.allCases, id: \.self) { Label(studio.catalogTitle($0), systemImage: $0.symbol).tag($0) }
         }
-        .labelsHidden().fixedSize()
+        .pickerStyle(.menu).labelsHidden().fixedSize().capsuleControls()
     }
 }
 
@@ -174,9 +174,12 @@ private struct GuidedEditor: View {
                     }
                     Spacer(minLength: 8)
                     Button { studio.level = .expert; studio.filter = nil; studio.search = "" } label: {
-                        Text("All \(studio.specs(in: studio.group).count) settings ›").font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.link)
+                        HStack(spacing: 6) {
+                            Text("Show All \(studio.specs(in: studio.group).count) in Expert")
+                            Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold)).accessibilityHidden(true)
+                        }
                     }
-                    .buttonStyle(.plain)
+                    .quietAction().fixedSize()
                     .accessibilityLabel("Show all \(studio.specs(in: studio.group).count) \(studio.catalogTitle(studio.group)) settings in Expert")
                 }
                 .padding(.horizontal, 4)
@@ -205,8 +208,10 @@ private struct GuidedRow: View {
 
     var body: some View {
         let state = studio.state(spec)
+        // A yes/no is a switch: the signed scale reads as “Invert up and down” here, as on the board.
+        let inverts = spec.name.lowercased() == "m_pitch"
         VStack(spacing: 0) {
-            SettingsRow(spec.title, detail: spec.setting.summary) {
+            SettingsRow(inverts ? "Invert up and down" : spec.title, detail: inverts ? "Moving the mouse forward looks down." : spec.setting.summary) {
                 if spec.name.lowercased() == "com_maxfps" {
                     FrameCapSegments(studio: studio, spec: spec, state: state, theirs: nil)
                 } else {
@@ -229,21 +234,14 @@ private struct RuleTip: View {
     @Environment(\.undoManager) private var undo
     @Environment(\.palette) private var palette
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "lightbulb").foregroundStyle(palette.accent).accessibilityHidden(true)
-            Text("\(checkup.selectionTitle): \(text)").font(.system(size: 13)).foregroundStyle(palette.text).fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 8)
+        Banner(.tip, symbol: "lightbulb", message: "\(checkup.selectionTitle): \(text)") {
             if let fix, let change = fix.changes.first(where: { $0.setting.caseInsensitiveCompare(spec.name) == .orderedSame }) {
                 Button("Use \(ConfigValues.display(spec, change.newValue))") { checkup.apply(fix.id, undo: undo) }
-                    .glassAction().controlSize(.small).fixedSize().disabled(studio.isReadOnly)
+                    .glassAction().controlSize(.large).fixedSize().disabled(studio.isReadOnly)
                     .help(fix.title)
             }
         }
-        .padding(.vertical, 10).padding(.leading, 14).padding(.trailing, 12)
-        .background(palette.accent.opacity(0.07), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(palette.accent.opacity(0.25), lineWidth: 1))
         .padding(.horizontal, SettingsMetrics.radius).padding(.bottom, 14)
-        .accessibilityElement(children: .contain)
     }
 }
 
@@ -261,8 +259,7 @@ private struct GuidedControl: View {
             if spec.labelsCoverRange {
                 LabelChoice(spec: spec, state: state) { studio.set(spec, to: $0, undo: undo) }
             } else {
-                Toggle(spec.title, isOn: Binding(get: { state.flag }, set: { studio.set(spec, to: $0 ? "1" : "0", undo: undo) }))
-                    .toggleStyle(.switch).labelsHidden().tint(palette.control)
+                SwitchToggle(spec.title, isOn: Binding(get: { state.flag }, set: { studio.set(spec, to: $0 ? "1" : "0", undo: undo) }))
             }
         case .enumeration:
             ChoiceMenu(spec: spec, state: state) { studio.set(spec, to: $0, undo: undo) }
@@ -277,22 +274,23 @@ private struct GuidedControl: View {
             }
         case .int, .float:
             if spec.name.lowercased() == "m_pitch" {
-                // A signed scale: the direction flips and the magnitude is kept.
-                Picker(spec.title, selection: Binding(get: { (state.number ?? 0.022) < 0 }, set: { inverted in
+                // A signed scale: the direction flips and the magnitude is kept. Yes/no, so a switch.
+                SwitchToggle("Invert up and down", isOn: Binding(get: { (state.number ?? 0.022) < 0 }, set: { inverted in
                     let magnitude = abs(state.number ?? 0.022)
                     studio.set(spec, to: ConfigValues.format(inverted ? -magnitude : magnitude), undo: undo)
-                })) { Text("Normal").tag(false); Text("Inverted").tag(true) }
-                    .pickerStyle(.segmented).labelsHidden().fixedSize()
+                }))
             } else if spec.name.lowercased() == "r_anisotropy", let minimum = spec.minimum, let maximum = spec.maximum {
                 let levels = stride(from: 0, through: 6, by: 1).map { pow(2.0, Double($0)) }.filter { $0 >= minimum && $0 <= maximum }
-                Picker(spec.title, selection: Binding(get: { state.number ?? minimum }, set: { studio.set(spec, to: ConfigValues.format($0, integer: true), undo: undo) })) {
-                    ForEach(levels + ((state.number).map { levels.contains($0) ? [] : [$0] } ?? []), id: \.self) { Text("\(ConfigValues.format($0, integer: true))×").tag($0) }
-                }
-                .labelsHidden().fixedSize()
+                let shown = levels + ((state.number).map { levels.contains($0) ? [] : [$0] } ?? [])
+                let selection = Binding(get: { state.number ?? minimum }, set: { studio.set(spec, to: ConfigValues.format($0, integer: true), undo: undo) })
+                let options = shown.map { (value: $0, title: "\(ConfigValues.format($0, integer: true))×") }
+                // Two to four short options are a segmented control; more are a pop-up.
+                if options.count <= 4 { ScopeSwitch(spec.title, selection: selection, options: options) }
+                else { PopUpButton(spec.title, selection: selection, options: options) }
             } else if spec.labelsCoverRange {
                 LabelChoice(spec: spec, state: state) { studio.set(spec, to: $0, undo: undo) }
             } else if let range = spec.slideRange {
-                HStack(spacing: 14) {
+                HStack(spacing: 12) {
                     if spec.practicalRange != nil {
                         // The slider covers the catalog's practical range; the field takes any value the game accepts.
                         CommitSlider(value: state.number ?? range.lowerBound, range: range, step: spec.step, label: spec.title, readout: nil) {
@@ -360,11 +358,10 @@ private struct DPIRow: View {
                     guard let value = ConfigValues.number(trimmed), value > 0, value <= 100_000 else { return nil }
                     return ConfigValues.format(value)
                 }) { studio.setDPI($0.isEmpty ? nil : ConfigValues.number($0), undo: undo) }
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    Text(MouseMath.label(distance)).font(.stencil(20)).foregroundStyle(palette.dark ? palette.accent : Palette.hex(0x4e5b2f))
-                    Text("cm per full turn").font(.system(size: 12)).foregroundStyle(palette.secondary)
-                }
-                .frame(minWidth: 150, alignment: .trailing)
+                // A value in a row: SF with tabular figures, as the readout beside a slider.
+                Text("\(MouseMath.label(distance)) cm per full turn").font(.system(size: 13, weight: .semibold)).monospacedDigit()
+                    .foregroundStyle(palette.text).lineLimit(1)
+                .frame(minWidth: 136, alignment: .trailing)
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(distance == nil ? "Enter your mouse’s DPI to see how far you turn" : "\(MouseMath.label(distance)) centimetres per full turn")
                 .accessibilityAddTraits(.isStaticText)
@@ -384,22 +381,30 @@ private struct ExpertTools: View {
     var body: some View {
         // One row when it fits; otherwise the tools wrap into a second row, and at the narrowest
         // the rules get a row of their own above search and Edit as Text, never squeezing labels.
+        // The board's order: the rules and how this loadout reads, then Compare with, then the text editor.
         ViewThatFits(in: .horizontal) {
-            HStack(spacing: 10) { compare; Spacer(minLength: 8); tools }
-            VStack(alignment: .leading, spacing: 10) { compare; tools }
+            HStack(spacing: 8) { ExpertRulesStatus(checkup: studio.checkup); divider; compare; Spacer(minLength: 8); search; textToggle }
             VStack(alignment: .leading, spacing: 10) {
-                compare
+                HStack(spacing: 8) { ExpertRulesStatus(checkup: studio.checkup); divider; compare }
+                HStack(spacing: 8) { search; Spacer(minLength: 0); textToggle }
+            }
+            VStack(alignment: .leading, spacing: 10) {
                 ExpertRulesStatus(checkup: studio.checkup)
-                HStack(spacing: 10) { search; textToggle }
+                compare
+                HStack(spacing: 8) { search; textToggle }
             }
         }
-        .controlSize(.regular)
+        .padding(.horizontal, 6)
+    }
+
+    private var divider: some View {
+        Rectangle().fill(palette.separator).frame(width: 1, height: 20).padding(.horizontal, 8).accessibilityHidden(true)
     }
 
     private var compare: some View {
         HStack(spacing: 10) {
             HStack(spacing: 8) {
-                Text("Compare with").font(.system(size: 12)).foregroundStyle(palette.secondary).fixedSize()
+                Text("Compare with").font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.secondary).fixedSize()
                 // A player from Discover appears here only while it's the comparison.
                 Picker("Compare with", selection: Binding(get: {
                     studio.player.map { CompareChoice.player($0.entryID) } ?? studio.compareID.map(CompareChoice.loadout) ?? .nobody
@@ -414,7 +419,7 @@ private struct ExpertTools: View {
                     if let player = studio.player { Text(player.name).tag(CompareChoice.player(player.entryID)) }
                     ForEach(studio.profiles.filter { $0.id != studio.current?.profile.id }) { Text($0.displayName).tag(CompareChoice.loadout($0.id)) }
                 }
-                .labelsHidden().fixedSize()
+                .pickerStyle(.menu).labelsHidden().fixedSize().capsuleControls().controlSize(.large)
             }
             if let name = studio.comparisonName {
                 VStack(alignment: .leading, spacing: 1) {
@@ -427,14 +432,6 @@ private struct ExpertTools: View {
                 .accessibilityLabel("Compare markers show \(name)’s values" + (studio.comparisonProvenance.map { ". \($0)" } ?? ""))
                 .accessibilityAddTraits(.isStaticText)
             }
-        }
-    }
-
-    private var tools: some View {
-        HStack(spacing: 10) {
-            ExpertRulesStatus(checkup: studio.checkup)
-            search
-            textToggle
         }
     }
 
@@ -482,13 +479,29 @@ private struct ExpertEditor: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0, pinnedViews: []) {
                     if compact { GroupMenu(studio: studio).padding(.bottom, 10) }
+                    // One group: its title and blurb, as in Guided. Several (a search or a filter): a section title over each.
+                    let single = sections.count == 1 && studio.filter == nil && studio.search.isEmpty
                     ForEach(sections) { section in
-                        HStack(alignment: .firstTextBaseline) {
-                            Text(studio.catalogTitle(section.group)).font(.system(size: 15, weight: .semibold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
-                            Spacer()
-                            Text(section.specs.count == 1 ? "1 setting" : "\(section.specs.count) settings").font(.system(size: 12)).foregroundStyle(palette.tertiary)
+                        let changed = section.specs.filter { studio.state($0).changed && !$0.launcherOwned }.count
+                        let count = (section.specs.count == 1 ? "1 setting" : "\(section.specs.count) settings") + (changed > 0 ? " · \(changed) changed" : "")
+                        if single {
+                            HStack(alignment: .bottom, spacing: 16) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(studio.catalogTitle(section.group)).font(StudioTypography.groupTitle).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
+                                    Text(section.group.blurb).font(.system(size: 13)).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+                                }
+                                Spacer(minLength: 8)
+                                Text(count).font(StudioTypography.help).monospacedDigit().foregroundStyle(palette.tertiary).lineLimit(1).fixedSize()
+                            }
+                            .padding(.horizontal, 6).padding(.bottom, 12)
+                        } else {
+                            HStack(alignment: .firstTextBaseline) {
+                                Text(studio.catalogTitle(section.group)).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.secondary).accessibilityAddTraits(.isHeader)
+                                Spacer()
+                                Text(count).font(StudioTypography.help).monospacedDigit().foregroundStyle(palette.tertiary)
+                            }
+                            .padding(.horizontal, 6).padding(.top, 12).padding(.bottom, 8)
                         }
-                        .padding(.horizontal, 4).padding(.top, 8).padding(.bottom, 8)
                         ForEach(Array(section.specs.enumerated()), id: \.element.id) { index, spec in
                             ExpertRow(studio: studio, checkup: studio.checkup, spec: spec, stacked: stacked, openSettings: openSettings)
                                 .panelSegment(first: index == 0, last: index == section.specs.count - 1, highlighted: studio.highlighted == spec.name,
@@ -523,8 +536,8 @@ private struct ExpertEditor: View {
 }
 
 private struct ExpertRow: View {
-    /// The editor width below which a row's name sits above its controls: the 214-point name
-    /// column, a slider with its field and presets, the three actions and the row's insets.
+    /// The editor width below which a row's name sits above its controls: the name
+    /// and console name, a slider with its field and presets, the three actions and the row's insets.
     static let sideBySideWidth: CGFloat = 640
     @ObservedObject var studio: ConfigStudioModel
     @ObservedObject var checkup: ConfigCheckupModel
@@ -539,22 +552,22 @@ private struct ExpertRow: View {
         let state = studio.state(spec)
         let theirs = studio.theirs(spec)
         VStack(alignment: .leading, spacing: 6) {
+            // One row per setting: its name and console name, the control on the right, then the row's actions.
             if stacked {
                 VStack(alignment: .leading, spacing: 8) {
                     name(state)
                     HStack(alignment: .center, spacing: 14) {
-                        control(state, theirs).frame(maxWidth: .infinity, alignment: .leading)
+                        control(state, theirs).frame(maxWidth: .infinity, alignment: .trailing)
                         actions(state)
                     }
-                    .frame(minHeight: 40)
                 }
             } else {
                 HStack(alignment: .center, spacing: 14) {
-                    name(state).frame(width: 214, alignment: .leading)
-                    control(state, theirs).frame(maxWidth: .infinity, alignment: .leading)
+                    name(state).frame(maxWidth: .infinity, alignment: .leading)
+                    control(state, theirs).fixedSize(horizontal: true, vertical: false)
                     actions(state)
                 }
-                .frame(minHeight: 40)
+                .frame(minHeight: 34)
             }
             let evaluation = checkup.evaluation(spec)
             let issue = evaluation.flatMap { $0.status == .violation || $0.status == .conflict ? $0 : nil }
@@ -571,7 +584,7 @@ private struct ExpertRow: View {
                         StudioCompareValue(value: theirs.display, source: source).fixedSize()
                         // The same rule guards the action: locks, the game running, the launcher and server-owned settings.
                         let blocked = studio.takeTheirsBlock(spec)
-                        Button("Take Theirs") { studio.takeTheirs(spec, undo: undo) }.glassAction().controlSize(.small).fixedSize()
+                        Button("Take Theirs") { studio.takeTheirs(spec, undo: undo) }.glassAction().controlSize(.large).fixedSize()
                             .disabled(blocked != nil)
                             .accessibilityLabel("Take \(source)’s \(spec.title), \(theirs.display)")
                             .accessibilityHint(blocked ?? "")
@@ -587,11 +600,11 @@ private struct ExpertRow: View {
                         Text("Note: \(note)").font(StudioTypography.help).italic().foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                .padding(.leading, stacked ? 0 : 228)
                 .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.vertical, 10).padding(.leading, 18).padding(.trailing, 12)
+        .padding(.vertical, 9).padding(.leading, 20).padding(.trailing, 16)
+        .frame(minHeight: 52)
         .accessibilityElement(children: .contain)
         .accessibilityLabel(spec.title)
         .accessibilityHint("Console name \(spec.name). \(spec.setting.summary)")
@@ -599,13 +612,13 @@ private struct ExpertRow: View {
 
     private func name(_ state: ConfigSettingState) -> some View {
         VStack(alignment: .leading, spacing: 3) {
-            HStack(spacing: 6) {
-                Text(spec.title).font(.system(size: 13, weight: .medium)).foregroundStyle(palette.dark ? Palette.hex(0xe6dfcf) : palette.text)
+            HStack(spacing: 8) {
+                Text(spec.title).font(.system(size: 14)).foregroundStyle(palette.text)
                     .lineLimit(2).fixedSize(horizontal: false, vertical: true)
-                if state.locked { Image(systemName: "lock.fill").font(.system(size: 10)).foregroundStyle(palette.accent).accessibilityLabel("Locked") }
                 if state.changed && !spec.launcherOwned { Circle().fill(palette.accent).frame(width: 6, height: 6).accessibilityLabel("Changed from default").accessibilityAddTraits(.isStaticText) }
+                if state.locked { Image(systemName: "lock.fill").font(.system(size: 11)).foregroundStyle(palette.accent).accessibilityLabel("Locked") }
             }
-            Text(spec.name).font(StudioTypography.consoleName).foregroundStyle(palette.address).lineLimit(1).textSelection(.enabled)
+            Text(spec.name).font(.typewriter(12)).foregroundStyle(palette.tertiary).lineLimit(1).textSelection(.enabled)
             if let badge = checkup.badge(spec) {
                 Badge(badge.text, tone: badge.tone == .negative ? .negative : badge.tone == .caution ? .accent : .neutral)
                     .accessibilityLabel("Rules: \(badge.text)")
@@ -620,7 +633,7 @@ private struct ExpertRow: View {
         if spec.launcherOwned {
             HStack(spacing: 10) {
                 Text(state.display).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.text)
-                Button("Change in Settings", action: openSettings).buttonStyle(.plain).font(.system(size: 12, weight: .semibold)).foregroundStyle(palette.link)
+                Button("Change in Settings", action: openSettings).quietAction().fixedSize()
             }
         } else {
             ExpertControl(studio: studio, spec: spec, state: state, theirs: theirs)
@@ -660,11 +673,8 @@ private struct ExpertControl: View {
             if spec.labelsCoverRange {
                 LabelChoice(spec: spec, state: state) { studio.set(spec, to: $0, undo: undo) }
             } else {
-                HStack(spacing: 10) {
-                    Toggle(spec.title, isOn: Binding(get: { state.flag }, set: { studio.set(spec, to: $0 ? "1" : "0", undo: undo) }))
-                        .toggleStyle(.switch).labelsHidden().tint(palette.control)
-                    Text(state.flag ? "On" : "Off").font(.system(size: 12)).foregroundStyle(palette.secondary).accessibilityHidden(true)
-                }
+                // A yes/no is a switch alone, never with “On” or “Off” written beside it.
+                SwitchToggle(spec.title, isOn: Binding(get: { state.flag }, set: { studio.set(spec, to: $0 ? "1" : "0", undo: undo) }))
             }
         case .enumeration:
             ChoiceMenu(spec: spec, state: state) { studio.set(spec, to: $0, undo: undo) }
@@ -678,15 +688,16 @@ private struct ExpertControl: View {
             } else if spec.labelsCoverRange {
                 LabelChoice(spec: spec, state: state) { studio.set(spec, to: $0, undo: undo) }
             } else if let range = spec.slideRange {
-                HStack(spacing: 10) {
+                HStack(spacing: 8) {
                     CommitSlider(value: state.number ?? range.lowerBound, range: range, step: spec.step, label: spec.title, readout: nil,
                                  marker: theirs?.number) { studio.set(spec, to: ConfigValues.text(number: $0, spec: spec), undo: undo) }
+                        .frame(width: 150)
                     NumberEntry(spec: spec, state: state, showUnit: true) { studio.set(spec, to: $0, undo: undo) }
                     if !spec.valueLabels.isEmpty { LabelPresets(spec: spec) { studio.set(spec, to: $0, undo: undo) } }
                 }
                 .practicalRangeHint(spec)
             } else {
-                HStack(spacing: 10) {
+                HStack(spacing: 8) {
                     NumberEntry(spec: spec, state: state, showUnit: true) { studio.set(spec, to: $0, undo: undo) }
                     if !spec.valueLabels.isEmpty { LabelPresets(spec: spec) { studio.set(spec, to: $0, undo: undo) } }
                 }
@@ -713,7 +724,7 @@ private struct FrameCapSegments: View {
                 ForEach(presets, id: \.self) { Text("\($0)").tag($0) }
                 Text("Custom").tag(-1)
             }
-            .pickerStyle(.segmented).labelsHidden().fixedSize()
+            .segmentedChoice()
             if isCustom { NumberEntry(spec: spec, state: state, showUnit: true) { studio.set(spec, to: $0, undo: undo) } }
         }
     }
@@ -728,8 +739,8 @@ private struct IconAction: View {
     @Environment(\.isEnabled) private var enabled
     var body: some View {
         Button(action: action) {
-            Image(systemName: symbol).font(.system(size: 13, weight: .medium))
-                .foregroundStyle(on ? palette.accent : palette.chipIcon)
+            Image(systemName: symbol).font(.system(size: 14, weight: .medium))
+                .foregroundStyle(on ? palette.accent : palette.tertiary)
                 .frame(width: StudioMetrics.minimumHitTarget, height: StudioMetrics.minimumHitTarget)
                 .contentShape(Circle())
         }
@@ -753,10 +764,10 @@ private struct NoteEditor: View {
             TextField("Why it’s set this way", text: $note, axis: .vertical).lineLimit(2...5).textFieldStyle(.roundedBorder).frame(width: 280)
             HStack {
                 if studio.state(spec).note != nil {
-                    Button("Remove Note") { studio.setNote(spec, "", undo: undo); dismiss() }.glassAction().controlSize(.small)
+                    Button("Remove Note") { studio.setNote(spec, "", undo: undo); dismiss() }.glassAction().controlSize(.large)
                 }
                 Spacer()
-                Button("Save Note") { studio.setNote(spec, note, undo: undo); dismiss() }.prominentAction().controlSize(.small).keyboardShortcut(.defaultAction)
+                Button("Save Note") { studio.setNote(spec, note, undo: undo); dismiss() }.prominentAction().controlSize(.large).keyboardShortcut(.defaultAction)
             }
         }
         .padding(16)
@@ -775,16 +786,14 @@ private struct LabelChoice: View {
     var commit: (String) -> Void
     var body: some View {
         let current = state.value.flatMap { value in spec.valueLabels.first { ConfigValues.same(spec, $0.text, value) }?.text }
-        let picker = Picker(spec.title, selection: Binding(get: { current ?? "" }, set: { if !$0.isEmpty { commit($0) } })) {
-            ForEach(spec.valueLabels, id: \.text) { Text($0.title).tag($0.text) }
-            // A value outside the named ones (set by hand) still shows as itself.
-            if current == nil { Text(state.value ?? "Not set").tag("") }
-        }
-        .labelsHidden().fixedSize()
+        let selection = Binding(get: { current ?? "" }, set: { if !$0.isEmpty { commit($0) } })
+        // A value outside the named ones (set by hand) still shows as itself.
+        let options = spec.valueLabels.map { (value: $0.text, title: $0.title) } + (current == nil ? [(value: "", title: state.value ?? "Not set")] : [])
+        // Two to four short options are a segmented control; more, or long labels, are a pop-up.
         if spec.valueLabels.count <= 4 && spec.valueLabels.allSatisfy({ $0.title.count <= 14 }) {
-            picker.pickerStyle(.segmented)
+            ScopeSwitch(spec.title, selection: selection, options: options)
         } else {
-            picker.pickerStyle(.menu)
+            PopUpButton(spec.title, selection: selection, options: options)
         }
     }
 }
@@ -830,11 +839,8 @@ private struct ChoiceMenu: View {
     }
     var body: some View {
         let index = state.value.flatMap { ConfigValues.enumIndex($0, choices: spec.choices) }
-        Picker(spec.title, selection: Binding(get: { index ?? -1 }, set: { if spec.choices.indices.contains($0) { commit(spec.choices[$0]) } })) {
-            ForEach(Array(spec.choices.enumerated()), id: \.offset) { Text(spec.title(forChoice: $0.element)).tag($0.offset) }
-            if index == nil { Text(unlisted).tag(-1) }
-        }
-        .labelsHidden().fixedSize()
+        let options = spec.choices.enumerated().map { (value: $0.offset, title: spec.title(forChoice: $0.element)) } + (index == nil ? [(value: -1, title: unlisted)] : [])
+        PopUpButton(spec.title, selection: Binding(get: { index ?? -1 }, set: { if spec.choices.indices.contains($0) { commit(spec.choices[$0]) } }), options: options)
     }
 }
 
@@ -845,11 +851,13 @@ private struct NumberEntry: View {
     var commit: (String) -> Void
     @Environment(\.palette) private var palette
     var body: some View {
-        HStack(spacing: 6) {
-            CommitField(value: state.value ?? "", label: spec.title, width: 84, alignment: .trailing,
+        HStack(spacing: 8) {
+            CommitField(value: state.value ?? "", label: spec.title, width: 72, alignment: .trailing,
                         validate: { ConfigValues.number($0, type: spec.type).map { ConfigValues.text(number: $0, spec: spec) } }, commit: commit)
-            if showUnit, let unit = spec.unit {
-                Text(unit).font(.system(size: 11)).foregroundStyle(palette.tertiary).lineLimit(1).fixedSize().accessibilityHidden(true)
+            if showUnit {
+                // The unit column keeps its width so fields line up down the group.
+                Text(spec.unit ?? "").font(StudioTypography.help).foregroundStyle(palette.tertiary).lineLimit(1).fixedSize()
+                    .frame(minWidth: 56, alignment: .leading).accessibilityHidden(true)
             }
         }
     }
@@ -932,11 +940,13 @@ struct CommitField: View {
                 if secure { SecureField(label, text: text, prompt: prompt.map { Text($0) }) }
                 else { TextField(label, text: text, prompt: prompt.map { Text($0) }) }
             }
+            // The rounded field of a form row (LauncherTextField's metrics): 28 tall, radius 7, the field fill.
             .textFieldStyle(.plain).labelsHidden()
             .font(.system(size: 13)).monospacedDigit()
-            .padding(.horizontal, 8).frame(width: width, height: ControlMetrics.height(.large))
-            .background(palette.well, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous).strokeBorder(invalid ? palette.negative : palette.wellStroke, lineWidth: 1))
+            .padding(.horizontal, 12).frame(width: width, height: 28)
+            .background(palette.field, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous).strokeBorder(invalid ? palette.negative : focused ? palette.accent.opacity(0.75) : palette.wellStroke, lineWidth: focused || invalid ? 2 : 1))
+            .shapeAudit(.field, .rounded(7), "text field")
         }
     }
     /// Reads only the callback's snapshot, never this closure's captured `value` or context, which
@@ -1110,7 +1120,7 @@ private struct PanelSegmentStyle: ViewModifier {
         content
             .background(highlighted ? palette.selection : bad ? palette.negative.opacity(0.05) : .clear, in: shape)
             .background(palette.panel, in: shape)
-            .overlay(alignment: .top) { if !first { Rectangle().fill(palette.separator).frame(height: 1).padding(.leading, 18) } }
+            .overlay(alignment: .top) { if !first { Rectangle().fill(palette.separator).frame(height: 1) } }
             .overlay { PanelSegmentEdge(radius: SettingsMetrics.radius, top: first, bottom: last).stroke(highlighted ? palette.selectionStroke : palette.panelStroke, lineWidth: 1) }
     }
 }
@@ -1162,9 +1172,10 @@ private struct TextEditorPane: View {
                 Text(studio.textBlocked ? "Fix the underlined problems to apply your edits." : "Edits apply to the loadout when you choose Apply. Lines the game won’t accept are underlined.")
                     .font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 8)
-                Text("\(studio.text.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline).count) lines").font(.typewriter(12)).foregroundStyle(palette.address)
-                Button("Revert", action: studio.revertText).glassAction().disabled(!studio.textEdited)
-                Button("Apply Text Edits") { studio.applyText(undo: undo) }.prominentAction()
+                Text("\(studio.text.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline).count) lines").font(StudioTypography.help).monospacedDigit()
+                    .foregroundStyle(palette.tertiary).fixedSize()
+                Button("Revert", action: studio.revertText).glassAction().actionControlSize().disabled(!studio.textEdited)
+                Button("Apply Text Edits") { studio.applyText(undo: undo) }.prominentAction().actionControlSize()
                     .disabled(!studio.textEdited || studio.textBlocked || studio.isReadOnly || studio.textStale)
                     .keyboardShortcut("s", modifiers: .command)
             }
@@ -1285,7 +1296,7 @@ struct JumpPalette: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass").foregroundStyle(palette.secondary).accessibilityHidden(true)
-                TextField("Jump to any setting", text: $query).textFieldStyle(.plain).font(.system(size: 16)).focused($searching)
+                TextField("Setting or console name", text: $query).textFieldStyle(.plain).font(.system(size: 17)).focused($searching)
                     .accessibilityLabel("Setting name or console name")
                     .onSubmit { go(results.first { $0.name == selection } ?? results.first) }
                     .arrowKeys { move($0, in: results) }
@@ -1321,11 +1332,17 @@ struct JumpPalette: View {
                     .onChange(of: selection) { _, name in if let name { reader.scrollTo(name) } }
                 }
             }
-            HStack(spacing: 14) {
-                Text("↑ ↓ to move · Return to jump").font(.system(size: 11)).foregroundStyle(palette.secondary)
+            // A list of shortcuts, so the keys are boxed caps.
+            HStack(spacing: 12) {
+                HStack(spacing: 4) { ShortcutKeys(["↑"]); ShortcutKeys(["↓"]); Text("to move") }
+                    .accessibilityElement(children: .ignore).accessibilityLabel("Up and down arrows to move")
+                HStack(spacing: 4) { ShortcutKeys(["↩"]); Text("to jump") }
+                    .accessibilityElement(children: .ignore).accessibilityLabel("Return to jump")
                 Spacer()
-                Button("Close") { dismiss() }.glassAction().controlSize(.small).keyboardShortcut(.cancelAction)
+                Button("Close") { dismiss() }.glassAction().controlSize(.large).keyboardShortcut(.cancelAction)
             }
+            .font(StudioTypography.help).foregroundStyle(palette.tertiary)
+            .padding(.leading, 6)
         }
         .padding(12)
         .frame(width: 600, height: 440)

@@ -14,11 +14,11 @@ struct HostingView: View {
         // The reader gives the page the window's size and no minimum of its own, so a wide control
         // can never push the split view around.
         GeometryReader { proxy in
-            let leading = max(22, 264 - origin.x)
+            let leading = max(22, 284 - origin.x)
             Group {
-                if hosting.servers.isEmpty && hosting.draft == nil { none } else { some(width: proxy.size.width - leading - 22) }
+                if hosting.servers.isEmpty && hosting.draft == nil { none } else { some(width: proxy.size.width - leading - 32) }
             }
-            .padding(.leading, leading).padding(.trailing, 22).padding(.top, 84).padding(.bottom, 22)
+            .padding(.leading, leading).padding(.trailing, 32).padding(.top, 84).padding(.bottom, 24)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
         .background { ContourBackdrop().ignoresSafeArea() }
@@ -30,29 +30,32 @@ struct HostingView: View {
     }
 
     private var none: some View {
-        VStack(spacing: 14) {
-            Image(systemName: "server.rack").font(.system(size: 34, weight: .light)).foregroundStyle(palette.accent).accessibilityHidden(true)
-            Text("HOST YOUR OWN SERVER").font(.stencil(34)).tracking(1).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
+        // An empty state (stencil heading, as Design Rules allow), set larger as the page's only content.
+        VStack(spacing: 12) {
+            Image(systemName: "dot.radiowaves.left.and.right").font(.system(size: 44, weight: .light)).foregroundStyle(palette.secondary).accessibilityHidden(true)
+            Text("HOST YOUR OWN SERVER").font(.stencil(34)).tracking(4).foregroundStyle(palette.chipIcon).multilineTextAlignment(.center)
+                .accessibilityAddTraits(.isHeader)
             Text("Run a server on this Mac for friends on your network or over the internet, with the original 1.3 or CoD2x, public rules or a competitive zPAM match. Or write the files for a server that runs somewhere else.")
-                .font(.system(size: 14)).foregroundStyle(palette.secondary).multilineTextAlignment(.center).frame(maxWidth: 560).fixedSize(horizontal: false, vertical: true)
+                .font(.system(size: 13)).foregroundStyle(palette.secondary).multilineTextAlignment(.center).frame(maxWidth: 560).fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 10) {
                 Button { hosting.newServer(engine: model.chosenEngine) } label: { Label("New Server", systemImage: "plus") }.prominentAction()
-                Button("Write a server.cfg…") { hosting.newServer(engine: model.chosenEngine); hosting.exporting = hosting.draft }
+                Button("Write a server.cfg…") { hosting.newServer(engine: model.chosenEngine); hosting.exporting = hosting.draft }.glassAction()
             }
-            .controlSize(.large).padding(.top, 4)
+            .actionControlSize().padding(.top, 6)
             Text("The server uses your own game files. Nothing is contacted until you start it.")
                 .font(StudioTypography.help).foregroundStyle(palette.tertiary)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.top, 176)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     /// The board's layout at 1440 wide: a 280-point list and two columns beside it. A narrower window
     /// (down to the 1100 minimum) keeps everything inside it: the list narrows, and the form's two
     /// columns become one.
     private func some(width: CGFloat) -> some View {
-        let listWidth: CGFloat = width < 900 ? 200 : 280
-        let columns = width - listWidth - 18 >= 700 ? 2 : 1
-        return HStack(alignment: .top, spacing: 18) {
+        let listWidth: CGFloat = width < 900 ? 220 : 300
+        let columns = width - listWidth - 20 >= 700 ? 2 : 1
+        return HStack(alignment: .top, spacing: 20) {
             list.frame(width: listWidth)
             Group {
                 if hosting.showingDraft, let draft = hosting.draft {
@@ -68,14 +71,14 @@ struct HostingView: View {
 
     private var list: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Your servers").font(StudioTypography.groupTitle).foregroundStyle(palette.heading).padding(.leading, 6).padding(.bottom, 4).accessibilityAddTraits(.isHeader)
+            GroupLabel("Your servers").padding(.horizontal, 8).padding(.top, 4).padding(.bottom, 6)
             if hosting.draft != nil {
-                row("New server", "Not saved yet", symbol: "plus", tint: palette.accent, selected: hosting.showingDraft) { hosting.selection = nil }
+                row("New server", "Not saved yet", symbol: "plus", tint: palette.tertiary, selected: hosting.showingDraft) { hosting.selection = nil }
             }
             ForEach(hosting.servers) { server in
                 let running = hosting.isRunning(server.id), failed = meta(server) == "Couldn’t start"
-                row(server.name, meta(server), symbol: running ? "dot.radiowaves.left.and.right" : failed ? "exclamationmark.triangle" : "server.rack",
-                    tint: running ? palette.positive : failed ? palette.negative : palette.secondary, selected: hosting.selection == server.id) {
+                row(server.name, meta(server), symbol: running ? "checkmark.circle" : failed ? "exclamationmark.triangle" : "minus.circle",
+                    tint: running ? palette.positive : failed ? palette.negative : palette.tertiary, selected: hosting.selection == server.id) {
                     hosting.selection = server.id
                 }
                 .contextMenu {
@@ -88,29 +91,32 @@ struct HostingView: View {
             }
             Spacer(minLength: 8)
             Text("A running server keeps going when you close this window. Quitting CoD2 Unbound asks before stopping it.")
-                .font(.system(size: 11)).foregroundStyle(palette.tertiary).lineSpacing(2).fixedSize(horizontal: false, vertical: true).padding(.horizontal, 6)
+                .font(StudioTypography.help).foregroundStyle(palette.tertiary).lineSpacing(1.5).fixedSize(horizontal: false, vertical: true).padding(.horizontal, 8)
         }
+        .padding(.vertical, 14).padding(.horizontal, 12)
         .frame(maxHeight: .infinity, alignment: .top)
+        .background(palette.panel, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(palette.panelStroke, lineWidth: 1))
+        .shapeAudit(.container, .rounded(20), "panel")
     }
     private func row(_ title: String, _ detail: String, symbol: String, tint: Color, selected: Bool, action: @escaping () -> Void) -> some View {
-        let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
         return Button(action: action) {
-            HStack(spacing: 10) {
-                Image(systemName: symbol).font(.system(size: 13, weight: .semibold)).foregroundStyle(tint).frame(width: 30, height: 30)
-                    .background(palette.dark ? Palette.hex(0x1b1f17) : palette.crate, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            HStack(spacing: 12) {
+                Image(systemName: symbol).font(.system(size: 15, weight: .medium)).foregroundStyle(tint).frame(width: 18)
                     .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text(title).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text).lineLimit(1)
-                    Text(detail).font(StudioTypography.help).foregroundStyle(palette.secondary).lineLimit(1)
+                    Text(detail).font(StudioTypography.help).foregroundStyle(palette.tertiary).lineLimit(1)
                 }
                 Spacer(minLength: 0)
             }
-            .padding(.vertical, 6).padding(.horizontal, 10).frame(minHeight: 48)
+            .padding(.vertical, 9).padding(.horizontal, 10).frame(minHeight: 48)
             .background(selected ? palette.selection : .clear, in: shape)
             .overlay(shape.strokeBorder(selected ? palette.selectionStroke : .clear, lineWidth: 1))
             .contentShape(shape)
         }
-        .buttonStyle(RowButtonStyle(radius: 12))
+        .buttonStyle(RowButtonStyle(radius: 14))
         .accessibilityLabel("\(title), \(detail)").accessibilityAddTraits(selected ? .isSelected : [])
     }
     private func meta(_ server: HostedServer) -> String {
@@ -132,15 +138,23 @@ private struct HostingToolbar: ViewModifier {
     func body(content: Content) -> some View {
         #if COD2_LIQUID_GLASS
         if #available(macOS 26.0, *) {
-            content.toolbar { leading; ToolbarSpacer(.flexible); ToolbarItem { export }; ToolbarSpacer(.fixed); ToolbarItem { new } }
+            content.toolbar {
+                leading
+                // With no servers yet the page itself offers New Server and the export, as the board draws it.
+                if hasServers { ToolbarSpacer(.flexible); ToolbarItem { export }; ToolbarSpacer(.fixed); ToolbarItem { new } }
+            }
         } else { legacy(content) }
         #else
         legacy(content)
         #endif
     }
     private func legacy(_ content: Content) -> some View {
-        content.toolbar { leading; ToolbarItem { Spacer() }; ToolbarItem { export }; ToolbarItem { new } }
+        content.toolbar {
+            leading
+            if hasServers { ToolbarItem { Spacer() }; ToolbarItem { export }; ToolbarItem { new } }
+        }
     }
+    private var hasServers: Bool { !(hosting.servers.isEmpty && hosting.draft == nil) }
     @ToolbarContentBuilder private var leading: some ToolbarContent {
         ToolbarItem(placement: .navigation) {
             ScopeSwitch("Which servers", selection: $model.serverScope, options: ServerScope.allCases.map { ($0, $0.title) })
@@ -195,97 +209,79 @@ private struct HostingForm: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(isNew ? "New server" : current.name).font(.system(size: 26, weight: .bold)).foregroundStyle(palette.heading).lineLimit(1)
+                    Text(isNew ? "New server" : current.name).font(.system(size: 22, weight: .bold)).foregroundStyle(palette.heading).lineLimit(1)
                         .accessibilityAddTraits(.isHeader)
                     // One column has no room for the hint beside the buttons: it goes under the name.
-                    if columns == 1 { Text(hint(current)).font(StudioTypography.help).foregroundStyle(palette.secondary).lineLimit(1) }
+                    if columns == 1 { Text(hint(current)).font(StudioTypography.help).foregroundStyle(palette.tertiary).lineLimit(1) }
                 }
                 Spacer(minLength: 12)
-                if columns == 2 { Text(hint(current)).font(StudioTypography.help).foregroundStyle(palette.secondary).lineLimit(1) }
+                if columns == 2 { Text(hint(current)).font(StudioTypography.help).foregroundStyle(palette.tertiary).lineLimit(1) }
                 if hosting.isRunning(current.id) {
-                    Button("Done") { hosting.editing = nil }.prominentAction()
+                    Button("Done") { hosting.editing = nil }.prominentAction().actionControlSize()
                 } else {
-                    if isNew { Button("Cancel") { hosting.cancelDraft() } } else { Button("Delete Server…") { model.requestDeleteHostedServer(current) } }
+                    Group {
+                        if isNew { Button("Cancel") { hosting.cancelDraft() } } else { Button("Delete Server…") { model.requestDeleteHostedServer(current) } }
+                    }
+                    .glassAction().actionControlSize()
                     Button("Start Server") { if let saved = isNew ? hosting.saveDraft() : current { hosting.start(saved) } }
-                        .prominentAction().disabled(current.rules == .zpam && !zpamReady(current))
+                        .prominentAction().actionControlSize().disabled(current.rules == .zpam && !zpamReady(current))
                         .help(current.rules == .zpam && !zpamReady(current) ? "Get zPAM first" : "Starts the server on this Mac")
                 }
             }
             problem(current)
             ScrollView {
-                let layout = columns == 2 ? AnyLayout(HStackLayout(alignment: .top, spacing: 14)) : AnyLayout(VStackLayout(alignment: .leading, spacing: 18))
+                let layout = columns == 2 ? AnyLayout(HStackLayout(alignment: .top, spacing: 20)) : AnyLayout(VStackLayout(alignment: .leading, spacing: 18))
                 layout {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 0) {
                         label("Server")
+                        // A narrow column: each row puts its title and control on one line and its help under both.
                         FormGroup {
-                            FormRow("Name", detail: "What players see in the server list.") {
-                                TextField("Server name", text: server.name).textFieldStyle(.roundedBorder).frame(width: 200).accessibilityLabel("Server name")
+                            FormWideRow("Name", detail: "What players see in the server list.") {
+                                LauncherTextField("Server name", text: server.name, width: 200)
                             }
-                            // Who can join depends on the version, and that takes a sentence: it goes under
-                            // the switch, across the row, as Rules' explanation does.
-                            VStack(alignment: .leading, spacing: 6) {
-                                HStack(spacing: 14) {
-                                    Text("Game version").font(.system(size: 14)).foregroundStyle(palette.text)
-                                    Spacer(minLength: 8)
-                                    Picker("Game version", selection: server.engine) {
-                                        Text("CoD2x").tag(GameEngine.cod2x); Text("Original 1.3").tag(GameEngine.original)
-                                    }
-                                    .pickerStyle(.segmented).labelsHidden().fixedSize()
+                            FormWideRow("Game version", detail: current.engine == .cod2x
+                                        ? "Anyone with CoD2x \(CoD2xFiles.version) or newer can join, on Mac, Windows or Linux. A running CoD2x server asks CoD2x’s update service about new versions."
+                                        : "Anyone with the original 1.3 can join, on Mac or Windows.") {
+                                Picker("Game version", selection: server.engine) {
+                                    Text("CoD2x").tag(GameEngine.cod2x); Text("Original 1.3").tag(GameEngine.original)
                                 }
-                                Text(current.engine == .cod2x
-                                     ? "Anyone with CoD2x \(CoD2xFiles.version) or newer can join, on Mac, Windows or Linux. A running CoD2x server asks CoD2x’s update service about new versions."
-                                     : "Anyone with the original 1.3 can join, on Mac or Windows.")
-                                    .font(.system(size: 12)).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
+                                .segmentedChoice()
+                                .accessibilityLabel("Game version")
                             }
-                            .padding(.horizontal, FormMetrics.rowInset(.panel)).padding(.vertical, 10)
-                            .accessibilityElement(children: .contain)
-                            FormRow("Who can join", detail: current.reach.detail) {
-                                Picker("Who can join", selection: server.reach) { ForEach(HostedServer.Reach.allCases, id: \.self) { Text($0.title).tag($0) } }
-                                    .labelsHidden().fixedSize()
+                            FormWideRow("Who can join", detail: current.reach.detail) {
+                                PopUpButton("Who can join", selection: server.reach, options: HostedServer.Reach.allCases.map { ($0, $0.title) })
                             }
                             FormRow("Players") {
-                                Picker("Players", selection: server.players) { ForEach([2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 32], id: \.self) { Text("\($0)").tag($0) } }
-                                    .labelsHidden().fixedSize()
+                                PopUpButton("Players", selection: server.players, options: [2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 32].map { ($0, "\($0)") })
                             }
-                            FormRow("Password to join", detail: "Leave empty for an open server.") {
-                                SecureField("None", text: server.joinPassword).textFieldStyle(.roundedBorder).frame(width: 200).accessibilityLabel("Password to join")
+                            FormWideRow("Password to join", detail: "Leave empty for an open server.") {
+                                LauncherTextField("Password to join", text: server.joinPassword, prompt: "None", secure: true, width: 180)
                             }
-                            FormRow("Admin password", detail: "For controlling the server from inside the game. Kept on this Mac.") {
-                                HStack(spacing: 6) {
-                                    Group {
-                                        if showAdmin { TextField("Admin password", text: server.adminPassword) } else { SecureField("Admin password", text: server.adminPassword) }
-                                    }
-                                    .textFieldStyle(.roundedBorder).frame(width: 130).accessibilityLabel("Admin password")
-                                    Button(showAdmin ? "Hide" : "Show") { showAdmin.toggle() }.controlSize(.small).fixedSize()
+                            FormWideRow("Admin password", detail: "For controlling the server from inside the game. Kept on this Mac.") {
+                                HStack(spacing: 8) {
+                                    LauncherTextField("Admin password", text: server.adminPassword, secure: !showAdmin, monospaced: true, width: 120)
+                                    Button(showAdmin ? "Hide" : "Show") { showAdmin.toggle() }.glassAction().controlSize(.large).fixedSize()
                                 }
                             }
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .topLeading)
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 0) {
                         label("Match")
                         FormGroup {
-                            // The switch is wide: its explanation goes under it, across the row.
-                            VStack(alignment: .leading, spacing: 6) {
-                                HStack(spacing: 14) {
-                                    Text("Rules").font(.system(size: 14)).foregroundStyle(palette.text)
-                                    Spacer(minLength: 8)
-                                    Picker("Rules", selection: server.rules) { ForEach(HostedServer.Rules.allCases, id: \.self) { Text($0.title).tag($0) } }
-                                        .pickerStyle(.segmented).labelsHidden().fixedSize()
-                                }
-                                Text(current.rules.detail).font(.system(size: 12)).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
+                            FormWideRow("Rules", detail: current.rules.detail) {
+                                Picker("Rules", selection: server.rules) { ForEach(HostedServer.Rules.allCases, id: \.self) { Text($0.title).tag($0) } }
+                                    .segmentedChoice()
+                                    .accessibilityLabel("Rules")
                             }
-                            .padding(.horizontal, FormMetrics.rowInset(.panel)).padding(.vertical, 10)
-                            .accessibilityElement(children: .contain)
                             if current.rules == .zpam { zpamRows(current) } else {
                                 FormRow("Game type") {
-                                    Picker("Game type", selection: server.gameType) { ForEach(HostingCatalog.gameTypes, id: \.id) { Text($0.title).tag($0.id) } }
-                                        .labelsHidden().fixedSize()
+                                    PopUpButton("Game type", selection: server.gameType, options: HostingCatalog.gameTypes.map { ($0.id, $0.title) })
                                 }
-                                FormRow("Friendly fire") { Toggle("Friendly fire", isOn: server.friendlyFire).labelsHidden().toggleStyle(.switch) }
+                                FormRow("Friendly fire", isOn: server.friendlyFire)
                             }
                         }
-                        label("Maps, in order").padding(.top, 8)
+                        label("Maps, in order").padding(.top, 14)
                         maps(current)
                     }
                     .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -297,8 +293,9 @@ private struct HostingForm: View {
             if current.rules == .zpam, !model.snapshot { await hosting.lookUpZPAM(current.zpamLine) }
         }
     }
+    /// A section title above a form group (.sec-title): SF 13 semibold, secondary, sentence case.
     private func label(_ text: String) -> some View {
-        Text(text.uppercased()).font(.system(size: 11, weight: .semibold)).tracking(0.88).foregroundStyle(palette.tertiary).padding(.leading, 6).accessibilityAddTraits(.isHeader)
+        Text(text).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.secondary).padding(.horizontal, 6).padding(.bottom, 8).accessibilityAddTraits(.isHeader)
     }
     private func zpamReady(_ server: HostedServer) -> Bool { if case .ready = hosting.zpam[server.zpamLine] { return true }; return false }
 
@@ -309,6 +306,7 @@ private struct HostingForm: View {
             Banner(.error, title: "The server couldn’t start: port \(String(current.port)) is already in use.",
                    message: "Another server or a running game is using it. The next free port is \(String(next)).") {
                 Button("Use \(String(next)) and Start") { if let saved = hosting.saveDraft() ?? hosting.selected { hosting.start(saved, port: next) } }
+                    .prominentAction().controlSize(.large)
             }
         default: EmptyView()
         }
@@ -318,32 +316,33 @@ private struct HostingForm: View {
         let megabytes: (Int) -> String = { "\(($0 + 524_288) / 1_048_576) MB" }
         switch hosting.zpam[current.zpamLine] ?? .unknown {
         case .unknown:
-            FormRow("Looking up zPAM…", detail: "Asking the zPAM project’s releases on GitHub which version is current.") { ProgressView().controlSize(.small) }
+            FormWideRow("Looking up zPAM…", detail: "Asking the zPAM project’s releases on GitHub which version is current.") { ProgressView().controlSize(.small) }
         case .failed(let message):
-            FormRow("zPAM couldn’t be looked up", detail: message) { Button("Try Again") { Task { await hosting.lookUpZPAM(current.zpamLine) } } }
+            FormWideRow("zPAM couldn’t be looked up", detail: message) {
+                Button("Try Again") { Task { await hosting.lookUpZPAM(current.zpamLine) } }.glassAction().controlSize(.large)
+            }
         case .missing(let release):
-            FormRow("zPAM isn’t on this Mac yet",
-                    detail: "The match mod competitive servers run, made by the author of CoD2x. \(megabytes(release.bytes)) with its map pack, from the zPAM project’s releases on GitHub. Checked after download and kept beside your servers; your game folder is not touched.") {
-                Button("Get zPAM \(release.version)") { hosting.getZPAM(current.zpamLine) }
+            FormWideRow("zPAM isn’t on this Mac yet",
+                        detail: "The match mod competitive servers run, made by the author of CoD2x. \(megabytes(release.bytes)) with its map pack, from the zPAM project’s releases on GitHub. Checked after download and kept beside your servers; your game folder is not touched.") {
+                Button("Get zPAM \(release.version)") { hosting.getZPAM(current.zpamLine) }.prominentAction().controlSize(.large).fixedSize()
             }
         case .getting(let release, let received):
-            FormRow("Getting zPAM \(release.version)…", detail: "\(megabytes(received).dropLast(3)) of \(megabytes(release.bytes))") {
+            FormWideRow("Getting zPAM \(release.version)…", detail: "\(megabytes(received).dropLast(3)) of \(megabytes(release.bytes))") {
                 HStack(spacing: 10) {
-                    ProgressView(value: Double(received), total: Double(max(1, release.bytes))).frame(width: 90).accessibilityLabel("Downloading zPAM")
-                    Button("Cancel") { hosting.cancelZPAM() }.fixedSize()
+                    ProgressBar("Downloading zPAM", value: Double(received) / Double(max(1, release.bytes))).frame(minWidth: 60, maxWidth: 180)
+                    Button("Cancel") { hosting.cancelZPAM() }.glassAction().controlSize(.regular).fixedSize()
                 }
             }
         case .ready(let version):
-            FormRow("zPAM \(version)", detail: current.engine == .cod2x ? "Installed. A running match server checks CoD2x’s update service and keeps zPAM current by itself."
-                                                                        : "Installed, for the original 1.3.") {
-                Label("Ready", systemImage: "checkmark").font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.positive)
+            FormWideRow("zPAM \(version)", detail: current.engine == .cod2x ? "Installed. A running match server checks CoD2x’s update service and keeps zPAM current by itself."
+                                                                            : "Installed, for the original 1.3.") {
+                StatusLabel(.ready)
             }
-            FormRow("Match mode", detail: "zPAM’s own name for the format.") {
-                Picker("Match mode", selection: server.matchMode) { ForEach(HostingCatalog.matchModes, id: \.id) { Text($0.title).tag($0.id) } }
-                    .labelsHidden().frame(width: 230)
+            FormWideRow("Match mode", detail: "zPAM’s own name for the format.") {
+                PopUpButton("Match mode", selection: server.matchMode, options: HostingCatalog.matchModes.map { ($0.id, $0.title) })
             }
-            FormRow("Players get maps from", detail: "zPAM’s map pack is fetched by each player’s game from this address.") {
-                Text("cod2x.me · zPAM’s default").font(.system(size: 13)).foregroundStyle(palette.secondary).fixedSize()
+            FormWideRow("Players get maps from", detail: "zPAM’s map pack is fetched by each player’s game from this address.") {
+                Text("cod2x.me · zPAM’s default").font(.system(size: 13)).foregroundStyle(palette.secondary).lineLimit(1)
             }
         }
     }
@@ -352,7 +351,7 @@ private struct HostingForm: View {
     private func maps(_ current: HostedServer) -> some View {
         let box = RoundedRectangle(cornerRadius: FormMetrics.radius(.panel), style: .continuous)
         return VStack(alignment: .leading, spacing: 8) {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 84, maximum: 132), spacing: 10, alignment: .top)], alignment: .leading, spacing: 12) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10, alignment: .top), count: 4), alignment: .leading, spacing: 12) {
                 ForEach(Array(current.maps.enumerated()), id: \.offset) { index, map in
                     HostingMapTile(artwork: model.artwork, map: map, order: index + 1, canRemove: current.maps.count > 1) { server.wrappedValue.maps.remove(at: index) }
                         .draggable(map)
@@ -367,9 +366,9 @@ private struct HostingForm: View {
                 Button { hosting.addingMap = true } label: {
                     VStack(alignment: .leading, spacing: 6) {
                         Color.clear.aspectRatio(4.0 / 3.0, contentMode: .fit)
-                            .overlay(Image(systemName: "plus").font(.system(size: 16, weight: .semibold)).accessibilityHidden(true))
+                            .overlay(Image(systemName: "plus").font(.system(size: 17, weight: .semibold)).accessibilityHidden(true))
                             .overlay(RoundedRectangle(cornerRadius: HostingMapTile.radius, style: .continuous)
-                                .strokeBorder(palette.accent.opacity(0.5), style: StrokeStyle(lineWidth: 1, dash: [3, 3])))
+                                .strokeBorder(palette.selectionStroke, style: StrokeStyle(lineWidth: 1, dash: [3, 3])))
                         Text("Add Map").font(.system(size: 12, weight: .semibold)).lineLimit(1)
                     }
                     .foregroundStyle(palette.accent)
@@ -385,7 +384,7 @@ private struct HostingForm: View {
             }
             .padding(HostingMapTile.inset).frame(maxWidth: .infinity, alignment: .leading)
             .background(palette.panel, in: box).overlay(box.strokeBorder(palette.panelStroke, lineWidth: 1))
-            Text("Drag to reorder. The server starts on the first map.").font(StudioTypography.help).foregroundStyle(palette.tertiary).padding(.leading, 6)
+            Text("Drag to reorder. The server starts on the first map.").font(StudioTypography.help).foregroundStyle(palette.tertiary).padding(.horizontal, 6)
         }
     }
 }
@@ -448,7 +447,7 @@ private struct HostingMapPicker: View {
             HStack(alignment: .firstTextBaseline) {
                 Text("Add a map").padding(.leading, 6).font(.system(size: 17, weight: .semibold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
                 Spacer(minLength: 12)
-                Text(available.isEmpty ? "Every map is in the rotation" : "\(available.count) not in the rotation").font(StudioTypography.help).monospacedDigit().foregroundStyle(palette.secondary)
+                Text(available.isEmpty ? "Every map is in the rotation" : "\(available.count) not in the rotation").font(StudioTypography.help).monospacedDigit().foregroundStyle(palette.tertiary)
             }
             if !available.isEmpty {
                 LazyVGrid(columns: Array(repeating: GridItem(.fixed(Self.tile + 12), spacing: 4, alignment: .top), count: 4), alignment: .leading, spacing: 4) {
@@ -461,7 +460,7 @@ private struct HostingMapPicker: View {
                                     .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(palette.panelStroke, lineWidth: 1))
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(name).font(.system(size: 12, weight: .semibold)).foregroundStyle(palette.text).lineLimit(1)
-                                    Text(MapCatalog.region(map).map { $0.capitalized } ?? " ").font(.system(size: 11)).foregroundStyle(palette.secondary).lineLimit(1)
+                                    Text(MapCatalog.region(map).map { $0.capitalized } ?? " ").font(.system(size: 11)).foregroundStyle(palette.tertiary).lineLimit(1)
                                 }
                                 .padding(.horizontal, 2)
                             }
@@ -498,37 +497,42 @@ private struct HostingRunning: View {
                 HStack(alignment: .center, spacing: 12) { title; Spacer(minLength: 12); actions(status) }
                 VStack(alignment: .leading, spacing: 10) { title; HStack(spacing: 8) { actions(status) } }.frame(maxWidth: .infinity, alignment: .leading)
             }
-            HStack(spacing: 12) {
-                tile(status.map { "\($0.players.count)" } ?? "—", suffix: status.map { " / \($0.maxPlayers)" } ?? "", "players")
+            HStack(spacing: 14) {
+                tile(status.map { "\($0.players.count)" } ?? "—", suffix: status.map { " / \($0.maxPlayers)" } ?? "", "players", numeral: true)
                 tile(status.map { MapCatalog.displayName(HostingCatalog.stockMap($0.map)) } ?? "Starting…", suffix: "", status.map { [HostingCatalog.gameTypeTitle($0.gameType), $0.matchInfo].compactMap { $0 }.joined(separator: " · ") } ?? "The first map is loading")
                 tile(server.engine == .cod2x ? "CoD2x" : "Original 1.3", suffix: "", server.rules.title)
-                tile(String(server.port), suffix: "", "UDP port")
+                tile(String(server.port), suffix: "", "UDP port", numeral: true)
             }
-            HStack(alignment: .top, spacing: 14) {
-                VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 20) {
+                VStack(alignment: .leading, spacing: 0) {
                     label("How to join")
                     FormGroup {
                         // Off the ports the game's own list asks, friends need the address: say so here.
-                        FormRow("On your network", detail: server.inLocalList ? hosting.localAddress(server)
-                                    : "\(hosting.localAddress(server)) · Not in the game’s own local list, which looks at ports \(String(server.listedPorts.lowerBound)) to \(String(server.listedPorts.upperBound)). Friends connect to this address.",
-                                monospacedTitle: false) {
-                            Button("Copy") { copy(hosting.localAddress(server)) }
+                        FormWideRow("On your network") {
+                            Button("Copy") { copy(hosting.localAddress(server)) }.glassAction().controlSize(.large)
+                        } detail: {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(hosting.localAddress(server)).font(.typewriter(12))
+                                if !server.inLocalList {
+                                    Text("Not in the game’s own local list, which looks at ports \(String(server.listedPorts.lowerBound)) to \(String(server.listedPorts.upperBound)). Friends connect to this address.")
+                                }
+                            }
                         }
-                        FormRow("Over the internet", detail: "Your router has to pass UDP port \(String(server.port)) to this Mac. CoD2 Unbound can’t check that from here.") {
-                            Button("How To") { NSWorkspace.shared.open(HostingCatalog.portGuide) }.help("Opens the server guide on GitHub")
+                        FormWideRow("Over the internet", detail: "Your router has to pass UDP port \(String(server.port)) to this Mac. CoD2 Unbound can’t check that from here.") {
+                            Button("How To") { NSWorkspace.shared.open(HostingCatalog.portGuide) }.glassAction().controlSize(.large).help("Opens the server guide on GitHub")
                         }
-                        FormRow("Invite link", detail: "Opens CoD2 Unbound on a friend’s Mac on your network. The password is not in the link.") {
-                            Button("Copy Link") { if let link = (try? LaunchLink.direct(hosting.localAddress(server)))?.url { copy(link) } }
+                        FormWideRow("Invite link", detail: "Opens CoD2 Unbound on a friend’s Mac on your network. The password is not in the link.") {
+                            Button("Copy Link") { if let link = (try? LaunchLink.direct(hosting.localAddress(server)))?.url { copy(link) } }.glassAction().controlSize(.large)
                         }
                         if hosting.onWiFi {
-                            FormRow("This Mac is on Wi-Fi", detail: "AirDrop and Handoff can make players freeze for a moment. A network cable is steadier.") {
-                                Button("Why") { NSWorkspace.shared.open(HostingCatalog.wifiGuide) }.help("Opens the server guide on GitHub")
+                            FormWideRow("This Mac is on Wi-Fi", detail: "AirDrop and Handoff can make players freeze for a moment. A network cable is steadier.") {
+                                Button("Why") { NSWorkspace.shared.open(HostingCatalog.wifiGuide) }.glassAction().controlSize(.large).help("Opens the server guide on GitHub")
                             }
                         }
                     }
                     // Its full height always: the players below take what is left, never this group's lines.
                     .fixedSize(horizontal: false, vertical: true)
-                    label("Players").padding(.top, 8)
+                    label("Players").padding(.top, 14)
                     // The page never runs past the window: as many players as fit, and the rest behind
                     // All Players, which opens every one of them as a dialog.
                     let players = status?.players ?? []
@@ -545,12 +549,12 @@ private struct HostingRunning: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .topLeading)
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack(alignment: .firstTextBaseline) {
                         label("Server log")
                         Spacer()
                         Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([hosting.logURL(server.id)]) }.buttonStyle(.plain)
-                            .font(StudioTypography.help).foregroundStyle(palette.link)
+                            .font(.system(size: 13)).foregroundStyle(palette.link).padding(.trailing, 6)
                     }
                     ScrollViewReader { proxy in
                         ScrollView {
@@ -560,12 +564,12 @@ private struct HostingRunning: View {
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                 }
                             }
-                            .padding(12)
+                            .padding(.vertical, 12).padding(.horizontal, 14)
                         }
                         .onChange(of: hosting.logs[server.id]?.count) { _, count in if let count, count > 0 { proxy.scrollTo(count - 1, anchor: .bottom) } }
                     }
-                    .background(palette.well, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(palette.wellStroke, lineWidth: 1))
+                    .background(palette.well, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(palette.wellStroke, lineWidth: 1))
                     .accessibilityLabel("Server log")
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -573,19 +577,22 @@ private struct HostingRunning: View {
         }
     }
     private var title: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(server.name).font(.system(size: 26, weight: .bold)).foregroundStyle(palette.heading).lineLimit(1).accessibilityAddTraits(.isHeader)
+        HStack(alignment: .firstTextBaseline, spacing: 14) {
+            Text(server.name).font(.system(size: 22, weight: .bold)).foregroundStyle(palette.heading).lineLimit(1).accessibilityAddTraits(.isHeader)
             TimelineView(.periodic(from: .now, by: 30)) { context in
-                Label(running(now: context.date), systemImage: "checkmark.circle").font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.positive)
+                StatusLabel(.ready, running(now: context.date))
             }
         }
     }
     @ViewBuilder private func actions(_ status: HostedStatus?) -> some View {
-        Button("Edit…") { hosting.editing = server.id }.help("Change its settings. They apply the next time it starts.").fixedSize()
-        Button("Next Map") { hosting.nextMap(server) }.disabled(status == nil).fixedSize()
-        Button { model.join("127.0.0.1:\(server.port)", password: server.joinPassword.isEmpty ? nil : server.joinPassword) } label: { Label("Join", systemImage: "play.fill") }
-            .prominentAction().disabled(status == nil || !model.canNavigate).fixedSize()
-        Button("Stop Server") { hosting.stop(server) }.fixedSize()
+        Group {
+            Button("Edit…") { hosting.editing = server.id }.glassAction().help("Change its settings. They apply the next time it starts.").fixedSize()
+            Button("Next Map") { hosting.nextMap(server) }.glassAction().disabled(status == nil).fixedSize()
+            Button { model.join("127.0.0.1:\(server.port)", password: server.joinPassword.isEmpty ? nil : server.joinPassword) } label: { Label("Join", systemImage: "play.fill") }
+                .prominentAction().disabled(status == nil || !model.canNavigate).fixedSize()
+            Button("Stop Server") { hosting.stop(server) }.destructiveAction().fixedSize()
+        }
+        .controlSize(.large)
     }
     private func playerRows(_ players: [HostedStatus.Player], shown: Int) -> some View {
         let shown = min(shown, players.count)
@@ -596,7 +603,7 @@ private struct HostingRunning: View {
                 ForEach(players.prefix(shown)) { player in HostingPlayerRow(hosting: hosting, server: server, player: player) }
                 if shown < players.count {
                     FormRow(shown == 0 ? "\(players.count) players" : "\(players.count - shown) more") {
-                        Button("All \(players.count) Players…") { hosting.showingPlayers = server }.fixedSize()
+                        Button("All \(players.count) Players…") { hosting.showingPlayers = server }.glassAction().controlSize(.regular).fixedSize()
                     }
                 }
             }
@@ -607,18 +614,27 @@ private struct HostingRunning: View {
         let minutes = max(0, Int(now.timeIntervalSince(since) / 60))
         return minutes < 1 ? "Running" : minutes < 60 ? "Running for \(minutes) min" : "Running for \(minutes / 60) h \(minutes % 60) min"
     }
+    /// A section title above a form group (.sec-title): SF 13 semibold, secondary, sentence case.
     private func label(_ text: String) -> some View {
-        Text(text.uppercased()).font(.system(size: 11, weight: .semibold)).tracking(0.88).foregroundStyle(palette.tertiary).padding(.leading, 6).accessibilityAddTraits(.isHeader)
+        Text(text).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.secondary).padding(.horizontal, 6).padding(.bottom, 8).accessibilityAddTraits(.isHeader)
     }
-    private func tile(_ value: String, suffix: String, _ caption: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("\(Text(value).foregroundStyle(palette.numeral))\(Text(suffix).foregroundStyle(palette.tertiary))")
-                .font(.stencil(26)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
-            Text(caption).font(StudioTypography.help).foregroundStyle(palette.secondary).lineLimit(1)
+    /// A fact card: a count or the port as a stencil numeral (30, so 28 and up), words in SF 20.
+    private func tile(_ value: String, suffix: String, _ caption: String, numeral: Bool = false) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Group {
+                if numeral {
+                    Text("\(Text(value).foregroundStyle(palette.numeral))\(Text(suffix).font(.stencil(18)).foregroundStyle(palette.tertiary))")
+                        .font(.stencil(30)).monospacedDigit()
+                } else {
+                    Text(value).font(.system(size: 20, weight: .semibold)).foregroundStyle(palette.heading)
+                }
+            }
+            .lineLimit(1).minimumScaleFactor(0.6)
+            Text(caption).font(StudioTypography.help).foregroundStyle(palette.tertiary).lineLimit(1)
         }
-        .padding(14).frame(maxWidth: .infinity, alignment: .leading)
-        .background(palette.panel, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(palette.panelStroke, lineWidth: 1))
+        .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+        .background(palette.panel, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(palette.panelStroke, lineWidth: 1))
         .accessibilityElement(children: .ignore).accessibilityLabel("\(value)\(suffix) \(caption)").accessibilityAddTraits(.isStaticText)
     }
     private func copy(_ text: String) {
@@ -637,38 +653,26 @@ private struct HostingExportSheet: View {
     @State private var matchSettings = true
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .top, spacing: 12) {
-                Image(systemName: "doc.text").font(.system(size: 22)).foregroundStyle(palette.accent).accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Export “\(server.name)” for another machine").font(.system(size: 17, weight: .bold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
-                    Text("Writes a folder you can copy to a Linux or Windows server. Nothing is uploaded.").font(.system(size: 13)).foregroundStyle(palette.secondary)
-                }
-            }
+        SheetScaffold(icon: .symbol("doc.text"), title: "Export “\(server.name)” for another machine",
+                      message: "Writes a folder you can copy to a Linux or Windows server. Nothing is uploaded.", width: 560,
+                      actions: [.cancel { hosting.exporting = nil }, .primary("Export…") { export() }]) {
             FormGroup {
                 FormRow("server.cfg", detail: "Name, rules, maps and limits, with a comment on every line.") { included }
                 FormRow("Start commands", detail: "One for Linux, one for Windows, for \(server.engine == .cod2x ? "CoD2x" : "the original 1.3").") { included }
                 if server.rules == .zpam {
                     FormRow("zPAM match settings", detail: "The match mode and its rules. zPAM’s files are not copied; the read-me links the release to download.") {
-                        Toggle("Include zPAM match settings", isOn: $matchSettings).labelsHidden().toggleStyle(.switch)
+                        SwitchToggle("Include zPAM match settings", isOn: $matchSettings)
                     }
                 }
                 FormRow("Passwords", detail: passwords ? "On, the file holds your passwords. Share it with care." : "Off, the file says CHANGE_ME where each password goes.") {
-                    Toggle("Include passwords", isOn: $passwords).labelsHidden().toggleStyle(.switch)
+                    SwitchToggle("Include passwords", isOn: $passwords)
                 }
             }
-            HStack(spacing: 10) {
-                Text("Game files are never included.").font(StudioTypography.help).foregroundStyle(palette.tertiary)
-                Spacer()
-                Button("Cancel", role: .cancel) { hosting.exporting = nil }.keyboardShortcut(.cancelAction)
-                Button("Export…") { export() }.prominentAction().keyboardShortcut(.defaultAction)
-            }
+        } note: {
+            Text("Game files are never included.")
         }
-        .padding(22).frame(width: 560)
     }
-    private var included: some View {
-        Label("Included", systemImage: "checkmark").font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.positive)
-    }
+    private var included: some View { StatusLabel(.ready, "Included") }
     private func export() {
         let panel = NSOpenPanel()
         panel.canChooseFiles = false; panel.canChooseDirectories = true; panel.canCreateDirectories = true; panel.allowsMultipleSelection = false
@@ -687,9 +691,11 @@ private struct HostingPlayerRow: View {
     var hosting: HostingModel
     var server: HostedServer
     var player: HostedStatus.Player
+    @Environment(\.palette) private var palette
     var body: some View {
-        FormRow(QuakeColors.plain(player.name), detail: "\(player.ping) ms") {
-            Button("Kick") { hosting.kick(player, from: server) }.controlSize(.small)
+        FormRow(QuakeColors.plain(player.name), minHeight: 40) {
+            Text("\(player.ping) ms").font(.system(size: 12)).monospacedDigit().foregroundStyle(palette.tertiary)
+            Button("Kick") { hosting.kick(player, from: server) }.glassAction().controlSize(.regular)
                 .accessibilityLabel("Remove \(QuakeColors.plain(player.name)) from the server")
         }
     }

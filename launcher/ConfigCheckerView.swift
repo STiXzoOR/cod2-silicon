@@ -229,10 +229,17 @@ struct ConfigCheckerPage: View {
 
     // MARK: Empty
 
+    /// The page's content width, inside its side insets.
+    private var inner: CGFloat { max(0, width - 2 * StudioMetrics.pageInset) }
+
     private var empty: some View {
         Group {
             if sideBySide {
-                HStack(alignment: .top, spacing: StudioMetrics.sectionGap) { CheckerDropZone(checker: checker); checks.frame(width: 340) }
+                // 1.3 : 1, as drawn.
+                HStack(alignment: .top, spacing: 20) {
+                    CheckerDropZone(checker: checker).frame(maxHeight: .infinity)
+                    checks.frame(width: max(300, (inner - 20) / 2.3)).frame(maxHeight: .infinity, alignment: .top)
+                }
             } else {
                 ScrollView { VStack(spacing: StudioMetrics.sectionGap) { CheckerDropZone(checker: checker).frame(minHeight: 300); checks } }
             }
@@ -242,13 +249,16 @@ struct ConfigCheckerPage: View {
     private var checks: some View {
         ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 20)) {
             VStack(alignment: .leading, spacing: 14) {
-                Text("What gets checked").font(StudioTypography.groupTitle).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
+                Text("What gets checked").font(.system(size: 17, weight: .semibold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
                 ForEach(Self.checkList, id: \.title) { check in
                     HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: check.symbol).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.accent).frame(width: 22).accessibilityHidden(true)
+                        Image(systemName: check.symbol).font(.system(size: 14, weight: .medium)).foregroundStyle(palette.accent)
+                            .frame(width: 30, height: 30)
+                            .background(palette.selection, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .padding(.top, 1).accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(check.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text)
-                            Text(check.detail).font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+                            Text(check.detail).font(.system(size: 13)).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -271,10 +281,10 @@ struct ConfigCheckerPage: View {
     private var result: some View {
         Group {
             if sideBySide {
-                HStack(alignment: .top, spacing: StudioMetrics.sectionGap) { CheckerLines(checker: checker); CheckerFindings(checker: checker).frame(width: 340) }
+                HStack(alignment: .top, spacing: 20) { CheckerLines(checker: checker); CheckerFindings(checker: checker).frame(width: 380) }
             } else {
                 // What needs a look comes first; the file's lines follow, each half scrolling on its own.
-                VStack(spacing: StudioMetrics.sectionGap) { CheckerFindings(checker: checker); CheckerLines(checker: checker) }
+                VStack(spacing: 20) { CheckerFindings(checker: checker); CheckerLines(checker: checker) }
             }
         }
         .frame(maxHeight: .infinity, alignment: .top)
@@ -287,18 +297,14 @@ struct ConfigCheckerScope: View {
     @ObservedObject var checker: ConfigCheckerModel
     @Environment(\.palette) private var palette
     var body: some View {
-        HStack(spacing: 8) {
-            Text("Check for").font(.system(size: 12)).foregroundStyle(palette.secondary).padding(.leading, 10)
-            Picker("Game version to check for", selection: $checker.dialect) {
-                Text(ConfigCheckerModel.title(.cod2x)).tag(ConfigDialect.cod2x)
-                Text(ConfigCheckerModel.title(.stock)).tag(ConfigDialect.stock)
-            }
-            .labelsHidden().fixedSize().help("The game version whose settings and limits the config is checked against")
-            Picker("Server rules to check for", selection: $checker.ruleset) {
-                Text("No server rules").tag(String?.none)
-                ForEach(checker.rulesets) { Text($0.title).tag(String?.some($0.id)) }
-            }
-            .labelsHidden().fixedSize().help("Server rules to check against as well, such as zPAM’s")
+        HStack(spacing: 10) {
+            Text("Check for").font(.system(size: 13)).foregroundStyle(palette.secondary).padding(.leading, 10).accessibilityHidden(true)
+            PopUpButton("Game version to check for", selection: $checker.dialect,
+                        options: [(value: ConfigDialect.cod2x, title: ConfigCheckerModel.title(.cod2x)), (value: ConfigDialect.stock, title: ConfigCheckerModel.title(.stock))])
+                .help("The game version whose settings and limits the config is checked against")
+            PopUpButton("Server rules to check for", selection: $checker.ruleset,
+                        options: [(value: String?.none, title: "No server rules")] + checker.rulesets.map { (value: String?.some($0.id), title: $0.title) })
+                .help("Server rules to check against as well, such as zPAM’s")
         }
     }
 }
@@ -318,19 +324,33 @@ private struct CheckerDropZone: View {
     @ObservedObject var checker: ConfigCheckerModel
     @Environment(\.palette) private var palette
     @State private var targeted = false
-    @State private var loadoutMenu = MenuAnchorBox()
+    @State var loadoutMenu = MenuAnchorBox()
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: StudioMetrics.panelRadius, style: .continuous)
         VStack(spacing: 14) {
-            Image(systemName: "doc.text.magnifyingglass").font(.system(size: 34, weight: .light)).foregroundStyle(palette.accent).accessibilityHidden(true)
-            Text("DROP A CONFIG HERE").font(.stencil(30)).tracking(1).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
+            Image(systemName: "doc.text").font(.system(size: 40, weight: .light)).foregroundStyle(palette.secondary).accessibilityHidden(true)
+            Text("DROP A CONFIG HERE").font(.stencil(30)).tracking(1.2).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
             Text("Or paste one. It is read on this Mac only: nothing is uploaded, and nothing is added to your loadouts unless you ask.")
-                .font(.system(size: 13)).foregroundStyle(palette.secondary).multilineTextAlignment(.center).frame(maxWidth: 420)
+                .font(.system(size: 13)).foregroundStyle(palette.secondary).multilineTextAlignment(.center).frame(maxWidth: 440)
                 .fixedSize(horizontal: false, vertical: true)
-            HStack(spacing: 10) {
-                Button("Choose a File…") { checker.chooseFile() }.prominentAction()
-                Button("Paste from Clipboard") { checker.paste() }
+            // One row when it fits; otherwise the last button wraps under the others.
+            FlowChipsLayout(spacing: 10) { buttons }
+            .controlSize(.large).padding(.top, 4)
+        }
+        .padding(.vertical, 40).padding(.horizontal, 20)
+        .frame(maxWidth: .infinity, minHeight: 420, maxHeight: .infinity)
+        .background(targeted ? palette.selection : palette.panel, in: shape)
+        .overlay(shape.strokeBorder(targeted ? palette.selectionStroke : palette.panelStroke, style: StrokeStyle(lineWidth: 1, dash: [6, 5])))
+        .onDrop(of: [UTType.fileURL, UTType.plainText], isTargeted: $targeted) { checker.drop($0) }
+        .accessibilityElement(children: .contain)
+    }
+}
+
+extension CheckerDropZone {
+    @ViewBuilder var buttons: some View {
+                Button("Choose a File…") { checker.chooseFile() }.prominentAction().fixedSize()
+                Button("Paste from Clipboard") { checker.paste() }.glassAction().fixedSize()
                 // A real AppKit menu under the button, as the launcher's other menus of places are.
                 Button {
                     guard let view = loadoutMenu.view else { return }
@@ -338,20 +358,14 @@ private struct CheckerDropZone: View {
                     NativeMenu.popUp((checker.studio.session?.profiles ?? []).map { profile in
                         .init(title: profile.displayName, symbol: "slider.horizontal.3") { checker.checkLoadout(profile) }
                     }, below: view)
-                } label: { Label("Check a Loadout", systemImage: "chevron.down").labelStyle(.titleOnly) }
+                } label: {
+                    HStack(spacing: 6) { Text("Check a Loadout"); Image(systemName: "chevron.down").font(.system(size: 10, weight: .bold)).accessibilityHidden(true) }
+                }
+                .glassAction()
                 .background(MenuAnchor(box: loadoutMenu))
                 .fixedSize().disabled((checker.studio.session?.profiles ?? []).isEmpty)
                 .accessibilityLabel("Check a Loadout").accessibilityHint("Shows your loadouts")
-            }
-            .controlSize(.large).padding(.top, 4)
-        }
-        .padding(40)
-        .frame(maxWidth: .infinity, minHeight: 420)
-        .background(targeted ? palette.selection : palette.panel, in: shape)
-        .overlay(shape.strokeBorder(targeted ? palette.selectionStroke : palette.panelStroke, style: StrokeStyle(lineWidth: 1, dash: [6, 5])))
-        .onDrop(of: [UTType.fileURL, UTType.plainText], isTargeted: $targeted) { checker.drop($0) }
-        .accessibilityElement(children: .contain)
-    }
+                }
 }
 
 /// The config, line by line, with a mark and a few words beside each line that has a finding.
@@ -360,30 +374,35 @@ private struct CheckerLines: View {
     @Environment(\.palette) private var palette
 
     var body: some View {
-        ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: 16, leading: 0, bottom: 8, trailing: 0)) {
-            VStack(alignment: .leading, spacing: 10) {
+        let well = RoundedRectangle(cornerRadius: 12, style: .continuous)
+        ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: 18, leading: 0, bottom: 14, trailing: 0)) {
+            VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .center, spacing: 12) {
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(checker.source?.name ?? "").font(.system(size: 16, weight: .bold)).foregroundStyle(palette.heading).lineLimit(1).truncationMode(.middle)
+                        Text(checker.source?.name ?? "").font(.system(size: 17, weight: .semibold)).foregroundStyle(palette.heading).lineLimit(1).truncationMode(.middle)
                             .accessibilityAddTraits(.isHeader)
-                        Text(checker.meta).font(StudioTypography.help).foregroundStyle(palette.secondary).lineLimit(1)
+                        Text(checker.meta).font(StudioTypography.help).foregroundStyle(palette.tertiary).lineLimit(2)
                     }
                     Spacer(minLength: 12)
                     Picker("Which lines to show", selection: $checker.markedOnly) {
                         Text("All Lines").tag(false)
                         Text("Only Marked").tag(true)
                     }
-                    .pickerStyle(.segmented).labelsHidden().fixedSize()
+                    .segmentedChoice()
                 }
-                .padding(.horizontal, 18)
-                Rectangle().fill(palette.separator).frame(height: 1)
+                .padding(.horizontal, 20)
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(checker.lines) { line in CheckerLineRow(line: line) }
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 10)
                 }
                 .accessibilityLabel("Config lines")
+                .frame(maxHeight: .infinity, alignment: .top)
+                .background(palette.well, in: well)
+                .clipShape(well)
+                .overlay(well.strokeBorder(palette.wellStroke, lineWidth: 1))
+                .padding(.horizontal, 14)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -396,18 +415,19 @@ private struct CheckerLineRow: View {
 
     var body: some View {
         let removed = line.mark == .removed
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
-            Text("\(line.id)").font(.typewriter(12)).monospacedDigit().foregroundStyle(palette.tertiary).frame(width: 40, alignment: .trailing)
+        HStack(alignment: .center, spacing: 12) {
+            Text("\(line.id)").font(.typewriter(12)).monospacedDigit().foregroundStyle(palette.tertiary).frame(width: 30, alignment: .trailing)
             Group {
-                if let symbol { Image(systemName: symbol).font(.system(size: 11, weight: .bold)).foregroundStyle(color) } else { Color.clear }
+                if let symbol { Image(systemName: symbol).font(.system(size: 12, weight: .bold)).foregroundStyle(color) } else { Color.clear }
             }
-            .frame(width: 14, height: 12).accessibilityHidden(true)
-            Text(line.text.isEmpty ? " " : line.text).font(.typewriter(13)).foregroundStyle(removed ? palette.tertiary : palette.text)
-                .strikethrough(removed).lineLimit(1).truncationMode(.tail).textSelection(.enabled)
+            .frame(width: 14, height: 13).accessibilityHidden(true)
+            // The flagged line is the one thing that must stay readable: it is never shortened; its note gives way.
+            Text(line.text.isEmpty ? " " : line.text).font(.typewriter(12)).foregroundStyle(removed ? palette.tertiary : palette.text)
+                .strikethrough(removed).lineLimit(1).fixedSize().textSelection(.enabled)
             Spacer(minLength: 8)
-            if !line.note.isEmpty { Text(line.note).font(StudioTypography.help).foregroundStyle(color).lineLimit(1).layoutPriority(1) }
+            if !line.note.isEmpty { Text(line.note).font(.system(size: 11)).foregroundStyle(color).lineLimit(1).truncationMode(.tail) }
         }
-        .padding(.vertical, 3).padding(.trailing, 18)
+        .padding(.horizontal, 14).frame(height: 26)
         .background(tinted ? color.opacity(0.09) : .clear)
         .accessibilityElement(children: .ignore).accessibilityAddTraits(.isStaticText)
         .accessibilityLabel("Line \(line.id): \(line.text)" + (line.note.isEmpty ? "" : ". \(line.note)"))
@@ -415,11 +435,11 @@ private struct CheckerLineRow: View {
     private var tinted: Bool { if case .finding = line.mark { return true }; return false }
     private var symbol: String? {
         switch line.mark {
-        case .finding(.broken): "xmark"
-        case .finding(.different): "exclamationmark.triangle.fill"
+        case .finding(.broken): "xmark.circle"
+        case .finding(.different): "exclamationmark.triangle"
         case .finding(.note): "info.circle"
-        case .removed: "minus"
-        case .changed: "checkmark"
+        case .removed: "minus.circle"
+        case .changed: "checkmark.circle"
         case nil: nil
         }
     }
@@ -441,55 +461,69 @@ private struct CheckerFindings: View {
 
     var body: some View {
         let summary = checker.summary
-        ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: 18, leading: 18, bottom: 18, trailing: 18)) {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(alignment: .center, spacing: 14) {
-                    Text("\(summary.count)").font(.stencil(54)).monospacedDigit()
-                        .foregroundStyle(summary.count == 0 ? palette.positive : checker.applied.isEmpty ? palette.accent : palette.heading).accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(summary.title).font(.system(size: 16, weight: .bold)).foregroundStyle(palette.heading).fixedSize(horizontal: false, vertical: true)
-                        Text(summary.detail).font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: 14) {
+            ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 20)) {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(alignment: .center, spacing: 14) {
+                        Text("\(summary.count)").font(.stencil(44)).monospacedDigit()
+                            .foregroundStyle(summary.count == 0 && checker.applied.isEmpty ? palette.positive : checker.applied.isEmpty ? palette.accent : palette.numeral)
+                            .accessibilityHidden(true)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(summary.title).font(.system(size: 15, weight: .semibold)).foregroundStyle(palette.heading).fixedSize(horizontal: false, vertical: true)
+                            Text(summary.detail).font(.system(size: 13)).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+                        }
                     }
+                    .accessibilityElement(children: .combine).accessibilityAddTraits(.isHeader)
+                    actions
                 }
-                .accessibilityElement(children: .combine).accessibilityAddTraits(.isHeader)
-                actions
-                Rectangle().fill(palette.separator).frame(height: 1)
-                if checker.open.isEmpty { passed } else { list }
+            }
+            if checker.open.isEmpty {
+                ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 20)) { passed }
+                    .frame(maxHeight: .infinity, alignment: .top)
+            } else {
+                ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: 14, leading: 12, bottom: 14, trailing: 12)) { list }
+                    .frame(maxHeight: .infinity, alignment: .top)
             }
         }
         .frame(maxHeight: .infinity, alignment: .top)
     }
 
+    /// One gold action: Fix All while there is something to fix, then Save as Loadout….
     @ViewBuilder private var actions: some View {
         let count = checker.fixable.count
+        let save = Button("Save as Loadout…") { checker.saveAsLoadout() }.disabled(checker.studio.session == nil || checker.studio.isReadOnly)
+            .help("Reviews this config, with your fixes, as a new loadout or into one you have")
         FlowChipsLayout(spacing: 8) {
-            if count > 0 { Button(count == 1 ? "Fix 1 Line" : "Fix All \(count)") { checker.fixAll() }.prominentAction().help("Applies every fix under Won’t work and Won’t do what it says. Notes are left for you.") }
-            Button("Save as Loadout…") { checker.saveAsLoadout() }.disabled(checker.studio.session == nil || checker.studio.isReadOnly)
-                .help("Reviews this config, with your fixes, as a new loadout or into one you have")
-            Button(checker.applied.isEmpty ? "Copy Config" : "Copy Cleaned Config") { checker.copyCleaned() }
+            if count > 0 {
+                Button(count == 1 ? "Fix 1 Line" : "Fix All \(count)") { checker.fixAll() }.prominentAction()
+                    .help("Applies every fix under Won’t work and Won’t do what it says. Notes are left for you.")
+                save.glassAction()
+            } else {
+                save.prominentAction()
+            }
+            Button(checker.applied.isEmpty ? "Copy Config" : "Copy Cleaned Config") { checker.copyCleaned() }.glassAction()
             if !checker.applied.isEmpty {
-                Button("Export…") { checker.export() }.help("Saves the config with your fixes as a new file")
-                Button { checker.undo() } label: { Label("Undo", systemImage: "arrow.uturn.backward") }.help("Puts every line back as it was")
+                Button("Export…") { checker.export() }.glassAction().help("Saves the config with your fixes as a new file")
+                Button { checker.undo() } label: { Label("Undo", systemImage: "arrow.uturn.backward") }.quietAction().help("Puts every line back as it was")
             }
         }
+        .controlSize(.large)
     }
 
     private var list: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 4) {
                 ForEach(ConfigCheckFinding.Kind.allCases, id: \.rawValue) { kind in
                     let findings = checker.open(kind)
                     if !findings.isEmpty {
-                        VStack(alignment: .leading, spacing: 6) {
-                            HStack(spacing: 8) {
-                                Image(systemName: Self.symbol(kind)).font(.system(size: 12, weight: .bold)).foregroundStyle(color(kind)).accessibilityHidden(true)
-                                Text(Self.title(kind)).font(.system(size: 13, weight: .bold)).foregroundStyle(palette.heading)
-                                Spacer(minLength: 6)
-                                Text(findings.count == 1 ? "1 line" : "\(findings.count) lines").font(StudioTypography.help).foregroundStyle(palette.secondary)
-                            }
-                            .accessibilityElement(children: .combine).accessibilityAddTraits(.isHeader)
-                            ForEach(findings) { finding in row(finding) }
+                        HStack(spacing: 8) {
+                            Image(systemName: Self.symbol(kind)).font(.system(size: 13, weight: .semibold)).foregroundStyle(color(kind)).accessibilityHidden(true)
+                            Text(Self.title(kind)).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.heading)
+                            Text(findings.count == 1 ? "1 line" : "\(findings.count) lines").font(StudioTypography.help).foregroundStyle(palette.tertiary)
                         }
+                        .padding(.horizontal, 8).padding(.top, 8).padding(.bottom, 4)
+                        .accessibilityElement(children: .combine).accessibilityAddTraits(.isHeader)
+                        ForEach(findings) { finding in row(finding) }
                     }
                 }
             }
@@ -497,28 +531,28 @@ private struct CheckerFindings: View {
     }
     private func row(_ finding: ConfigCheckFinding) -> some View {
         HStack(alignment: .top, spacing: 10) {
-            Text("\(finding.line)").font(.typewriter(12)).monospacedDigit().foregroundStyle(palette.tertiary).frame(width: 30, alignment: .trailing).padding(.top, 2)
+            Text("\(finding.line)").font(.typewriter(12)).monospacedDigit().foregroundStyle(palette.tertiary).frame(width: 34, alignment: .trailing).padding(.top, 1)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(finding.title).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.text).fixedSize(horizontal: false, vertical: true)
-                Text(finding.detail).font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+                Text(finding.detail).font(StudioTypography.help).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityElement(children: .combine).accessibilityLabel("Line \(finding.line). \(finding.title). \(finding.detail)")
-            Spacer(minLength: 6)
             if let label = finding.fixLabel {
-                Button(label) { checker.fix(finding) }.controlSize(.small).fixedSize()
+                // A dense list: the 24-point button.
+                Button(label) { checker.fix(finding) }.glassAction().controlSize(.regular).fixedSize()
                     .accessibilityLabel("\(label): line \(finding.line), \(finding.title)")
             }
         }
-        .padding(.vertical, 6).padding(.horizontal, 8)
-        .background(palette.well.opacity(0.5), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .padding(.vertical, 7).padding(.horizontal, 8)
     }
     private var passed: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(checker.applied.isEmpty ? "Nothing to fix" : "Nothing left to fix").font(StudioTypography.groupTitle).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
+        VStack(alignment: .leading, spacing: 12) {
+            Text(checker.applied.isEmpty ? "Nothing to fix" : "Nothing left to fix").font(.system(size: 17, weight: .semibold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
             ForEach(passes, id: \.self) { text in
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Image(systemName: "checkmark").font(.system(size: 11, weight: .bold)).foregroundStyle(palette.positive).accessibilityHidden(true)
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Image(systemName: "checkmark.circle").font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.positive).accessibilityHidden(true)
                     Text(text).font(.system(size: 13)).foregroundStyle(palette.text).fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -536,7 +570,7 @@ private struct CheckerFindings: View {
         switch kind { case .broken: "Won’t work"; case .different: "Won’t do what it says"; case .note: "Worth knowing" }
     }
     static func symbol(_ kind: ConfigCheckFinding.Kind) -> String {
-        switch kind { case .broken: "xmark"; case .different: "exclamationmark.triangle.fill"; case .note: "info.circle" }
+        switch kind { case .broken: "xmark.circle"; case .different: "exclamationmark.triangle"; case .note: "info.circle" }
     }
     private func color(_ kind: ConfigCheckFinding.Kind) -> Color {
         switch kind { case .broken: palette.negative; case .different: palette.caution; case .note: palette.compare }

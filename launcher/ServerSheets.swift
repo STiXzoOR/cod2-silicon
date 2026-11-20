@@ -27,7 +27,7 @@ struct ConnectSheet: View {
                       actions: [.cancel { model.dismissSheet() },
                                 .primary("Launch", symbol: "play.fill", enabled: parsed != nil && passwordProblem == nil && model.canNavigate, launch)]) {
             VStack(alignment: .leading, spacing: 8) {
-                LauncherTextField("Server address", text: $address, prompt: "203.0.113.24:28960", shape: .capsule, invalid: invalid, autofocus: true)
+                LauncherTextField("Server address", text: $address, prompt: "203.0.113.24:28960", shape: .capsule, monospaced: true, invalid: invalid, autofocus: true)
                     .onSubmit(launch)
                 status.padding(.leading, 8)
             }
@@ -42,7 +42,7 @@ struct ConnectSheet: View {
             }
             recent
         } note: {
-            Text("Accepts an address, a name with a port, or a cod2x:// link.")
+            Text("Accepts an address, a name with a port, or a cod2x:// or cod2:// link.")
         }
         .task(id: parsed?.address) { await ask(parsed?.address) }
         .onChange(of: address) { _, _ in if let link = parsed?.password, password.isEmpty { password = link } }

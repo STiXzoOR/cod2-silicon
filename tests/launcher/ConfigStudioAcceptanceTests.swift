@@ -359,7 +359,7 @@ enum ConfigStudioAcceptanceTests {
         }
 
         // A player from Discover.
-        model.compare(with: ConfigPlayerComparison(entryID: "player-1", name: "[Player 1]", provenance: "Players catalog",
+        model.compare(with: ConfigPlayerComparison(entryID: "player-1", name: "vargr", provenance: "Players catalog",
                                                    values: ["cg_viewsize": "100", "cg_weaponcycledelay": "150", "sensitivity": "3.2",
                                                             catalogOwned.name.lowercased(): alternative(catalogOwned, model: model),
                                                             launcher.name.lowercased(): alternative(launcher, model: model)]))
@@ -369,9 +369,9 @@ enum ConfigStudioAcceptanceTests {
         guarded(launcher, "player", "CoD2 Unbound sets")
         require(model.takeTheirsBlock(speed) == nil)
         model.takeTheirs(speed)
-        require(model.state(speed).raw == "3.2" && session.history.first?.summary == "Took Mouse speed from [Player 1]", "ordinary settings stay writable")
+        require(model.state(speed).raw == "3.2" && session.history.first?.summary == "Took Mouse speed from vargr", "ordinary settings stay writable")
         model.setLock(speed, true)
-        model.compare(with: ConfigPlayerComparison(entryID: "player-1", name: "[Player 1]", provenance: "Players catalog", values: ["sensitivity": "2.2"]))
+        model.compare(with: ConfigPlayerComparison(entryID: "player-1", name: "vargr", provenance: "Players catalog", values: ["sensitivity": "2.2"]))
         guarded(speed, "player", "Locked")
         model.setLock(speed, false)
 
@@ -535,7 +535,7 @@ enum ConfigStudioAcceptanceTests {
         let gauges = checkup.gauges(report)
         // The card says the outcome in words (how steady the match ran, how often the Mac fell below the
         // cap); the exact figures sit behind Show Details.
-        require(gauges[0].value == "SOME DIPS" && gauges[0].status == "Watch" && gauges[0].tone == .caution, "\(gauges[0].value) \(gauges[0].status)")
+        require(gauges[0].value == "Some dips" && gauges[0].status == "Watch" && gauges[0].tone == .caution, "\(gauges[0].value) \(gauges[0].status)")
         require(gauges[0].detail.contains("about 2 in every 100 frames") && !gauges[0].detail.contains("p50"), gauges[0].detail)
         require(gauges[0].figures.contains("p50 3 ms · p99 7 ms · max 20 ms"), gauges[0].figures)
         // The cap can change during a match: the counts aren't attributed to the cap recorded at the end.
@@ -543,7 +543,7 @@ enum ConfigStudioAcceptanceTests {
                 && !gauges[0].figures.contains("within the 333 fps cap"), gauges[0].figures)
         require(gauges[1].status == "Not measured" || gauges[1].status == "From settings", "mouse polling is never invented")
         require(!gauges[1].detail.contains("Hz") && !gauges[1].figures.contains("Hz") && gauges[1].figures.contains("Polling rate isn’t measured"))
-        require(gauges[2].value == "40 MS" && gauges[2].status == "Could be better" && gauges[2].figures.contains("average 40 ms, highest 50 ms over 3 samples"), gauges[2].figures)
+        require(gauges[2].value == "40 ms" && gauges[2].status == "Could be better" && gauges[2].figures.contains("average 40 ms, highest 50 ms over 3 samples"), gauges[2].figures)
         require(gauges[2].figures.contains("Missing server updates: 40% (2 of 5), inferred from gaps in the update sequence; not a precise packet-loss measurement."), gauges[2].figures)
         require(gauges.allSatisfy { !($0.detail + $0.figures + $0.value).lowercased().contains("score") })
         // Opened for the older match (Library › Matches): that match, named as such, until Show Last Match.
@@ -552,7 +552,7 @@ enum ConfigStudioAcceptanceTests {
         }
         checkup.show(match: olderMatch.id)
         require(checkup.shownMatch?.map == "mp_carentan" && value(checkup.matchPresentation).title == "Your match on Carentan, Search & Destroy"
-                && checkup.gauges(value(checkup.report))[2].value == "45 MS" && reads == 2, value(checkup.matchPresentation).title)
+                && checkup.gauges(value(checkup.report))[2].value == "45 ms" && reads == 2, value(checkup.matchPresentation).title)
         checkup.show(match: "2020-01-01T00:00:00Z 203.0.113.9:28960 mp_gone")
         require(checkup.focusedMatchMissing && checkup.shownMatch?.map == "mp_toujane", "a match this Mac no longer has falls back to the latest")
         checkup.show(match: nil)
@@ -565,7 +565,7 @@ enum ConfigStudioAcceptanceTests {
         checkup.refreshMatches()
         require(checkup.latestMatch?.frameQuantilesAreExact == false && checkup.report?.dials[0].value == nil, "an upper bound isn't passed on as a measured p99")
         let bound = checkup.gauges(value(checkup.report))[0]
-        require(bound.value == "PAUSES" && bound.status == "Long pauses" && bound.figures.contains("p99 at least 250 ms (at most 300 ms)") && !bound.figures.contains("p99 300 ms"), bound.figures)
+        require(bound.value == "Pauses" && bound.status == "Long pauses" && bound.figures.contains("p99 at least 250 ms (at most 300 ms)") && !bound.figures.contains("p99 300 ms"), bound.figures)
         // A p99 sample at exactly the limit is in the overflow bucket: at least the limit, not longer than it.
         let edge = row.replacingOccurrences(of: "\"frameTimeP99MS\":7,\"frameTimeMaxMS\":20,\"frameTimeHistogramLimitMS\":250",
                                             with: "\"frameTimeP99MS\":250,\"frameTimeMaxMS\":250,\"frameTimeHistogramLimitMS\":250")

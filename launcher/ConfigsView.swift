@@ -81,29 +81,37 @@ struct ConfigsShell: View {
         .onChange(of: session.current?.profile.id) { _, _ in discover.page = nil }
         .configImportFlows(discover)
         // The toolbar keeps its two places on every page: what the page is about in the middle (a
-        // loadout's sections, or what a config is checked for) and its search and actions trailing.
+        // loadout's sections, or what a config is checked for) and its search, status and actions
+        // trailing. The leading edge sits over the Configs column's title, so nothing goes there.
         .toolbar {
             if discover.page == nil { ToolbarItem(placement: .principal) {
                 Picker("Loadout section", selection: Binding(get: { studio.tab }, set: { tab in leaveText { studio.tab = tab } })) {
                     ForEach(ConfigStudioTab.available) { Text($0.title).tag($0) }
                 }
-                .pickerStyle(.segmented).labelsHidden().fixedSize()
+                .segmentedChoice()
                 .disabled(session.current == nil)
             } }
             if discover.page == .checker { ToolbarItem(placement: .principal) { ConfigCheckerScope(checker: discover.checker) } }
         }
         .trailingToolbar { if discover.page == .checker {
             ConfigCheckerAnother(checker: discover.checker)
-        } else if discover.page != nil {
-            ToolbarSearchField(prompt: "Search players, teams or styles", width: 286, text: $discover.query, focus: $searchFocused, request: discover.findRequest)
+        } else if let page = discover.page {
+            ToolbarSearchField(prompt: "Search players, teams or styles", width: 280, text: $discover.query, focus: $searchFocused, request: discover.findRequest)
                 .help("Search setups by player, team, era or where they were published (⌘F)")
+            // The catalogue's count and Refresh, as Servers shows its list's; a player's page has neither.
+            if case .player = page {} else { CatalogueStatus(discover: discover) }
         } else {
             if studio.tab == .history {
                 Button(action: studio.saveSnapshot) { Label("Save a Snapshot Now", systemImage: "clock.badge.checkmark") }
                     .disabled(studio.isReadOnly || session.current == nil)
                     .help(studio.isReadOnly ? "Configs are read-only while Call of Duty 2 is running" : "Save how this loadout is set up now as a snapshot")
             }
-            Button { studio.jumpPresented = true } label: { Label("Jump to Any Setting", systemImage: "magnifyingglass").labelStyle(.titleAndIcon) }
+            // The shortcut is a plain hint beside the label, never a boxed key. A toolbar button is
+            // read by its title, so VoiceOver says the shortcut too.
+            Button { studio.jumpPresented = true } label: {
+                Label { Text("Jump to Any Setting  \(Text("⌘K").foregroundStyle(palette.hint))") } icon: { Image(systemName: "magnifyingglass") }
+                    .labelStyle(.titleAndIcon)
+            }
                 .keyboardShortcut("k", modifiers: .command)
                 .disabled(studio.catalog == nil || session.current == nil)
                 .help("Jump to any setting (⌘K)")
@@ -213,7 +221,7 @@ private struct LoadoutColumn: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 4) {
                     DiscoverColumnSection(discover: discover, open: open)
-                    ColumnLabel(text: "MY LOADOUTS").padding(.horizontal, 10).padding(.top, 22).padding(.bottom, 6)
+                    GroupLabel("My loadouts").padding(.horizontal, 10).padding(.top, 22).padding(.bottom, 6)
                     ForEach(session.profiles) { profile in
                         LoadoutRow(profile: profile, subtitle: subtitle(profile),
                                    selected: discover.page == nil && profile.id == session.current?.profile.id, focused: focused) { select(profile.id) }
@@ -266,14 +274,6 @@ private struct LoadoutColumn: View {
     }
 }
 
-private struct ColumnLabel: View {
-    var text: String
-    @Environment(\.palette) private var palette
-    var body: some View {
-        Text(text).font(.system(size: 11, weight: .semibold)).tracking(0.88).foregroundStyle(palette.tertiary).accessibilityAddTraits(.isHeader)
-    }
-}
-
 /// A command row under the loadouts (New Loadout, Add a Config): a dashed tile and accent words.
 private struct ColumnAction: View {
     var title: String
@@ -312,7 +312,8 @@ private struct AddConfigRow: View {
     @State private var anchor = MenuAnchorBox()
     var body: some View {
         ColumnAction(title: "Add a Config", symbol: "square.and.arrow.down", help: "Add a config from a file, a link, your Windows install or the clipboard", menu: true) {
-            if let view = anchor.view { NativeMenu.popUp(AddConfigButton.items(discover, window: view.window), below: view) }
+            if let view = anchor.view { NativeMenu.popUp(AddConfigButton.items(discover, window: view.window), below: view,
+                                                         header: AddConfigButton.header, footnote: AddConfigButton.footnote) }
         }
         .background(MenuAnchor(box: anchor))
         .disabled(discover.studio.session == nil || discover.step != nil)
@@ -337,7 +338,7 @@ private struct LoadoutRow: View {
                 }
                 Spacer(minLength: 4)
                 if profile.isActive {
-                    Image(systemName: "checkmark.circle.fill").font(.system(size: 14)).foregroundStyle(palette.positive).accessibilityHidden(true)
+                    Image(systemName: "checkmark").font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.positive).accessibilityHidden(true)
                 }
             }
             .padding(.vertical, 6).padding(.horizontal, 10).frame(minHeight: 48)
@@ -354,15 +355,20 @@ private struct LoadoutRow: View {
     }
 }
 
+/// The column's 30-point tile (.ctile): a loadout's stencil initial, or a page's symbol.
 struct MonogramTile: View {
-    var text: String
+    var text: String = ""
+    var symbol: String? = nil
     @Environment(\.palette) private var palette
     var body: some View {
-        Text(text).font(.stencil(16)).foregroundStyle(palette.accent)
-            .frame(width: 30, height: 30)
-            .background(palette.dark ? Palette.hex(0x1b1f17) : palette.crate, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(palette.dark ? Color.white.opacity(0.09) : palette.wellStroke, lineWidth: 1))
-            .accessibilityHidden(true)
+        Group {
+            if let symbol { Image(systemName: symbol).font(.system(size: 13, weight: .semibold)) } else { Text(text).font(.stencil(16)) }
+        }
+        .foregroundStyle(palette.accent)
+        .frame(width: 30, height: 30)
+        .background(palette.tileFill, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(palette.tileStroke, lineWidth: 1))
+        .accessibilityHidden(true)
     }
 }
 
@@ -384,7 +390,9 @@ struct LoadoutHeader: View {
     }
     private var stamp: String? {
         guard let last = session.history.first else { return nil }
-        return (session.history.count == 1 ? "ADDED " : "EDITED ") + StencilDate.dayAndTime(last.date)
+        let day = DateFormatter(), time = DateFormatter()
+        day.setLocalizedDateFormatFromTemplate("dMMM"); time.setLocalizedDateFormatFromTemplate("HHmm")
+        return (session.history.count == 1 ? "Added " : "Edited ") + day.string(from: last.date) + " at " + time.string(from: last.date)
     }
 
     var body: some View {
@@ -396,20 +404,14 @@ struct LoadoutHeader: View {
     }
 
     private var identity: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Eyebrow(text: current.profile.isActive ? "Loadout · In use" : "Loadout")
-            Text(current.profile.displayName.uppercased()).font(StudioTypography.loadoutTitle).tracking(0.92).foregroundStyle(palette.heading)
+        VStack(alignment: .leading, spacing: 4) {
+            Text(current.profile.displayName).font(.system(size: 30, weight: .bold)).tracking(-0.3).foregroundStyle(palette.heading)
                 .lineLimit(1).truncationMode(.tail)
-                .accessibilityLabel(current.profile.displayName).accessibilityAddTraits(.isHeader)
-            HStack(spacing: 10) {
-                Text(Self.provenance(current.metadata.origin)).font(.system(size: 13)).foregroundStyle(palette.secondary).lineLimit(1)
-                if let stamp {
-                    Circle().fill(palette.tertiary).frame(width: 3, height: 3).accessibilityHidden(true)
-                    Text(stamp).font(.typewriter(12)).foregroundStyle(palette.address).lineLimit(1)
-                }
-            }
-            .accessibilityElement(children: .combine)
+                .accessibilityAddTraits(.isHeader)
+            Text(([Self.provenance(current.metadata.origin)] + [stamp].compactMap { $0 }).joined(separator: " · "))
+                .font(.system(size: 13)).monospacedDigit().foregroundStyle(palette.secondary).lineLimit(1)
         }
+        .padding(.leading, 4)
     }
 
     /// As drawn: Guided shows the in-use badge; Expert shows its changed count; History its source filter.
@@ -419,24 +421,24 @@ struct LoadoutHeader: View {
                 Text("\(studio.changedCount) changed from the game’s defaults").font(.system(size: 12)).foregroundStyle(palette.secondary).fixedSize()
             }
             if !current.profile.isActive {
-                Button("Use for Next Game", action: studio.useForNextGame).glassAction().disabled(studio.isReadOnly)
+                Button("Use for Next Game", action: studio.useForNextGame).glassAction().actionControlSize().disabled(studio.isReadOnly)
                     .help(studio.isReadOnly ? "Configs are read-only while Call of Duty 2 is running" : "The game starts with this loadout next time")
-            } else if studio.tab == .settings && studio.level == .guided {
-                StatusLabel(.ready, "In use for your next game")
-                    .padding(.horizontal, 12).frame(height: 28)
-                    .overlay(Capsule().strokeBorder(palette.positive.opacity(0.45), lineWidth: 1))
-                    .fixedSize()
+            } else {
+                StatusLabel(.ready, "In use for your next game").padding(.trailing, 8)
             }
             if studio.tab == .settings {
                 Picker("Detail level", selection: $studio.level) { ForEach(ConfigDetailLevel.allCases) { Text($0.title).tag($0) } }
-                    .pickerStyle(.segmented).labelsHidden().fixedSize()
+                    .segmentedChoice()
             } else if studio.tab == .binds {
                 BindsLayoutPicker(binds: studio.binds)
             } else if studio.tab == .checkup {
                 TuneForPicker(checkup: studio.checkup)
             } else if studio.tab == .history {
-                Picker("Show changes from", selection: $studio.historyFilter) { ForEach(ConfigHistoryFilter.allCases) { Text($0.title).tag($0) } }
-                    .pickerStyle(.segmented).labelsHidden().fixedSize()
+                // Five sources: a pop-up, not a segmented control.
+                HStack(spacing: 10) {
+                    Text("Show changes from").font(.system(size: 13)).foregroundStyle(palette.secondary).accessibilityHidden(true)
+                    PopUpButton("Show changes from", selection: $studio.historyFilter, options: ConfigHistoryFilter.allCases.map { (value: $0, title: $0.title) })
+                }
             }
         }
     }
@@ -446,9 +448,9 @@ private struct BindsLayoutPicker: View {
     @ObservedObject var binds: ConfigBindsModel
     var body: some View {
         Picker("Binds view", selection: $binds.layout) {
-            ForEach(ConfigBindsLayout.allCases) { Label($0.title, systemImage: $0.symbol).tag($0) }
+            ForEach(ConfigBindsLayout.allCases) { Text($0.title).tag($0) }
         }
-        .pickerStyle(.segmented).labelsHidden().fixedSize()
+        .segmentedChoice()
     }
 }
 
@@ -456,11 +458,18 @@ private struct TuneForPicker: View {
     @ObservedObject var checkup: ConfigCheckupModel
     @Environment(\.palette) private var palette
     var body: some View {
-        HStack(spacing: 10) {
-            Text("Tune for").font(.system(size: 12)).foregroundStyle(palette.secondary)
-            Picker("Tune for", selection: $checkup.tuneFor) { ForEach(ConfigTuneFor.allCases, id: \.self) { Text($0.title).tag($0) } }
-                .pickerStyle(.segmented).labelsHidden().fixedSize()
+        // In the narrowest window the words would wrap onto two lines; the control then stands alone.
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 10) {
+                Text("Tune for").font(.system(size: 13)).foregroundStyle(palette.secondary).fixedSize().accessibilityHidden(true)
+                picker
+            }
+            picker
         }
+    }
+    private var picker: some View {
+        Picker("Tune for", selection: $checkup.tuneFor) { ForEach(ConfigTuneFor.allCases, id: \.self) { Text($0.title).tag($0) } }
+            .segmentedChoice()
     }
 }
 
@@ -494,7 +503,7 @@ struct ConfigBanners: View {
         }
         if let failure = studio.failure {
             Banner(.error, title: failure.title, message: failure.message) {
-                VStack(spacing: 8) {
+                HStack(spacing: 8) {
                     if failure.retry != nil { Button("Try Again", action: studio.retryFailure).glassAction().disabled(studio.isReadOnly) }
                     Button(session.draft != nil ? "Discard Change" : "Dismiss", action: studio.discardFailedChange).glassAction()
                 }
@@ -502,7 +511,7 @@ struct ConfigBanners: View {
             }
         } else if let error = session.error {
             Banner(.error, title: "Couldn’t read this loadout", message: error) {
-                VStack(spacing: 8) {
+                HStack(spacing: 8) {
                     Button("Try Again", action: studio.refresh).glassAction()
                     if let id = session.focusedProfileID ?? session.profiles.first(where: \.isActive)?.id {
                         Button("Review…") {

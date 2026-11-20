@@ -1,6 +1,12 @@
 {
   "items": [
     {
+      "date": "2026-11-20",
+      "title": "A tidier launcher",
+      "summary": "0.3.7 gives every page the same titles, labels, buttons and switches. Nothing in the game changed.",
+      "open": "updates"
+    },
+    {
       "date": "2026-11-18",
       "title": "CoD2 Silicon is now CoD2 Unbound",
       "summary": "0.3.6 has the new name and a new icon. From CoD2 Silicon, download it once by hand; your settings come along.",

@@ -263,7 +263,7 @@ enum ServerPasswords {
         if shown != total { return count }
         guard let date = library.cachedAt else { return count }
         if mastersDidNotAnswer { return "\(count) · from \(Self.clock(date, now: now))" }
-        return "\(count) · updated \(Self.age(date, now: now))"
+        return "\(count) · \(Self.age(date, now: now))"
     }
     /// “just now”, “2 min ago”, “3 h ago”, then a date.
     static func age(_ date: Date, now: Date = Date()) -> String {

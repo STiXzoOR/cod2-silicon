@@ -20,8 +20,6 @@ enum StudioMetrics {
 }
 
 enum StudioTypography {
-    static var loadoutTitle: Font { .stencil(46) }
-    static var discoverTitle: Font { .stencil(60) }
     static var groupTitle: Font { .system(size: 20, weight: .bold) }
     static var rowTitle: Font { .system(size: 14) }
     static var help: Font { .system(size: 12) }
@@ -100,24 +98,33 @@ enum StudioKeyRole: String, CaseIterable {
     case unbound = "Not bound"
     case unavailable = "The game can’t use this key"
 
-    var fill: Color {
+    /// A quiet tint of a token, laid over the panel (the Binds boards' colour-mix into --panel):
+    /// movement blue, communication green, combat red, game and interface grey.
+    func fill(_ palette: Palette) -> Color {
         switch self {
-        case .movement: Palette.hex(0xe2bd72)
-        case .communication: Palette.hex(0x7fa6e6)
-        case .combat: Palette.hex(0xc46a2f)
-        case .game: Palette.hex(0x4a4c42)
-        case .unbound: Palette.hex(0x22251e)
-        case .unavailable: Palette.hex(0x1a1c17)
+        case .movement: palette.compare.opacity(0.24)
+        case .communication: palette.positive.opacity(0.24)
+        case .combat: palette.negative.opacity(0.22)
+        case .game: palette.secondary.opacity(0.22)
+        case .unbound: palette.well
+        case .unavailable: .clear
         }
     }
 
-    var ink: Color {
+    func edge(_ palette: Palette) -> Color {
         switch self {
-        case .movement, .combat: Palette.hex(0x1c170c)
-        case .communication: Palette.hex(0x0d1220)
-        case .game: Palette.hex(0xf3ecdc)
-        case .unbound: Palette.hex(0xbdb5a1)
-        case .unavailable: Palette.hex(0xa9a28f)
+        case .movement: palette.compare.opacity(0.55)
+        case .communication: palette.positive.opacity(0.55)
+        case .combat: palette.negative.opacity(0.5)
+        case .game: palette.secondary.opacity(0.45)
+        case .unbound, .unavailable: palette.wellStroke
+        }
+    }
+
+    func ink(_ palette: Palette) -> Color {
+        switch self {
+        case .movement, .communication, .combat, .game: palette.text
+        case .unbound, .unavailable: palette.tertiary
         }
     }
 }
@@ -155,41 +162,48 @@ struct StudioKeyCap: View {
     var width: CGFloat = 44
     /// Half-height arrow keys are shorter and drop the caption.
     var height: CGFloat = 36
+    /// The inspector's large cap: the label centred and bigger.
+    var large = false
     @Environment(\.palette) private var palette
     @Environment(\.colorSchemeContrast) private var contrast
 
     var body: some View {
-        VStack(spacing: 2) {
-            Text(key).font(.system(size: 11, weight: .semibold)).lineLimit(1)
-            if let action, height >= 30 { Text(action).font(.system(size: 10)).lineLimit(1) }
+        let shape = RoundedRectangle(cornerRadius: large ? 12 : StudioMetrics.keyRadius, style: .continuous)
+        // The label at the top left and what the key does under it, as on the Binds board.
+        VStack(alignment: .leading, spacing: 2) {
+            Text(key).font(.system(size: large ? 22 : 11, weight: large ? .bold : .semibold)).lineLimit(1)
+            if let action, height >= 30, !large {
+                Spacer(minLength: 0)
+                Text(action).font(.system(size: 11, weight: .medium)).lineLimit(1).foregroundStyle(role.ink(palette).opacity(0.8))
+            }
         }
-        .padding(.horizontal, 3)
-        .foregroundStyle(role.ink)
-        .frame(width: max(StudioMetrics.minimumHitTarget, width), height: height)
+        .padding(.horizontal, large || height < 30 ? 0 : 6).padding(.vertical, large || height < 30 ? 0 : 5)
+        .foregroundStyle(role.ink(palette))
+        .frame(width: max(StudioMetrics.minimumHitTarget, width), height: height,
+               alignment: large || height < 30 ? .center : .topLeading)
         .background {
             ZStack {
-                role.fill
+                palette.panel
+                role.fill(palette)
                 if role == .unavailable {
                     Canvas { context, size in
                         var path = Path()
-                        for offset in stride(from: -size.height, through: size.width, by: 8) {
+                        for offset in stride(from: -size.height, through: size.width, by: 6) {
                             path.move(to: CGPoint(x: offset, y: size.height))
                             path.addLine(to: CGPoint(x: offset + size.height, y: 0))
                         }
-                        context.stroke(path, with: .color(.white.opacity(0.10)), lineWidth: 3)
+                        context.stroke(path, with: .color(palette.track), lineWidth: 1.5)
                     }
                     .allowsHitTesting(false).accessibilityHidden(true)
                 }
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: StudioMetrics.keyRadius))
-        .overlay(RoundedRectangle(cornerRadius: StudioMetrics.keyRadius)
-            .strokeBorder(role.ink.opacity(contrast == .increased ? 0.65 : 0.25), lineWidth: 1))
+        .clipShape(shape)
+        .overlay(shape.strokeBorder(contrast == .increased ? role.ink(palette).opacity(0.65) : role.edge(palette), lineWidth: 1))
         .overlay {
             if selected {
-                // Leave a ground-colored gap: brass directly on a Movement key
-                // disappears in dark appearance. Selection never changes layout.
-                RoundedRectangle(cornerRadius: StudioMetrics.keyRadius + 4)
+                // A ground-coloured gap between the key and the accent ring. Selection never changes layout.
+                RoundedRectangle(cornerRadius: StudioMetrics.keyRadius + 4, style: .continuous)
                     .strokeBorder(palette.accent, lineWidth: 2).padding(-4)
                     .allowsHitTesting(false)
             }

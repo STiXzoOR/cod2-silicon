@@ -59,7 +59,7 @@ struct ConfigCheckupView: View {
                     HStack(spacing: 10) {
                         Text(hidden == 1 ? "1 suggestion set aside for now." : "\(hidden) suggestions set aside for now.")
                             .font(.system(size: 13)).foregroundStyle(palette.secondary)
-                        Button("Show Again", action: checkup.showAgain).glassAction().controlSize(.small)
+                        Button("Show Again", action: checkup.showAgain).glassAction().controlSize(.large)
                     }
                     .padding(.horizontal, 6)
                 }
@@ -69,21 +69,33 @@ struct ConfigCheckupView: View {
                     }
                 }
                 .padding(.horizontal, 6)
-                HStack(spacing: 22) {
-                    Label("Locked settings are never suggested.", systemImage: "lock").font(StudioTypography.help).foregroundStyle(palette.secondary)
-                    Button { studio.tab = .history } label: {
-                        Label("Every change can be undone in History.", systemImage: "clock.arrow.circlepath").font(StudioTypography.help).foregroundStyle(palette.link)
-                    }
-                    .buttonStyle(.plain)
-                    Button { studio.tab = .settings; studio.level = .expert } label: {
-                        Text("Want the exact settings? Expert shows them.").font(StudioTypography.help).foregroundStyle(palette.link)
-                    }
-                    .buttonStyle(.plain)
+                // The footnotes wrap onto lines of their own rather than run past the window's edge.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 20) { footnotes }
+                    VStack(alignment: .leading, spacing: 6) { footnotes }
                 }
+                .font(StudioTypography.help).foregroundStyle(palette.tertiary)
                 .padding(.horizontal, 6)
             }
-            .padding(.trailing, 4).padding(.bottom, 8)
+            .padding(.trailing, 4).padding(.bottom, 24)
         }
+    }
+
+    @ViewBuilder private var footnotes: some View {
+        Label { Text("Locked settings are never suggested.") } icon: { Image(systemName: "lock").accessibilityHidden(true) }
+            .fixedSize()
+        Button { studio.tab = .history } label: {
+            Label { Text("Every change can be undone in \(Text("History").foregroundColor(palette.link)).") } icon: {
+                Image(systemName: "arrow.uturn.backward").accessibilityHidden(true)
+            }
+        }
+        .buttonStyle(.plain).fixedSize()
+        .accessibilityLabel("Every change can be undone in History")
+        Button { studio.tab = .settings; studio.level = .expert } label: {
+            Text("Want the exact settings? \(Text("Expert").foregroundColor(palette.link)) shows them behind each suggestion.")
+        }
+        .buttonStyle(.plain).fixedSize()
+        .accessibilityLabel("Want the exact settings? Expert shows them behind each suggestion.")
     }
 }
 
@@ -123,7 +135,7 @@ extension RulesBar {
     @ViewBuilder func summary(_ standing: ConfigCheckupStanding) -> some View {
         if let status = standing.status {
             StudioStatusLabel(title: status.title, tone: status.tone).fixedSize(horizontal: false, vertical: true)
-            Button(showingRules ? "Hide Rules" : "Show Rules") { showingRules.toggle() }.glassAction().controlSize(.small).fixedSize()
+            Button(showingRules ? "Hide Rules" : "Show Rules") { showingRules.toggle() }.glassAction().controlSize(.large).fixedSize()
         }
     }
 }
@@ -131,15 +143,18 @@ extension RulesBar {
 struct RulesMenu: View {
     @ObservedObject var checkup: ConfigCheckupModel
     @Environment(\.palette) private var palette
-    private var rulesIcon: NSImage {
-        let name = "Rules to check against: \(checkup.selectionTitle)"
-        let image = NSImage(systemSymbolName: "checklist", accessibilityDescription: name) ?? NSImage()
-        image.accessibilityDescription = name
+    /// VoiceOver reads a menu button by its picture's description; a name put on the menu alone is
+    /// not read, and the bordered menu style reads no name at all. So the name rides on a picture
+    /// with nothing in it, and the capsule is drawn here.
+    private var name: NSImage {
+        let image = NSImage(size: NSSize(width: 1, height: 1))
+        image.accessibilityDescription = "Rules to check against: \(checkup.selectionTitle)"
         return image
     }
     var body: some View {
         HStack(spacing: 8) {
-            Text("Rules").font(.system(size: 12)).foregroundStyle(palette.secondary)
+            Text("Rules").font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.secondary)
+            // Several rule sets can apply at once, so a menu of ticks drawn as the capsule pop-up button.
             Menu {
                 ForEach(checkup.available) { ruleset in
                     Button {
@@ -154,10 +169,13 @@ struct RulesMenu: View {
                     Text(checkup.selectionTitle).lineLimit(1)
                         .accessibilityLabel("Rules to check against: \(checkup.selectionTitle)")
                 } icon: {
-                    Image(nsImage: rulesIcon)
+                    Image(nsImage: name)
                 }
             }
             .menuStyle(.borderlessButton).fixedSize()
+            .padding(.leading, 8).padding(.trailing, 10).frame(height: 28)
+            .background(palette.button, in: Capsule()).overlay(Capsule().strokeBorder(palette.buttonStroke, lineWidth: 1))
+            .shapeAudit(.control, .capsule, "rules menu")
             .accessibilityLabel("Rules to check against: \(checkup.selectionTitle)")
         }
     }
@@ -171,7 +189,7 @@ private struct MatchPanel: View {
     @Environment(\.palette) private var palette
     var body: some View {
         if let match = checkup.matchPresentation {
-            ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: 16, leading: 20, bottom: 16, trailing: 20)) {
+            ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 20)) {
                 ViewThatFits(in: .horizontal) {
                     HStack(alignment: .top, spacing: 16) { words(match); Spacer(minLength: 8); buttons }
                     VStack(alignment: .leading, spacing: 10) { words(match); buttons }
@@ -212,7 +230,7 @@ private struct MatchPanel: View {
             if checkup.focusedMatchID != nil, checkup.shownMatch?.id != checkup.latestMatch?.id {
                 // Both labels are one height, so the two capsules line up whatever their symbols.
                 Button { checkup.focusedMatchID = nil } label: { Label("Show Last Match", systemImage: "clock.arrow.circlepath").frame(height: 16) }
-                    .glassAction().controlSize(.small).fixedSize()
+                    .glassAction().actionControlSize().fixedSize()
                     .help("Measure from your most recent match instead")
             }
             refresh
@@ -220,7 +238,7 @@ private struct MatchPanel: View {
     }
     private var refresh: some View {
         Button { checkup.refreshMatches() } label: { Label("Refresh", systemImage: "arrow.clockwise").frame(height: 16) }
-            .glassAction().controlSize(.small).fixedSize()
+            .glassAction().actionControlSize().fixedSize()
             .help("Read the match summaries the game saved on this Mac again")
             .accessibilityLabel("Refresh match summaries")
     }
@@ -258,54 +276,51 @@ private struct SourceLine: View {
         if let url = reference.url {
             Link(destination: url) { Text("Source: \(reference.text)").font(StudioTypography.help) }.foregroundStyle(palette.link)
         } else {
-            Text("Source: \(reference.text)").font(.typewriter(11)).foregroundStyle(palette.address).lineLimit(1).truncationMode(.middle)
+            Text("Source: \(reference.text)").font(.typewriter(12)).foregroundStyle(palette.address).lineLimit(1).truncationMode(.middle)
         }
     }
 }
 
-/// One of the four cards: the outcome in a word, the value, what the player would notice, and the
-/// raw figures behind Show details.
+/// One of the four cards: what it measures, the outcome in a word as a value, its status, what the
+/// player would notice, and the raw figures behind Show Details.
 private struct DialCard: View {
     var gauge: ConfigCheckupGauge
     @Environment(\.palette) private var palette
     @State private var details = false
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
+            // The label, the value and the status each take a line, so a long status never meets the title.
             VStack(alignment: .leading, spacing: 8) {
-                // The status moves under the title when a narrow card can't hold both on one line.
-                ViewThatFits(in: .horizontal) {
-                    HStack(alignment: .firstTextBaseline, spacing: 8) { title; Spacer(minLength: 4); StatusLabel(gauge.tone.kind, gauge.status) }
-                    VStack(alignment: .leading, spacing: 4) { title; StatusLabel(gauge.tone.kind, gauge.status) }
-                }
-                Text(gauge.value).font(.stencil(30)).tracking(0.6).foregroundStyle(palette.heading).lineLimit(1).minimumScaleFactor(0.7)
-                Text(gauge.detail).font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+                Text(gauge.area.title).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.secondary).lineLimit(1)
+                Text(gauge.value).font(.value).foregroundStyle(palette.heading).lineLimit(1).minimumScaleFactor(0.8)
+                StudioStatusLabel(title: gauge.status, tone: gauge.tone)
+                Text(gauge.detail).font(StudioTypography.help).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(gauge.area.title): \(gauge.value == "—" ? "no value" : gauge.value), \(gauge.status). \(gauge.detail)")
             .accessibilityAddTraits(.isStaticText)
             if !gauge.figures.isEmpty {
                 if details {
-                    Text(gauge.figures).font(.system(size: 11)).monospacedDigit().foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
+                    Text(gauge.figures).font(StudioTypography.help).monospacedDigit().foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
                         .textSelection(.enabled)
                 }
-                Button(details ? "Hide Details" : "Show Details") { details.toggle() }.quietAction().controlSize(.small)
+                Button(details ? "Hide Details" : "Show Details") { details.toggle() }.quietAction()
                     .padding(.horizontal, -6)
                     .accessibilityLabel(details ? "Hide the \(gauge.area.title.lowercased()) figures" : "Show the \(gauge.area.title.lowercased()) figures")
             }
             Spacer(minLength: 0)
         }
-        .padding(.vertical, 16).padding(.horizontal, 18)
+        .padding(.vertical, 16).padding(.horizontal, 20)
         .frame(maxWidth: .infinity, minHeight: 132, alignment: .topLeading)
         .background(palette.panel, in: RoundedRectangle(cornerRadius: StudioMetrics.panelRadius, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: StudioMetrics.panelRadius, style: .continuous).stroke(palette.panelStroke, lineWidth: 1))
         .accessibilityElement(children: .contain)
     }
-    private var title: some View {
-        Text(gauge.area.title).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.dark ? Palette.hex(0xcfc6b1) : palette.secondary)
-            .lineLimit(1).fixedSize()
-    }
 }
 
+/// A suggestion: the outcome as its title, why, what you'll notice, the evidence and its source.
+/// One main button per card: Apply, beside Not Now and Show Me as quiet buttons. Only the top card's
+/// Apply is gold.
 private struct SuggestionCard: View {
     @ObservedObject var studio: ConfigStudioModel
     @ObservedObject var checkup: ConfigCheckupModel
@@ -316,74 +331,72 @@ private struct SuggestionCard: View {
 
     var body: some View {
         let showing = checkup.showing.contains(suggestion.id)
-        VStack(alignment: .leading, spacing: 10) {
-            if top { Eyebrow(text: "Top suggestion", size: 12, tracking: 0.28) }
-            HStack(alignment: .top, spacing: 18) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(suggestion.title).font(.system(size: 17, weight: .bold)).foregroundStyle(palette.heading).fixedSize(horizontal: false, vertical: true)
-                        .accessibilityAddTraits(.isHeader)
-                    Text(suggestion.why).font(.system(size: 13)).foregroundStyle(palette.dark ? Palette.hex(0xcfc6b1) : palette.body).lineSpacing(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                    HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Image(systemName: "lightbulb").foregroundStyle(palette.accent).accessibilityHidden(true)
-                        Text("\(Text("You’ll notice: ").fontWeight(.semibold))\(Text(suggestion.notice))").font(.system(size: 13)).foregroundStyle(palette.text)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    HStack(spacing: 8) {
-                        Text(checkup.evidenceText(suggestion)).fixedSize(horizontal: false, vertical: true)
-                    }
-                    .font(StudioTypography.help).foregroundStyle(palette.secondary)
-                    ForEach(Array(suggestion.sources.prefix(2).enumerated()), id: \.offset) { _, source in SourceLine(checkup: checkup, source: source) }
-                    if showing {
-                        VStack(alignment: .leading, spacing: 6) {
-                            ForEach(suggestion.changes, id: \.setting) { change in
-                                HStack(spacing: 8) {
-                                    Text("•").foregroundStyle(palette.tertiary).accessibilityHidden(true)
-                                    Text(checkup.changeText(change)).font(.system(size: 13)).foregroundStyle(palette.text)
-                                    Spacer(minLength: 4)
-                                    if let spec = studio.spec(named: change.setting) {
-                                        Button("Open in Expert") { studio.jump(to: spec) }.buttonStyle(.plain).font(.system(size: 12, weight: .semibold)).foregroundStyle(palette.link)
-                                    }
-                                }
+        VStack(alignment: .leading, spacing: 8) {
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .center, spacing: 8) { heading; Spacer(minLength: 12); buttons(showing) }
+                VStack(alignment: .leading, spacing: 10) { heading; buttons(showing) }
+            }
+            Text(suggestion.why).font(.system(size: 13)).foregroundStyle(palette.secondary).lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Image(systemName: "eye").font(.system(size: 13)).foregroundStyle(palette.accent).accessibilityHidden(true)
+                Text("\(Text("You’ll notice: ").fontWeight(.semibold))\(Text(suggestion.notice))").font(.system(size: 13)).foregroundStyle(palette.text)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if showing {
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(suggestion.changes, id: \.setting) { change in
+                        HStack(spacing: 8) {
+                            Text("•").foregroundStyle(palette.tertiary).accessibilityHidden(true)
+                            Text(checkup.changeText(change)).font(.system(size: 13)).monospacedDigit().foregroundStyle(palette.text)
+                            Spacer(minLength: 4)
+                            if let spec = studio.spec(named: change.setting) {
+                                Button("Open in Expert") { studio.jump(to: spec) }.quietAction().fixedSize()
                             }
                         }
-                        .padding(.vertical, 10).padding(.horizontal, 14)
-                        .background(palette.well, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(palette.wellStroke, lineWidth: 1))
                     }
                 }
-                Spacer(minLength: 0)
-                VStack(spacing: 8) {
-                    if top {
-                        Button { checkup.apply(suggestion.id, undo: undo) } label: { Text("Apply").frame(maxWidth: .infinity) }
-                            .prominentAction().actionControlSize().disabled(studio.isReadOnly)
-                            .shapeAudit(.field, .capsule, "checkup apply \(suggestion.id)")
-                    } else {
-                        Button { checkup.apply(suggestion.id, undo: undo) } label: { Text("Apply").frame(maxWidth: .infinity) }
-                            .glassAction().actionControlSize().disabled(studio.isReadOnly)
-                            .shapeAudit(.field, .capsule, "checkup apply \(suggestion.id)")
-                    }
-                    Button {
-                        if showing { checkup.showing.remove(suggestion.id) } else { checkup.showing.insert(suggestion.id) }
-                    } label: { Text(showing ? "Hide" : "Show Me").frame(maxWidth: .infinity) }
-                        .glassAction().actionControlSize()
-                    Button { checkup.notNow(suggestion.id) } label: { Text("Not Now").frame(maxWidth: .infinity, minHeight: 28) }
-                        .buttonStyle(.plain).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.secondary)
-                }
-                .frame(width: 132)
+                .padding(.vertical, 12).padding(.horizontal, 16)
+                .background(palette.well, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(palette.wellStroke, lineWidth: 1))
+                .padding(.vertical, 4)
             }
+            Text(checkup.evidenceText(suggestion)).font(StudioTypography.help).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
+            ForEach(Array(suggestion.sources.prefix(2).enumerated()), id: \.offset) { _, source in SourceLine(checkup: checkup, source: source) }
         }
-        .padding(.vertical, 16).padding(.horizontal, 18)
-        .background {
-            RoundedRectangle(cornerRadius: StudioMetrics.panelRadius, style: .continuous).fill(palette.panel)
-            if top {
-                RoundedRectangle(cornerRadius: StudioMetrics.panelRadius, style: .continuous)
-                    .fill(LinearGradient(colors: [palette.selection, .clear], startPoint: .top, endPoint: .center))
-            }
-        }
+        .padding(.vertical, 16).padding(.horizontal, 20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(palette.panel, in: RoundedRectangle(cornerRadius: StudioMetrics.panelRadius, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: StudioMetrics.panelRadius, style: .continuous).strokeBorder(top ? palette.selectionStroke : palette.panelStroke, lineWidth: 1))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(suggestion.title)
+    }
+
+    private var heading: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Text(suggestion.title).font(.system(size: 17, weight: .semibold)).foregroundStyle(palette.heading).fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
+            if top { Badge("Top suggestion", tone: .accent) }
+        }
+    }
+
+    private func buttons(_ showing: Bool) -> some View {
+        HStack(spacing: 8) {
+            Button("Not Now") { checkup.notNow(suggestion.id) }.quietAction().fixedSize()
+            Button(showing ? "Hide" : "Show Me") {
+                if showing { checkup.showing.remove(suggestion.id) } else { checkup.showing.insert(suggestion.id) }
+            }
+            .quietAction().fixedSize()
+            Group {
+                if top {
+                    Button("Apply") { checkup.apply(suggestion.id, undo: undo) }.prominentAction()
+                } else {
+                    Button("Apply") { checkup.apply(suggestion.id, undo: undo) }.glassAction()
+                }
+            }
+            .actionControlSize().fixedSize().disabled(studio.isReadOnly)
+            .shapeAudit(.field, .capsule, "checkup apply \(suggestion.id)")
+        }
     }
 }
 
@@ -394,16 +407,17 @@ private struct AppliedCard: View {
     @Environment(\.palette) private var palette
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "checkmark.circle").foregroundStyle(palette.positive).accessibilityHidden(true)
+            Image(systemName: "checkmark").font(.system(size: 17, weight: .semibold)).foregroundStyle(palette.positive).accessibilityHidden(true)
             Text("\(Text("Applied: ").fontWeight(.semibold))\(item.suggestion.title). Saved to History.").font(.system(size: 14)).foregroundStyle(palette.text)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 8)
-            Button("Undo") { checkup.undoApplied(item.id) }.glassAction().controlSize(.small).disabled(studio.isReadOnly)
+            Button { checkup.undoApplied(item.id) } label: { Label("Undo", systemImage: "arrow.uturn.backward") }
+                .glassAction().actionControlSize().fixedSize().disabled(studio.isReadOnly)
                 .shapeAudit(.field, .capsule, "checkup undo \(item.id)")
         }
-        .padding(.vertical, 14).padding(.horizontal, 18)
+        .padding(.vertical, 16).padding(.horizontal, 20)
         .background(palette.panel, in: RoundedRectangle(cornerRadius: StudioMetrics.panelRadius, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: StudioMetrics.panelRadius, style: .continuous).strokeBorder(palette.positive.opacity(0.4), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: StudioMetrics.panelRadius, style: .continuous).strokeBorder(palette.panelStroke, lineWidth: 1))
         .accessibilityElement(children: .contain)
     }
 }

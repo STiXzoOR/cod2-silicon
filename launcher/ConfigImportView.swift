@@ -77,18 +77,6 @@ struct ConfigImportSheet: View {
     }
 }
 
-private struct SheetTitle: View {
-    var title: String
-    @Environment(\.palette) private var palette
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Eyebrow(text: "Import", size: 12, tracking: 0.3)
-            Text(title).font(.system(size: 22, weight: .bold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-}
-
 // MARK: - Link
 
 private struct LinkStep: View {
@@ -264,9 +252,9 @@ private struct ImportReviewSheet: View {
     @State private var confirming: ConfirmationRequest?
 
     var body: some View {
-        VStack(spacing: 0) {
+        // The sheet's anatomy: symbol tile, a title that names the thing, the review, then the actions.
+        VStack(alignment: .leading, spacing: 16) {
             header
-            Rectangle().fill(palette.separator).frame(height: 1)
             switch review.phase {
             case .loading:
                 VStack(spacing: 10) {
@@ -278,12 +266,13 @@ private struct ImportReviewSheet: View {
                 EmptyState("Couldn’t read it", message: message, actionTitle: "Close", prominent: false) { discover.closeImport() }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             case .ready:
-                ScrollView { reviewBody.padding(.vertical, 16).padding(.horizontal, 26) }
+                ScrollView { reviewBody.padding(.bottom, 4) }
             }
-            Rectangle().fill(palette.separator).frame(height: 1)
             footer
         }
-        .frame(width: 780).frame(minHeight: 460, idealHeight: 720, maxHeight: .infinity)
+        .padding(22)
+        .environment(\.formContext, .inset)
+        .frame(width: 1000).frame(minHeight: 460, idealHeight: 760, maxHeight: .infinity)
         .confirmationAlert($confirming)
     }
 
@@ -294,40 +283,59 @@ private struct ImportReviewSheet: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: 16) {
-                SheetTitle(title: title)
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top, spacing: 14) {
+                Image(systemName: "square.and.arrow.down").font(.system(size: 20, weight: .medium)).foregroundStyle(palette.accent)
+                    .frame(width: 44, height: 44)
+                    .background(palette.selection, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(title).font(.system(size: 17, weight: .semibold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
+                        .fixedSize(horizontal: false, vertical: true)
+                    source
+                }
                 Spacer(minLength: 12)
-                if case .ready = review.phase {
+                destination
+            }
+            if let name = review.targetID.map({ _ in review.targetName }) {
+                Text("This changes \(name) itself. History keeps the version from before, so you can undo it.")
+                    .font(StudioTypography.help).foregroundStyle(palette.text)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if case .ready = review.phase {
+                HStack(alignment: .center, spacing: 16) {
                     Picker("How to import", selection: Binding(get: { review.mode }, set: { review.setMode($0) })) {
                         Text("Review").tag(ConfigImportMode.review)
                         Text("Import Everything").tag(ConfigImportMode.everything)
                     }
-                    .pickerStyle(.segmented).labelsHidden().fixedSize()
+                    .segmentedChoice()
                     .help("Review starts with risky lines left out. Import Everything ticks them too; blocked and locked lines stay out either way.")
+                    Text(review.summary).font(.system(size: 13)).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Button(review.showDetails ? "Hide Details" : "Show Details") { review.showDetails.toggle() }
+                        .quietAction().fixedSize()
+                        .accessibilityHint("Shows the exact lines")
                 }
             }
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 8) { source; Spacer(minLength: 12); destination }
-                VStack(alignment: .leading, spacing: 10) { source; destination }
-            }
-            if let name = review.targetID.map({ _ in review.targetName }) {
-                Text("This changes \(name) itself. History keeps the version from before, so you can undo it.")
-                    .font(StudioTypography.help).foregroundStyle(palette.dark ? Palette.hex(0xe2dbc9) : palette.text)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
         }
-        .padding(.top, 22).padding(.horizontal, 26).padding(.bottom, 16)
     }
 
     private var source: some View {
-        HStack(spacing: 8) {
-            ProvenanceChip(text: review.provenance.source, symbol: review.provenance.symbol)
-            if review.provenance.signed { ProvenanceChip(text: "Signed catalog entry", symbol: "checkmark.seal", tone: .positive) }
-            if review.provenance.windows { ProvenanceChip(text: "From Windows", symbol: "pc") }
+        HStack(spacing: 12) {
+            Chip(review.provenance.source) {
+                Image(systemName: review.provenance.symbol).accessibilityHidden(true)
+                Text(review.provenance.source)
+            }
+            if review.provenance.signed { StatusLabel(.ready, "Signed catalog entry") }
+            if review.provenance.windows {
+                Chip("From Windows") {
+                    Image(systemName: "pc").accessibilityHidden(true)
+                    Text("From Windows")
+                }
+            }
             if let credit = review.provenance.credit {
                 Text("Credit: \(credit)" + (review.provenance.publishedBy.map { " · As published by \($0)" } ?? ""))
-                    .font(StudioTypography.help).foregroundStyle(palette.secondary).lineLimit(1)
+                    .font(StudioTypography.help).foregroundStyle(palette.tertiary).lineLimit(1)
             } else if let detail = review.provenance.detail {
                 Text(detail).font(.typewriter(12)).foregroundStyle(palette.address).lineLimit(1).truncationMode(.middle)
                     .help(detail)
@@ -337,21 +345,22 @@ private struct ImportReviewSheet: View {
 
     private var destination: some View {
         HStack(spacing: 8) {
-            Text("Into").font(StudioTypography.help).foregroundStyle(palette.secondary)
+            Text("Into").font(.system(size: 13)).foregroundStyle(palette.secondary)
             Picker("Into", selection: Binding(get: { review.targetID ?? "" }, set: { review.setTarget($0.isEmpty ? nil : $0) })) {
                 Text("New loadout “\(review.displayName)”").tag("")
                 Divider()
                 ForEach(discover.studio.profiles) { Text($0.displayName).tag($0.id) }
             }
-            .labelsHidden().fixedSize()
+            .pickerStyle(.menu).labelsHidden().fixedSize().capsuleControls()
             .disabled(review.session == nil)
             .accessibilityLabel("Import into")
         }
+        .fixedSize()
     }
 
     @ViewBuilder private var reviewBody: some View {
         let items = review.items
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             if review.mode == .everything, review.riskyCount > 0 {
                 Banner(.error, title: "This imports \(review.riskyCount == 1 ? "1 line" : "\(review.riskyCount) lines") that need your OK",
                        message: review.consequences.joined(separator: ". ") + ". Switch to Review to leave them out.")
@@ -359,47 +368,86 @@ private struct ImportReviewSheet: View {
             if let error = review.applyError {
                 Banner(.error, title: "Nothing was imported.", message: error)
             }
-            HStack(alignment: .firstTextBaseline) {
-                Text(review.summary).font(.system(size: 13)).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: 12)
-                Button(review.showDetails ? "Hide Details" : "Show Details") { review.showDetails.toggle() }
-                    .quietAction()
-                    .accessibilityHint("Shows the exact lines")
-            }
             if items.isEmpty {
                 EmptyState("Nothing to import", message: "This config has no settings or key bindings to bring in.")
                     .padding(.vertical, 30)
             }
-            ForEach(ConfigImportPresentation.groupOrder(catalog: discover.studio.catalog), id: \.self) { group in
-                let rows = items.filter { $0.section == .change(group) }
-                if !rows.isEmpty {
-                    ReviewGroup(title: group, trailing: "\(rows.filter(\.selected).count) of \(rows.count)", items: rows,
-                                details: review.showDetails, toggle: { review.toggle($0) })
-                }
-            }
-            let protected = items.filter { $0.section == .protected }
-            if !protected.isEmpty {
-                ReviewGroup(title: "Protected", symbol: "lock", trailing: "Locked by you · never imported", tone: .quiet, items: protected,
-                            details: review.showDetails, protected: true, toggle: { review.toggle($0) })
-            }
+            // What needs your OK comes first, as tiles: each says what the line would do.
             let risky = items.filter { $0.section == .needsOK }
             if !risky.isEmpty {
                 let ticked = risky.filter(\.selected).count
-                ReviewGroup(title: "Needs your OK", symbol: "exclamationmark.triangle",
-                            trailing: ticked == 0 ? "Left out unless you tick them" : "\(ticked) of \(risky.count) ticked",
-                            tone: review.mode == .everything ? .riskyAll : .risky, items: risky, details: true, toggle: { review.toggle($0) })
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle").font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(review.mode == .everything ? palette.negative : palette.caution).accessibilityHidden(true)
+                        Text("Needs your OK").font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
+                        Spacer(minLength: 8)
+                        Text(ticked == 0 ? "Left out unless you tick them" : "\(ticked) of \(risky.count) ticked")
+                            .font(StudioTypography.help).monospacedDigit().foregroundStyle(palette.tertiary)
+                    }
+                    .padding(.horizontal, 6)
+                    Grid(horizontalSpacing: 12, verticalSpacing: 12) {
+                        ForEach(Array(stride(from: 0, to: risky.count, by: 3)), id: \.self) { start in
+                            GridRow(alignment: .top) {
+                                ForEach(start..<start + 3, id: \.self) { index in
+                                    if index < risky.count {
+                                        RiskTile(item: risky[index], everything: review.mode == .everything, toggle: { review.toggle($0) })
+                                    } else {
+                                        Color.clear.frame(height: 1).gridCellUnsizedAxes(.vertical)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Needs your OK")
+            }
+            // The changes by what they do, in two columns, with what stays protected beside them.
+            let blocks = changeBlocks(items)
+            if !blocks.isEmpty {
+                HStack(alignment: .top, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach(Array(blocks.enumerated()).filter { $0.offset % 2 == 0 }, id: \.offset) { _, block in group(block) }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach(Array(blocks.enumerated()).filter { $0.offset % 2 == 1 }, id: \.offset) { _, block in group(block) }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+                }
             }
             let machine = items.filter { $0.section == .machine }
             if !machine.isEmpty {
-                ReviewGroup(title: "Choose on this Mac", symbol: "desktopcomputer", trailing: "Set in Settings or Binds instead", tone: .quiet,
-                            items: machine, details: review.showDetails, toggle: { review.toggle($0) })
+                ReviewGroup(title: "Choose on this Mac", trailing: "Set in Settings or Binds instead", items: machine,
+                            details: review.showDetails, toggle: { review.toggle($0) })
             }
             let never = items.filter { $0.section == .never }
             if !never.isEmpty {
-                ReviewGroup(title: "Never imported", symbol: "nosign", trailing: "Passwords, file paths, protected settings, unknown commands",
-                            tone: .quiet, items: never, details: true, toggle: { review.toggle($0) })
+                ReviewGroup(title: "Never imported", trailing: "Passwords, file paths, protected settings, unknown commands",
+                            items: never, details: true, toggle: { review.toggle($0) })
             }
         }
+    }
+
+    private struct Block {
+        var title: String
+        var trailing: String
+        var items: [ConfigImportItem]
+        var protected = false
+    }
+    private func changeBlocks(_ items: [ConfigImportItem]) -> [Block] {
+        var blocks: [Block] = ConfigImportPresentation.groupOrder(catalog: discover.studio.catalog).compactMap { group in
+            let rows = items.filter { $0.section == .change(group) }
+            return rows.isEmpty ? nil : Block(title: group, trailing: "\(rows.filter(\.selected).count) of \(rows.count)", items: rows)
+        }
+        let protected = items.filter { $0.section == .protected }
+        if !protected.isEmpty { blocks.append(Block(title: "Protected", trailing: "Locked by you · never imported", items: protected, protected: true)) }
+        return blocks
+    }
+    private func group(_ block: Block) -> some View {
+        ReviewGroup(title: block.title, trailing: block.trailing, items: block.items, details: review.showDetails, protected: block.protected,
+                    toggle: { review.toggle($0) })
     }
 
     /// Why Apply is dimmed, said beside it; nil when it can apply.
@@ -410,12 +458,12 @@ private struct ImportReviewSheet: View {
         return nil
     }
     private var footer: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 8) {
             Group {
                 if case .ready = review.phase, let reason = applyBlock { Text(reason) }
-                else { Text("Nothing applies until you confirm · Undo anytime from History") }
+                else { Text("Nothing applies until you confirm. You can undo it from \(Text("History").foregroundColor(palette.link)).") }
             }
-            .font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+            .font(StudioTypography.help).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 8)
             if case .ready = review.phase {
                 Button("Cancel", role: .cancel) { discover.closeImport() }.glassAction().actionControlSize().keyboardShortcut(.cancelAction)
@@ -426,8 +474,7 @@ private struct ImportReviewSheet: View {
                 Button("Close", role: .cancel) { discover.closeImport() }.glassAction().actionControlSize().keyboardShortcut(.cancelAction)
             }
         }
-        .padding(.top, 14).padding(.bottom, 16).padding(.leading, 26).padding(.trailing, 22)
-        .background(palette.dark ? Color.black.opacity(0.14) : Color.black.opacity(0.03))
+        .padding(.top, 2)
     }
 
     private var confirmTitle: String {
@@ -450,77 +497,60 @@ private struct ImportReviewSheet: View {
     }
 }
 
-private struct ProvenanceChip: View {
-    var text: String
-    var symbol: String
-    var tone: StudioStatusTone? = nil
+/// A line that needs your OK, as a tile: the shared checkbox, what it would do, and the exact line.
+private struct RiskTile: View {
+    var item: ConfigImportItem
+    var everything: Bool
+    var toggle: @MainActor (String) -> Void
     @Environment(\.palette) private var palette
     var body: some View {
-        Label(text, systemImage: symbol)
-            .font(.system(size: 12, weight: .semibold)).lineLimit(1)
-            .foregroundStyle(tone.map { $0.color(in: palette) } ?? palette.chipText)
-            .padding(.horizontal, 10).frame(height: 26)
-            .background((tone.map { $0.color(in: palette).opacity(0.06) } ?? (palette.dark ? Color.white.opacity(0.06) : Color.white.opacity(0.55))), in: Capsule())
-            .overlay(Capsule().stroke(tone.map { $0.color(in: palette).opacity(0.45) } ?? (palette.dark ? Color.white.opacity(0.12) : palette.wellStroke), lineWidth: 1))
-            .fixedSize()
+        let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
+        CheckboxRow(isOn: Binding(get: { item.selected }, set: { _ in toggle(item.id) })) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(item.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.heading)
+                if let detail = item.detail, !detail.isEmpty {
+                    Text(detail).font(StudioTypography.help).foregroundStyle(palette.tertiary)
+                }
+                Text(item.exact).font(.typewriter(12)).foregroundStyle(palette.text).textSelection(.enabled)
+                    .accessibilityLabel("Exact line: \(item.exact)")
+            }
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .disabled(!item.selectable)
+        .padding(.vertical, 12).padding(.horizontal, 14)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(palette.well, in: shape)
+        .overlay(shape.strokeBorder(everything ? palette.negative.opacity(0.55) : palette.wellStroke, lineWidth: 1))
     }
 }
 
+/// One group of the review: its label and count over rows on a well, as a form group in a sheet.
 private struct ReviewGroup: View {
-    enum Tone { case plain, quiet, risky, riskyAll }
     var title: String
-    var symbol: String? = nil
     var trailing: String
-    var tone: Tone = .plain
     var items: [ConfigImportItem]
     var details: Bool
     var protected = false
     var toggle: @MainActor (String) -> Void
     @Environment(\.palette) private var palette
-    private let radius: CGFloat = 16
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
-                HStack(spacing: 8) {
-                    if let symbol { Image(systemName: symbol).foregroundStyle(accent).accessibilityHidden(true) }
-                    Text(title).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.heading)
-                }
-                .accessibilityElement(children: .combine).accessibilityAddTraits(.isHeader)
+                GroupLabel(title)
                 Spacer(minLength: 8)
-                Text(trailing).font(StudioTypography.help).foregroundStyle(tone == .risky || tone == .riskyAll ? palette.text : palette.secondary)
+                Text(trailing).font(StudioTypography.help).monospacedDigit().foregroundStyle(palette.tertiary)
                     .multilineTextAlignment(.trailing)
             }
-            .padding(.vertical, 11).padding(.horizontal, 16)
-            .overlay(alignment: .bottom) { Rectangle().fill(edge.opacity(0.6)).frame(height: 1) }
-            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                ReviewRow(item: item, details: details, protected: protected, toggle: toggle)
-                    .overlay(alignment: .top) { if index > 0 { Rectangle().fill(palette.separator).frame(height: 1) } }
+            .padding(.horizontal, 6)
+            FormGroup {
+                ForEach(items) { item in
+                    ReviewRow(item: item, details: details, protected: protected, toggle: toggle)
+                }
             }
         }
-        .background(fill, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).stroke(edge, lineWidth: 1))
-        .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(title)
-    }
-    private var accent: Color {
-        switch tone { case .risky: palette.caution; case .riskyAll: palette.negative; default: palette.chipIcon }
-    }
-    private var fill: Color {
-        switch tone {
-        case .plain: palette.panel
-        case .quiet: .clear
-        case .risky: palette.caution.opacity(0.06)
-        case .riskyAll: palette.negative.opacity(0.06)
-        }
-    }
-    private var edge: Color {
-        switch tone {
-        case .plain, .quiet: palette.panelStroke
-        case .risky: palette.caution.opacity(0.5)
-        case .riskyAll: palette.negative.opacity(0.55)
-        }
     }
 }
 
@@ -534,18 +564,19 @@ private struct ReviewRow: View {
     var body: some View {
         Group {
             if item.selectable {
-                Toggle(isOn: Binding(get: { item.selected }, set: { _ in toggle(item.id) })) { label }
-                    .toggleStyle(.checkbox)
+                CheckboxRow(isOn: Binding(get: { item.selected }, set: { _ in toggle(item.id) })) { label }
             } else {
                 HStack(alignment: .top, spacing: 8) {
-                    Image(systemName: symbol).font(.system(size: 12)).foregroundStyle(palette.chipIcon).frame(width: 16).padding(.top, 1)
+                    Image(systemName: symbol).font(.system(size: 14)).foregroundStyle(palette.tertiary).frame(width: 16).padding(.top, 1)
                         .accessibilityHidden(true)
                     label
                 }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 11).padding(.horizontal, 16)
+        .padding(.vertical, 9).padding(.horizontal, 16)
+        .frame(minHeight: FormMetrics.detailRowHeight)
+        .overlay(alignment: .top) { Rectangle().fill(palette.separator).frame(height: 1) }
     }
 
     private var symbol: String {
@@ -553,14 +584,13 @@ private struct ReviewRow: View {
     }
 
     private var label: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 8) {
-                Text(item.title).font(.system(size: 14, weight: item.risky ? .semibold : .regular))
-                    .foregroundStyle(item.selectable ? palette.text : (palette.dark ? Palette.hex(0xcfc6b1) : palette.text))
+                Text(item.title).font(.system(size: 14, weight: item.risky ? .semibold : .regular)).foregroundStyle(palette.text)
                 ForEach(item.labels, id: \.self) { Badge($0) }
             }
             if let detail = item.detail, !detail.isEmpty {
-                Text(detail).font(StudioTypography.help).foregroundStyle(palette.secondary)
+                Text(detail).font(StudioTypography.help).foregroundStyle(palette.tertiary)
             }
             if details { exact }
         }
@@ -570,11 +600,11 @@ private struct ReviewRow: View {
     @ViewBuilder private var exact: some View {
         Group {
             if protected, let previous = item.previous {
-                Text("\(Text(previous).foregroundColor(palette.address))\(Text("  (theirs: \(item.exact))").foregroundColor(palette.secondary))")
+                Text("\(Text(previous).foregroundColor(palette.text))\(Text("  (theirs: \(item.exact))").foregroundColor(palette.secondary))")
             } else if let previous = item.previous, !item.risky {
-                Text("\(Text(previous).strikethrough().foregroundColor(palette.secondary))  \(Text(item.exact).foregroundColor(palette.accent))")
+                Text("\(Text(previous).strikethrough().foregroundColor(palette.tertiary)) → \(Text(item.exact).foregroundColor(palette.text))")
             } else {
-                Text(item.exact).foregroundColor(palette.address)
+                Text(item.exact).foregroundColor(palette.secondary)
             }
         }
         .font(.typewriter(12)).lineSpacing(3).textSelection(.enabled)

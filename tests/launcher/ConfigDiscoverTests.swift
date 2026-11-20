@@ -280,7 +280,7 @@ import Darwin
         require(discover.heroes.map(\.id) == ["player-1", "player-3", "player-4"], "the banner pages through the featured setups")
         require(discover.styleShelves.map(\.filter) == [.classic, .cod2x] && discover.styleShelves.first?.total == 3, "one shelf for each style that has setups")
         require(discover.styleShelves.first?.entries.map(\.id) == ["player-1", "player-3", "player-2"], "a shelf lists featured setups first, then by name")
-        require(discover.teams == [ConfigDirectoryTeam(name: "[Team]", count: 4)], "teams with more than one setup")
+        require(discover.teams == [ConfigDirectoryTeam(name: "Team Northwind", count: 4)], "teams with more than one setup")
         require(discover.entry("player-2")?.artMap == "mp_carentan", "a setup's picture is its favourite map when it names one")
         discover.showAll(.cod2x)
         require(discover.page == .home && discover.browsing && discover.setups.map(\.id) == ["player-4", "player-5"], "See All shows one style")
@@ -306,7 +306,7 @@ import Darwin
         discover.tryEntry(discover.entry("player-1")!)
         guard let review = discover.review else { require(false, "Try this setup opens a review"); return }
         for _ in 0..<200 where { if case .loading = review.phase { return true }; return false }() { try? await Task.sleep(for: .milliseconds(25)) }
-        require(review.provenance.signed && review.provenance.credit == "[Player 1]" && review.targetID == nil, "a signed entry reviews into a new loadout")
+        require(review.provenance.signed && review.provenance.credit == "vargr" && review.targetID == nil, "a signed entry reviews into a new loadout")
         require(item(review, exact: "r_mode").section == .machine, "a Windows entry keeps display choices on this Mac")
         discover.closeImport()
         require(home.bytes("Main") == mainBefore && home.players == ["Main", "Pub", "Scrim"], "closing the review writes nothing")
@@ -321,8 +321,8 @@ import Darwin
         discover.page = .player("player-1")
         discover.compareInExpert(discover.entry("player-1")!)
         require(discover.page == nil && studio.tab == .settings && studio.level == .expert, "Compare opens Expert")
-        require(studio.comparisonName == "[Player 1]" && studio.compareID == nil, "the player is the comparison source")
-        require(studio.comparisonProvenance == "Players catalog · signed entry · credit [Player 1]", "the source and credit stay visible")
+        require(studio.comparisonName == "vargr" && studio.compareID == nil, "the player is the comparison source")
+        require(studio.comparisonProvenance == "Players catalog · signed entry · credit vargr", "the source and credit stay visible")
         let speed = studio.spec(named: "sensitivity")!, cap = studio.spec(named: "com_maxfps")!, gamma = studio.spec(named: "r_gamma")!
         require(studio.theirs(speed)?.raw == "2.1" && studio.theirs(cap)?.raw == "250" && studio.theirs(gamma)?.raw == "1.5", "their reviewed values, a locked one included")
         require(studio.theirs(studio.spec(named: "name")!) == nil && studio.spec(named: "r_mode").map({ studio.theirs($0) == nil }) != false,
@@ -337,18 +337,18 @@ import Darwin
         try home.session.reconcileGames([]); studio.failure = nil
         studio.takeTheirs(cap)
         var took = ConfigDocument(data: beforeTake!, dialect: .cod2x); try took.setSetting(named: "com_maxfps", value: "250")
-        require(home.bytes("Main") == took.serialized() && home.session.history.first?.summary == "Took Frame rate cap from [Player 1]", "one exact edit")
+        require(home.bytes("Main") == took.serialized() && home.session.history.first?.summary == "Took Frame rate cap from vargr", "one exact edit")
         require(studio.theirs(cap) == nil, "a taken value no longer differs")
         studio.compareID = "Scrim"
         require(studio.player == nil && studio.comparisonName == "Scrim" && studio.comparisonProvenance == nil, "choosing a loadout replaces the player")
 
         // A loadout imported from a player keeps its saved credit as the comparison's provenance.
         var credited = ConfigStudioMetadata(displayName: "From Player 1")
-        credited.origin = ConfigOrigin(kind: .imported, source: DirectoryFixture.base.absoluteString, credit: "[Player 1]")
+        credited.origin = ConfigOrigin(kind: .imported, source: DirectoryFixture.base.absoluteString, credit: "vargr")
         _ = try home.store.create(id: "From_Player_1", displayName: "From Player 1", document: config(["sensitivity": "2.1"]), metadata: credited)
         try home.session.refresh()
         studio.compareID = "From_Player_1"
-        require(studio.comparisonName == "From Player 1" && studio.comparisonProvenance == "Imported · credit [Player 1]" && studio.theirs(speed)?.raw == "2.1",
+        require(studio.comparisonName == "From Player 1" && studio.comparisonProvenance == "Imported · credit vargr" && studio.theirs(speed)?.raw == "2.1",
                 "the saved credit is shown with the loadout's values")
         studio.compareID = nil
         print("PASS: Compare in Expert uses the reviewed player values or a loadout's saved credit, honours locks and the running game")
