@@ -9,7 +9,6 @@ struct PlayerCardPopover: View {
     @ObservedObject private var studio: ConfigStudioModel
     @Environment(\.palette) private var palette
     @State private var name = ""
-    @FocusState private var nameFocused: Bool
     @State private var showColours = false
     init(model: LauncherModel) { self.model = model; studio = model.studio }
     var body: some View {
@@ -19,18 +18,9 @@ struct PlayerCardPopover: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Eyebrow(text: "Player", size: 12, tracking: 0.28)
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Name other players see").font(.system(size: 12)).foregroundStyle(palette.secondary)
-                        TextField("In-game name", text: $name, prompt: Text("Unknown Soldier").foregroundStyle(palette.tertiary))
-                            .textFieldStyle(.plain).font(.system(size: 13)).foregroundStyle(palette.text)
-                            .focused($nameFocused)
-                            .padding(.horizontal, 12).frame(height: 30)
-                            .background(palette.field, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .strokeBorder(model.playerCardError != nil ? palette.negative : nameFocused ? palette.accent.opacity(0.75) : palette.wellStroke,
-                                              lineWidth: nameFocused || model.playerCardError != nil ? 2 : 1))
-                            .shapeAudit(.field, .rounded(8), "name field")
+                        Text("Name other players see").font(.system(size: 12)).foregroundStyle(palette.tertiary)
+                        LauncherTextField("In-game name", text: $name, prompt: "Unknown Soldier", invalid: model.playerCardError != nil)
                             .disabled(!editable)
-                            .accessibilityLabel("In-game name")
                             .onSubmit { model.flushPlayerName(name) }
                     }
                     preview
@@ -48,7 +38,7 @@ struct PlayerCardPopover: View {
             .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(palette.wellStroke, lineWidth: 1))
             .shapeAudit(.container, .rounded(16), "player card group")
             HStack(spacing: 10) {
-                Text(footnote).font(.system(size: 12)).foregroundStyle(model.playerCardError != nil ? palette.negative : palette.secondary)
+                Text(footnote).font(.system(size: 12)).foregroundStyle(model.playerCardError != nil ? palette.negative : palette.tertiary)
                     .fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityAddTraits(.isStaticText)
                 Button("Done") { model.flushPlayerName(name); model.playerCardPresented = false }
@@ -77,7 +67,7 @@ struct PlayerCardPopover: View {
     }
     private var preview: some View {
         HStack(spacing: 4) {
-            Text("Shows as").foregroundStyle(palette.secondary)
+            Text("Shows as").foregroundStyle(palette.tertiary)
             QuakeName(name: name.isEmpty ? "Unknown Soldier" : name).fontWeight(.semibold).lineLimit(1)
             Button(showColours ? "Hide colours" : "Add colours…") { showColours.toggle() }
                 .buttonStyle(.plain).fixedSize()
@@ -106,8 +96,8 @@ struct PlayerCardPopover: View {
     @ViewBuilder private var keyRow: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
-                Text("CD key").font(.system(size: 13, weight: .medium)).foregroundStyle(palette.text)
-                Text(model.keyVerified ? "Stored only on this Mac." : "Needed to join most servers.").font(.system(size: 12)).foregroundStyle(palette.secondary)
+                Text("CD key").font(.system(size: 14)).foregroundStyle(palette.text)
+                Text(model.keyVerified ? "Stored only on this Mac." : "Needed to join most servers.").font(.system(size: 12)).foregroundStyle(palette.tertiary)
             }
             .accessibilityElement(children: .combine).accessibilityAddTraits(.isStaticText)
             Spacer(minLength: 8)
@@ -121,7 +111,7 @@ struct PlayerCardPopover: View {
     }
     private var loadoutRow: some View {
         HStack(spacing: 12) {
-            Text("Loadout for your next game").font(.system(size: 13, weight: .medium)).foregroundStyle(palette.text)
+            Text("Loadout for your next game").font(.system(size: 14)).foregroundStyle(palette.text)
             Spacer(minLength: 8)
             PopUpButton("Loadout for your next game", selection: Binding(get: { studio.activeProfile?.id ?? "" }, set: { id in
                 guard !id.isEmpty, id != studio.activeProfile?.id else { return }

@@ -107,11 +107,16 @@ extension SetupView {
                         steamStep(2, Text("Tap the shield at the bottom, then \(Text("Scan a QR Code").fontWeight(.semibold))."))
                         steamStep(3, Text("Point it at this code and approve the sign-in."))
                     }
-                    HStack(spacing: 8) {
-                        ProgressView().controlSize(.small)
+                    // Waiting on the person: a clock in the secondary colour. Waiting on the app: a spinner.
+                    HStack(spacing: 6) {
+                        if model.steam.qr != nil {
+                            Image(systemName: "clock").font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.secondary)
+                        } else {
+                            ProgressView().controlSize(.small)
+                        }
                         Text(model.steam.qr != nil ? "Waiting for you to approve on your phone…"
                              : model.steam.reachingSteam ? "Connecting to Steam…" : "Getting the download tool…")
-                            .font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.text)
+                            .font(.system(size: 12, weight: .semibold)).foregroundStyle(model.steam.qr != nil ? palette.secondary : palette.text)
                     }
                     .accessibilityElement(children: .combine).accessibilityAddTraits(.isStaticText)
                     note("Your phone will call this sign-in “DepotDownloader”, the download tool’s name. The code renews itself every little while.")
@@ -191,13 +196,14 @@ extension SetupView {
         .padding(.horizontal, 16).frame(minHeight: 40)
         .accessibilityElement(children: .combine).accessibilityAddTraits(.isStaticText)
     }
-    /// A step that is under way or still to come: the status label's shape, without a verdict's colour.
+    /// A step that is under way or still to come: the status label's shape, without a verdict's colour
+    /// (amber would read as “look at this”).
     private func steamPending(_ text: String, symbol: String, active: Bool) -> some View {
         HStack(spacing: 6) {
             Image(systemName: symbol).font(.system(size: 13, weight: .semibold))
             Text(text).lineLimit(1)
         }
-        .font(.system(size: 12, weight: .semibold)).foregroundStyle(active ? palette.accent : palette.secondary).fixedSize()
+        .font(.system(size: 12, weight: .semibold)).foregroundStyle(active ? palette.text : palette.secondary).fixedSize()
         .accessibilityElement(children: .ignore).accessibilityLabel(text)
     }
 
@@ -266,7 +272,7 @@ extension SetupView {
                 Spacer(minLength: 8)
                 CrashReportDetailsButton(model: model)
             }
-            .padding(.leading, 18).padding(.trailing, 2).padding(.bottom, 2)
+            .padding(.leading, 18).padding(.trailing, 12).padding(.bottom, 8)
         }
     }
 }
@@ -276,7 +282,7 @@ struct CrashReportDetailsButton: View {
     @ObservedObject var model: LauncherModel
     @State private var shown = false
     var body: some View {
-        Button("See What’s Sent…") { shown = true }.glassAction().controlSize(.large)
+        Button("See What’s Sent…") { shown = true }.quietAction()
             .popover(isPresented: $shown, arrowEdge: .bottom) { CrashReportContents(model: model) }
     }
 }
