@@ -4,10 +4,6 @@ import AppKit
 // Owner: ship-settings. The Settings window's seven panes, built against the SettingsWin board: General,
 // Display, Game Data, Privacy, Updates, Advanced and About. Every change saves itself (no Save button).
 
-/// A single-row group with a button keeps the button as far from the group's edge as from its top and bottom
-/// (the shape audit's rule): the 36-point action size in a row 20 points taller on each side.
-private let singleRowWithButton = ControlMetrics.action + 2 * FormMetrics.radius(.panel) + 1
-
 /// A pane's short confirmation where the person acted (“Shaders rebuilt.”), read out by VoiceOver.
 struct SettingsFeedbackLine: View {
     @ObservedObject var model: LauncherModel
@@ -50,7 +46,8 @@ struct GeneralPane: View {
                         Picker("Appearance", selection: $model.settings.appearance) {
                             ForEach(LauncherAppearance.allCases, id: \.self) { Text($0.title).tag($0) }
                         }
-                        .pickerStyle(.segmented).labelsHidden().fixedSize()
+                        .segmentedChoice()
+                        .accessibilityLabel("Appearance")
                     }
                     FormRow("Refresh the server list when Servers opens",
                             detail: model.settings.refreshServersOnOpen ? "On, the list refreshes each time you open Servers." : "Off, nothing is contacted until you press Refresh.",
@@ -58,14 +55,14 @@ struct GeneralPane: View {
                 }
             }
             if model.usesLoadouts {
-                Banner(.tip, symbol: "rectangle.on.rectangle", title: "Looking for frame rate, mouse, brightness, network, HUD or sound?",
+                Banner(.tip, symbol: "rectangle.on.rectangle", title: "Looking for mouse, brightness, network, HUD or sound?",
                        message: "They live in your loadouts, so every loadout keeps its own.") {
-                    Button("Open Configs", action: model.openConfigs).glassAction()
+                    Button("Open Configs", action: model.openConfigs).glassAction().controlSize(.large)
                 }
             } else {
                 Banner(.tip, symbol: "rectangle.on.rectangle", title: "Your loadouts aren’t set up yet",
                        message: "Until they are, the frame rate, mouse and sound settings in Display apply to every game." + (model.configStudio?.migrationError.map { " " + $0 } ?? "")) {
-                    Button("Open Configs", action: model.openConfigs).glassAction()
+                    Button("Open Configs", action: model.openConfigs).glassAction().controlSize(.large)
                 }
             }
         }
@@ -77,7 +74,8 @@ struct GeneralPane: View {
                                                       set: { model.settings.engine = $0 })) {
                 ForEach(model.engineOptions, id: \.value) { Text($0.title).tag($0.value) }
             }
-            .pickerStyle(.segmented).labelsHidden().fixedSize()
+            .segmentedChoice()
+            .accessibilityLabel("Game version")
         } else {
             Text(CoD2xFiles.engineTitle).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.text)
             Button("View Release") { NSWorkspace.shared.open(AppUpdate.releases) }.quietAction()
@@ -134,9 +132,9 @@ struct DisplayPane: View {
             } else {
                 // Resolution, vertical sync and the picture belong to each loadout: the game's own Graphics menu
                 // changes them too, and the launcher no longer sets them back at every start.
-                Banner(.tip, symbol: "square.stack.3d.up", title: "Resolution, vertical sync and picture quality belong to each loadout",
+                Banner(.tip, symbol: "square.stack.3d.up", title: "Resolution, vertical sync and picture quality belong to each loadout.",
                        message: "Change them in Configs or in the game’s own Graphics menu. Either way they stay as you set them.") {
-                    Button("Open Configs", action: model.openResolutionSettings).glassAction().disabled(!model.canNavigate)
+                    Button("Open Configs", action: model.openResolutionSettings).glassAction().controlSize(.large).disabled(!model.canNavigate)
                 }
             }
             if legacy {
@@ -157,7 +155,7 @@ struct DisplayPane: View {
                         .font(.system(size: 12)).foregroundStyle(palette.tertiary).padding(.horizontal, 6)
                 }
                 Spacer(minLength: 8)
-                Button("Restore Defaults", action: restore).glassAction().disabled(atDefaults)
+                Button("Restore Defaults", action: restore).glassAction().controlSize(.large).disabled(atDefaults)
             }
         }
         .onAppear { customFPS = !FrameCap.isPreset(model.settings.fps); model.refreshDisplay() }
@@ -207,7 +205,7 @@ struct DisplayPreview: View {
                 }
                 screen(windowed: windowed, size: size).padding(.top, 5)
             }
-            Text(model.mainDisplay?.name ?? "Main display").font(.system(size: 12)).foregroundStyle(palette.secondary)
+            Text(model.mainDisplay?.name ?? "Main display").font(.system(size: 12)).foregroundStyle(palette.tertiary)
                 .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
         }
         .padding(18)
@@ -270,13 +268,14 @@ private struct LegacyMouseGroup: View {
             }
             FormRow("Mouse DPI") {
                 TextField("DPI", value: $model.settings.dpi, format: .number.grouping(.never)).textFieldStyle(.plain).multilineTextAlignment(.trailing)
+                    // A field inside a form row is the rounded one (.field), as LauncherTextField draws it.
                     .padding(.horizontal, 12).frame(width: 80, height: 28)
-                    .background(palette.field, in: Capsule())
-                    .overlay(Capsule().stroke(palette.wellStroke, lineWidth: 1))
-                    .shapeAudit(.field, .capsule, "DPI field")
+                    .background(palette.field, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous).strokeBorder(palette.wellStroke, lineWidth: 1))
+                    .shapeAudit(.field, .rounded(7), "DPI field")
                     .accessibilityLabel("Mouse DPI")
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    Text(MouseMath.label(model.settings.cm360)).font(.stencil(20)).foregroundStyle(palette.dark ? palette.accent : Palette.hex(0x4e5b2f))
+                    Text(MouseMath.label(model.settings.cm360)).font(.value).foregroundStyle(palette.accent)
                         .contentTransition(.numericText())
                     Text("cm / 360°").font(.system(size: 13)).foregroundStyle(palette.secondary)
                 }
@@ -305,7 +304,7 @@ struct GameDataPane: View {
                     KeyRow(model: model)
                     ShaderRow(model: model)
                 }
-                if let error = model.dataChangeError { Banner(.error, message: error) { Button("Choose Again…", action: model.changeGameData).glassAction() } }
+                if let error = model.dataChangeError { Banner(.error, message: error) { Button("Choose Again…", action: model.changeGameData).glassAction().controlSize(.large) } }
                 if let message = model.shaderRebuildMessage {
                     Label(message, systemImage: model.approximate ? "exclamationmark.triangle" : "checkmark").font(.system(size: 12))
                         .padding(.horizontal, 6).accessibilityAddTraits(.isStaticText)
@@ -317,7 +316,7 @@ struct GameDataPane: View {
                     FormRow("Loadouts, demos and screenshots",
                             detail: PathDisplay.short(model.home.path) + (model.gameData.myFilesBytes.map { " · " + SettingsText.bytes($0) } ?? ""),
                             symbol: "doc") {
-                        Button("Show in Finder", action: model.showMyFilesInFinder).glassAction()
+                        Button("Show in Finder", action: model.showMyFilesInFinder).glassAction().controlSize(.large)
                     }
                     FormRow("Game versions installed", detail: model.originalAvailable ? "Both ship inside the app and update with it."
                             : "CoD2x ships inside the app and updates with it. This copy doesn’t include Original 1.3.", symbol: "cpu") {
@@ -327,9 +326,8 @@ struct GameDataPane: View {
                 }
             }
             FormGroup {
-                FormRow("Set up again", detail: "Walks through game data, CD key and shaders once more. Your loadouts, demos and screenshots stay. You can cancel at any step.",
-                        minHeight: singleRowWithButton) {
-                    Button("Set Up Again…", action: model.requestSetUpAgain).glassAction().actionControlSize().disabled(model.gameRunning || model.shaderBusy)
+                FormRow("Set up again", detail: "Walks through game data, CD key and shaders once more. Your loadouts, demos and screenshots stay. You can cancel at any step.") {
+                    Button("Set Up Again…", action: model.requestSetUpAgain).glassAction().controlSize(.large).disabled(model.gameRunning || model.shaderBusy)
                 }
             }
         }
@@ -345,8 +343,8 @@ private struct GameFolderRow: View {
         FormRow("Game data", detail: model.dataPath.isEmpty ? "No game folder chosen yet." : found ? model.dataPathDisplay + " · All 16 game archives · Version 1.3"
                 : model.dataPathDisplay + " · Not there now. Is its drive connected?", symbol: "folder") {
             StatusLabel(found ? .ready : .wontWork, found ? "Found" : "Not found")
-            Button("Show in Finder", action: model.showGameDataInFinder).glassAction().disabled(!found)
-            Button("Change…", action: model.changeGameData).glassAction().disabled(model.gameRunning || model.shaderBusy)
+            Button("Show in Finder", action: model.showGameDataInFinder).glassAction().controlSize(.large).disabled(!found)
+            Button("Change…", action: model.changeGameData).glassAction().controlSize(.large).disabled(model.gameRunning || model.shaderBusy)
         }
     }
 }
@@ -358,7 +356,7 @@ private struct KeyRow: View {
         FormRow("CD key", detail: ending.map { SettingsText.maskedKey(lastFour: $0) + " · Stored only on this Mac" } ?? "No key stored. The game needs one to join servers.",
                 symbol: "key") {
             StatusLabel(ending == nil ? .wontWork : .ready, ending == nil ? "Missing" : "Verified")
-            Button(ending == nil ? "Add Key…" : "Replace…", action: model.presentReplaceKey).glassAction()
+            Button(ending == nil ? "Add Key…" : "Replace…", action: model.presentReplaceKey).glassAction().controlSize(.large)
         }
     }
 }
@@ -373,7 +371,7 @@ private struct ShaderRow: View {
             } else {
                 StatusLabel(model.approximate ? .needsChange : .ready, model.approximate ? "Approximate" : "Ready")
             }
-            Button("Rebuild", action: model.rebuildShaders).glassAction()
+            Button("Rebuild", action: model.rebuildShaders).glassAction().controlSize(.large)
                 .disabled(model.shaderBusy || model.gameRunning || model.dataPath.isEmpty || !model.gameData.found)
                 .help("Build the shaders again from your game files")
         }
@@ -389,14 +387,14 @@ private struct CoD2xFilesRow: View {
         FormRow("CoD2x menus and icons", detail: known.contains(model.cod2xFilesMessage) ? detail : detail + "\n" + model.cod2xFilesMessage, symbol: "square.grid.2x2") {
             if model.cod2xFilesBusy {
                 ProgressView().controlSize(.small).accessibilityLabel(model.cod2xFilesMessage)
-                Button("Cancel", action: model.cancelCoD2xFiles).glassAction()
+                Button("Cancel", action: model.cancelCoD2xFiles).glassAction().controlSize(.large)
             } else if model.cod2xFilesInstalled {
                 StatusLabel(.ready, "Installed")
-                Button("Remove", action: model.removeCoD2xFiles).glassAction().disabled(model.gameRunning)
+                Button("Remove", action: model.removeCoD2xFiles).glassAction().controlSize(.large).disabled(model.gameRunning)
             } else {
-                Button("Copy From Folder…", action: model.chooseCoD2xFolder).glassAction().disabled(model.gameRunning)
+                Button("Copy From Folder…", action: model.chooseCoD2xFolder).glassAction().controlSize(.large).disabled(model.gameRunning)
                     .help("Copy them from a Windows Call of Duty 2 folder that has CoD2x installed")
-                Button("Download", action: model.downloadCoD2xFiles).glassAction().disabled(model.gameRunning)
+                Button("Download", action: model.downloadCoD2xFiles).glassAction().controlSize(.large).disabled(model.gameRunning)
             }
         }
     }
@@ -409,7 +407,7 @@ struct PrivacyPane: View {
     @Environment(\.palette) private var palette
     var body: some View {
         SettingsPaneScroll {
-            Banner(.tip, symbol: "lock", message: "CoD2 Unbound has no account and sends no reports unless you turn them on. Everything it contacts is listed below.")
+            Banner(.tip, symbol: "lock", message: "CoD2 Unbound has no account and sends nothing about you unless you turn it on here.")
             FormSection("Sharing") {
                 FormGroup {
                     // Only a build with a report receiver offers it; without one nothing is ever sent.
@@ -428,9 +426,8 @@ struct PrivacyPane: View {
             }
             FormSection("On this Mac") {
                 FormGroup {
-                    FormRow("Match summaries", detail: "Frame rate and connection notes after each match, so Check-up can advise you. Kept on this Mac, the last \(MatchSummaries.recordLimit) matches.",
-                            minHeight: singleRowWithButton) {
-                        Button("Delete Summaries…", action: model.requestDeleteSummaries).glassAction().actionControlSize()
+                    FormRow("Match summaries", detail: "Notes on how each match ran, so Check-up can advise you. Kept on this Mac, the last \(MatchSummaries.recordLimit) matches.") {
+                        Button("Delete Summaries…", action: model.requestDeleteSummaries).glassAction().controlSize(.large)
                             .disabled(model.matchSummaryCount == 0 || model.gameRunning)
                         SwitchToggle("Match summaries", isOn: $model.settings.matchSummariesEnabled)
                     }
@@ -464,7 +461,7 @@ private struct ContactRow: View {
     @Environment(\.palette) private var palette
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 16) {
-            Text(who).font(.system(size: 14)).foregroundStyle(palette.text).frame(width: 160, alignment: .leading)
+            Text(who).font(.system(size: 14)).foregroundStyle(palette.text).frame(width: 190, alignment: .leading)
             Text(when).font(.system(size: 13)).foregroundStyle(palette.secondary).lineSpacing(1.5)
                 .frame(maxWidth: .infinity, alignment: .leading).fixedSize(horizontal: false, vertical: true)
         }
@@ -516,7 +513,7 @@ struct UpdatesPane: View {
             }
             FormSection("Game versions") {
                 FormGroup {
-                    FormRow(CoD2xFiles.engineTitle, detail: "Included in this release. A newer CoD2x arrives with an app update.") { StatusLabel(.ready, "Included") }
+                    FormRow(CoD2xFiles.engineTitle, detail: "The version current CoD2x servers expect. Updates arrive with the app.") { StatusLabel(.ready, "Current") }
                     FormRow("Original 1.3", detail: model.originalAvailable ? "The final official patch. It doesn’t change." : "Not included in this copy of the app.") {
                         Text(model.originalAvailable ? "Final" : "Not included").font(.system(size: 12, weight: .semibold)).foregroundStyle(palette.secondary)
                     }
@@ -640,14 +637,14 @@ struct AdvancedPane: View {
             FormSection("Troubleshooting") {
                 FormGroup {
                     FormRow("Logs", detail: "The last 10 game sessions, up to 20 MiB on this Mac. Show in Finder selects the latest.") {
-                        Button("Show in Finder", action: model.showLogsInFinder).glassAction()
-                        Button("Copy Last Game Log") { copied = model.copyLastGameLog() }.glassAction()
+                        Button("Show in Finder", action: model.showLogsInFinder).glassAction().controlSize(.large)
+                        Button("Copy Last Game Log") { copied = model.copyLastGameLog() }.glassAction().controlSize(.large)
                     }
                     FormRow("Warnings you dismissed", detail: warningsDetail) {
-                        Button("Reset Warnings", action: model.resetWarnings).glassAction().disabled(model.settings.dismissedWarnings.isEmpty)
+                        Button("Reset Warnings", action: model.resetWarnings).glassAction().controlSize(.large).disabled(model.settings.dismissedWarnings.isEmpty)
                     }
                     FormRow("Launcher settings", detail: "Returns everything in this window to how it started. Loadouts, demos, screenshots and your CD key stay.") {
-                        Button("Reset Settings…", action: model.requestResetSettings).destructiveAction()
+                        Button("Reset Settings…", action: model.requestResetSettings).destructiveAction().controlSize(.large)
                     }
                 }
             } footer: {
@@ -706,9 +703,9 @@ private struct LaunchOptionsEditor: View {
                     .font(.system(size: 12)).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 if let previous = cleared {
-                    Button("Undo") { model.editAdvancedOptions(previous); cleared = nil }.glassAction()
+                    Button("Undo") { model.editAdvancedOptions(previous); cleared = nil }.glassAction().controlSize(.large)
                 } else {
-                    Button("Clear") { cleared = text; model.editAdvancedOptions("") }.glassAction().disabled(text.isEmpty)
+                    Button("Clear") { cleared = text; model.editAdvancedOptions("") }.glassAction().controlSize(.large).disabled(text.isEmpty)
                 }
             }
         }
@@ -741,7 +738,7 @@ struct AboutPane: View {
                         Button { model.copyVersionInfo(); copied = true } label: {
                             Label(copied ? "Copied" : "Copy Version Info", systemImage: copied ? "checkmark" : "doc.on.doc")
                         }
-                        .glassAction().controlSize(.small)
+                        .glassAction().controlSize(.regular)
                         .help("Copy the version, game versions, macOS, Mac model, shaders and display, as Report a Problem shows them")
                         .task(id: copied) { if copied { try? await Task.sleep(for: .seconds(2)); copied = false } }
                     }
@@ -801,7 +798,7 @@ private struct AboutFacts: View {
     }
     private func fact(_ key: String, _ value: String, _ detail: String, edge: Bool) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(key.uppercased()).font(.system(size: 11, weight: .semibold)).tracking(0.8).foregroundStyle(palette.tertiary)
+            GroupLabel(key, header: false)
             Text(value).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text).fixedSize(horizontal: false, vertical: true)
             Text(detail).font(.system(size: 12)).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
         }
@@ -861,7 +858,7 @@ struct FrameRateCrates: View {
             if custom {
                 VStack(alignment: .leading, spacing: 6) {
                     TextField("FPS", value: Binding(get: { fps }, set: { fps = min(1000, max(0, $0)) }), format: .number.grouping(.never)).textFieldStyle(.plain)
-                        .font(.stencil(34)).foregroundStyle(palette.dark ? palette.accent : Palette.hex(0x4e5b2f)).frame(height: 34)
+                        .font(.stencil(34)).foregroundStyle(palette.accent).frame(height: 34)
                         .accessibilityLabel("Custom frame cap, 0 to 1000 frames per second, 0 for no cap")
                     Text("fps · \(FrameCap.customCaption(fps))").font(.system(size: 11)).foregroundStyle(palette.secondary)
                 }
@@ -882,7 +879,7 @@ struct FrameRateCrates: View {
     private func crate(_ number: String, _ caption: String, selected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 6) {
-                Text(number).font(.stencil(34)).tracking(0.68).foregroundStyle(selected ? (palette.dark ? palette.accent : Palette.hex(0x4e5b2f)) : palette.numeral).frame(height: 34)
+                Text(number).font(.stencil(34)).tracking(0.68).foregroundStyle(selected ? palette.accent : palette.numeral).frame(height: 34)
                 Text("fps · \(caption)").font(.system(size: 11)).foregroundStyle(palette.secondary).lineSpacing(1.5).fixedSize(horizontal: false, vertical: true)
             }
             .crateStyle(selected: selected, palette: palette)
@@ -898,7 +895,7 @@ private extension View {
         self.padding(.vertical, 14).padding(.horizontal, 16)
             .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
             .background(selected ? palette.selection : palette.crate, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(selected ? palette.selectionStroke.opacity(1.3) : (palette.dark ? Color.white.opacity(0.09) : palette.panelStroke), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(selected ? palette.selectionStroke : palette.wellStroke, lineWidth: 1))
             .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .shapeAudit(.container, .rounded(16), "crate")
     }

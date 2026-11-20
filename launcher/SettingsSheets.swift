@@ -20,17 +20,17 @@ struct ReplaceKeySheet: View {
             VStack(alignment: .leading, spacing: 12) {
                 TextField("CD key", text: Binding(get: { KeyFormat.display(key) }, set: { key = KeyFormat.display($0); error = nil }),
                           prompt: Text("XXXX XXXX XXXX XXXX XXXX").foregroundColor(palette.tertiary))
-                    .textFieldStyle(.plain).font(.typewriter(20, bold: true)).tracking(2)
-                    .foregroundStyle(palette.text).autocorrectionDisabled().focused($focused)
-                    .padding(.horizontal, 22).frame(height: 54)
+                    .textFieldStyle(.plain).font(.typewriter(22, bold: true)).tracking(2.6)
+                    .foregroundStyle(palette.heading).autocorrectionDisabled().focused($focused)
+                    .padding(.horizontal, 24).frame(height: 56)
                     .background(palette.field, in: Capsule())
                     .overlay(Capsule().strokeBorder(stroke, lineWidth: focused || (raw.count == 20) ? 2 : 1))
                     .shapeAudit(.field, .capsule, "key field")
                     .onSubmit { if valid { save() } }
                     .accessibilityLabel("CD key, twenty characters")
                 Label(error ?? hint, systemImage: symbol)
-                    .font(.system(size: 13, weight: raw.count == 20 ? .semibold : .regular)).foregroundStyle(tone)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .font(.system(size: 12, weight: raw.count == 20 ? .semibold : .regular)).foregroundStyle(tone)
+                    .fixedSize(horizontal: false, vertical: true).padding(.leading, 8)
                     .accessibilityAddTraits(.isStaticText)
             }
             .onAppear { focused = true }
@@ -101,7 +101,7 @@ private struct NoteRow: View {
     @Environment(\.palette) private var palette
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 14) {
-            Badge(item.tag, tone: item.tag == "New" ? .accent : .neutral).frame(width: 64, alignment: .leading)
+            Badge(item.tag, tone: .accent).frame(width: 64, alignment: .leading)
             VStack(alignment: .leading, spacing: 3) {
                 Text(item.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text).fixedSize(horizontal: false, vertical: true)
                 if !item.detail.isEmpty {
