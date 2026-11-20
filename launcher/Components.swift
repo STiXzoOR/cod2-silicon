@@ -948,3 +948,42 @@ struct MapArtFrame: View {
         }
     }
 }
+
+// MARK: - r037-servers
+
+/// A form row in a narrow column (.row.wide with .row-top): the title and the control on one line, and
+/// the help under both at full width, so help never wraps into a narrow label column (Design Rules,
+/// “One row per setting”). Give the control the row's title as its VoiceOver name.
+struct FormWideRow<Trailing: View, Detail: View>: View {
+    var title: String
+    @ViewBuilder var trailing: Trailing
+    @ViewBuilder var detail: Detail
+    @Environment(\.palette) private var palette
+    @Environment(\.formContext) private var context
+    init(_ title: String, @ViewBuilder trailing: () -> Trailing, @ViewBuilder detail: () -> Detail) {
+        self.title = title; self.trailing = trailing(); self.detail = detail()
+    }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 14) {
+                // The title never wraps or shortens (.row-top .row-title is nowrap); the control gives way.
+                Text(title).font(.system(size: 14)).foregroundStyle(palette.text).lineLimit(1).fixedSize()
+                Spacer(minLength: 8)
+                trailing
+            }
+            .frame(minHeight: 28)
+            detail.font(.system(size: 12)).foregroundStyle(palette.tertiary).lineSpacing(1.5)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, FormMetrics.rowInset(context)).padding(.vertical, 9)
+        .frame(minHeight: FormMetrics.detailRowHeight)
+        .overlay(alignment: .top) { Rectangle().fill(palette.separator).frame(height: 1) }
+        .accessibilityElement(children: .contain)
+    }
+}
+extension FormWideRow where Detail == Text {
+    init(_ title: String, detail: String, @ViewBuilder trailing: () -> Trailing) {
+        self.init(title, trailing: trailing, detail: { Text(detail) })
+    }
+}

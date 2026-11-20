@@ -92,14 +92,14 @@ struct ColumnHeaders: View {
                 header("Players", .players)
                 header("Ping", .ping)
             } else {
-                Text("MAP").frame(width: 80, alignment: .leading).accessibilityHidden(true)
+                Text("Map").frame(width: 80, alignment: .leading).accessibilityHidden(true)
                 header("Server", .name).frame(maxWidth: .infinity, alignment: .leading)
                 header("Players", .players).frame(width: 80, alignment: .trailing)
                 header("Ping", .ping).frame(width: 84, alignment: .trailing)
                 Color.clear.frame(width: 22, height: 1)
             }
         }
-        .font(.stencil(12, heavy: false)).tracking(2.64).foregroundStyle(palette.tertiary)
+        .font(.groupLabel).foregroundStyle(palette.tertiary)
         .padding(.leading, RowMetrics.inset).padding(.trailing, RowMetrics.trailing).padding(.bottom, 8)
     }
     private func header(_ title: String, _ key: ServerSort) -> some View {
@@ -107,8 +107,8 @@ struct ColumnHeaders: View {
         let order = key == .name ? (ascending ? "A to Z" : "Z to A") : key == .ping ? (ascending ? "lowest first" : "highest first") : (ascending ? "fewest first" : "most first")
         return Button { select(key) } label: {
             HStack(spacing: 4) {
-                Text(title.uppercased())
-                if on { Image(systemName: ascending ? "chevron.up" : "chevron.down").font(.system(size: 8, weight: .bold)) }
+                Text(title)
+                if on { Image(systemName: ascending ? "chevron.up" : "chevron.down").font(.system(size: 9, weight: .bold)) }
             }
             .foregroundStyle(on ? palette.secondary : palette.tertiary)
             .contentShape(Rectangle())
@@ -149,7 +149,7 @@ struct ServerRow: View {
                             mapAndMode(lines: 2)
                             HStack(spacing: 12) {
                                 badges
-                                players(facts, size: 17, small: 12).fixedSize()
+                                players(facts, size: 15, small: 12).fixedSize()
                                 ping.fixedSize()
                             }
                         }
@@ -169,14 +169,14 @@ struct ServerRow: View {
                         .font(.system(size: 12))
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    players(facts, size: 24, small: 15).frame(width: 80, alignment: .trailing)
+                    players(facts, size: 17, small: 13).frame(width: 80, alignment: .trailing)
                     ping.frame(width: 84, alignment: .trailing)
                     favoriteButton
                 }
             }
         }
         .padding(.vertical, RowMetrics.inset).padding(.leading, RowMetrics.inset).padding(.trailing, RowMetrics.trailing)
-        .background(selected ? palette.selection : (palette.dark ? Color.white : Color.black).opacity(hovering ? 0.045 : 0), in: RoundedRectangle(cornerRadius: RowMetrics.radius, style: .continuous))
+        .background(selected ? palette.selection : hovering ? palette.hover : .clear, in: RoundedRectangle(cornerRadius: RowMetrics.radius, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: RowMetrics.radius, style: .continuous).strokeBorder(selected ? (focused ? palette.accent : palette.selectionStroke) : .clear, lineWidth: selected && focused ? 1.5 : 1))
         .contentShape(RoundedRectangle(cornerRadius: RowMetrics.radius, style: .continuous))
         .shapeAudit(.container, .rounded(RowMetrics.radius), "server row")
@@ -204,9 +204,9 @@ struct ServerRow: View {
     }
     private func players(_ facts: ServerFacts, size: CGFloat, small: CGFloat) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 0) {
-            Text("\(server.playerCount)").font(.stencil(size))
-                .foregroundStyle(facts.occupancy == .full ? palette.negative : facts.occupancy == .empty ? palette.tertiary : (palette.dark ? Palette.hex(0xefe7d3) : palette.numeral))
-            Text("/\(server.maxPlayers)").font(.stencil(small)).foregroundStyle(palette.tertiary)
+            Text("\(server.playerCount)").font(.system(size: size, weight: .semibold).monospacedDigit())
+                .foregroundStyle(facts.occupancy == .full ? palette.negative : facts.occupancy == .empty ? palette.tertiary : palette.numeral)
+            Text(" / \(server.maxPlayers)").font(.system(size: small).monospacedDigit()).foregroundStyle(palette.tertiary)
         }
     }
     private var serverName: some View {
@@ -222,12 +222,12 @@ struct ServerRow: View {
         HStack(spacing: 6) {
             PingBars(level: ServerFacts(server).pingLevel)
             Text("\(server.ping) ms").font(.system(size: 12))
-                .foregroundStyle(palette.dark ? Palette.hex(0xbdb5a1) : palette.secondary).monospacedDigit()
+                .foregroundStyle(palette.secondary).monospacedDigit()
         }
     }
     private var favoriteButton: some View {
         Button(action: toggleFavorite) {
-            Image(systemName: favorite ? "star.fill" : "star").font(.system(size: 14))
+            Image(systemName: favorite ? "star.fill" : "star").font(.system(size: 15))
                 .foregroundStyle(favorite ? palette.control : palette.secondary)
                 .frame(width: 22, height: 22).contentShape(Rectangle())
         }

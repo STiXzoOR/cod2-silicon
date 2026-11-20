@@ -83,7 +83,7 @@ struct ServersBanners: View {
                 }
                 .accessibilityElement(children: .combine)
                 .accessibilityAddTraits(.updatesFrequently)
-                Button("Stop", action: model.cancelRefresh).glassAction().actionControlSize()
+                Button("Stop", action: model.cancelRefresh).glassAction().controlSize(.large)
                     .accessibilityLabel("Stop refreshing")
             }
             .padding(.vertical, 10).padding(.leading, 14).padding(.trailing, 11)
@@ -93,7 +93,7 @@ struct ServersBanners: View {
         } else if model.mastersDidNotAnswer {
             Banner(.error, message: model.library.cachedAt.map { "The master servers didn’t answer. You’re seeing the list from \(LauncherModel.clock($0))." }
                    ?? "The master servers didn’t answer. Check your internet connection, then try again.") {
-                Button("Try Again", action: model.refresh).glassAction().actionControlSize()
+                Button("Try Again", action: model.refresh).glassAction().controlSize(.large)
             }
             .padding(.bottom, 12)
         }
