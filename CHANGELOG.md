@@ -6,32 +6,62 @@ was called CoD2 Silicon, and the entries from before then still use that name.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-20
+
+The game draws with Metal. Until now it drew through OpenGL, which macOS
+still carries but no longer develops. OpenGL stays in the app as a choice,
+in case something looks wrong.
+
 ### Added
 
 - **The game draws with Metal.** Both game versions, CoD2x and the original
-  1.3, now draw through Metal, the graphics system macOS uses today, where
-  they drew through OpenGL before. The app carries each game twice, once for
-  each, and Settings › Display has a Graphics row to choose: Metal, or OpenGL
-  if something looks wrong. Metal is the choice a new setup starts with.
-- About says which of the two the next game draws with, and credits mtld3d,
-  the library the Metal engines draw through. Its licence and the licences
-  of what it is built from are in Acknowledgements and inside the app.
+  1.3, now draw through Metal, the graphics system macOS uses today. The app
+  carries each game twice, once for each, and Settings › Display has a
+  Graphics row to choose: Metal, or OpenGL if something looks wrong. Metal is
+  the choice a new setup starts with, and an existing setup moves to it.
+  Both of the game's renderers work on it: DirectX 9, and DirectX 7 for the
+  players who prefer its plainer picture.
 - **Render scale**, in Settings › Display. With Metal, the game can draw the
   3D picture with fewer pixels and scale it up to fit: Full, 85%, 75%, 67% or
   50%. The HUD, text and menus are still drawn at the display's full size. It
   is meant for 4K and 5K displays. OpenGL always draws at full size.
+- About says which of the two the next game draws with, and credits mtld3d,
+  the library the Metal engines draw through. Its licence and the licences
+  of what it is built from are in Acknowledgements and inside the app.
 - The local match record now also notes whether the game's window was on
   screen and had the keyboard, and how much memory the game held at the start,
   at the end and at its highest, so a freeze or a match whose frames were
   never shown can be explained afterwards. Like the rest of the record it
   stays on this Mac.
 
+### Changed
+
+- **Smoke costs less to draw.** With Metal, thick smoke is drawn into a
+  layer of its own, at full, half or quarter size as the moment needs, and
+  laid over the scene. Several smoke grenades on top of each other no longer
+  bring the game down with them. Smoke is as thick as it was: nothing can be
+  seen through it that could not be seen before. `r_fxLayer 0` draws it the
+  old way.
+- The first time a map is visited, Metal compiles the game's shaders for it.
+  That takes a fraction of a second and happens while the map loads; the
+  result is kept, so later starts skip it.
+- The engine's source builds for Windows and Linux again, and the repository
+  has their build files. There is no Windows or Linux app yet.
+
 ### Fixed
 
-- With Metal, anti-aliasing on, and soft particles and dynamic shadows both
-  off, CoD2x's `r_filmTweakSkySaturation` had no effect: the sky took the
-  saturation of everything else. The sky is now told apart in that
-  combination too.
+- Started from Finder, the game and a hosted server could open only 256
+  files at once, a limit a large mod folder can reach. They now ask for 1024.
+
+### Know before you install
+
+- If the picture looks wrong with Metal, choose OpenGL in Settings › Display
+  and please report what you saw.
+- Two small differences from OpenGL are known, both inside thick smoke: at
+  the quarter-size layer the edge of a building behind the smoke can lose its
+  smoothing, and the weapon in your hands can be a shade clearer than it
+  would be. [What was tested and what was not](docs/macos-port/release-0.4.0-verification.md)
+  has the rest.
 
 ## [0.3.7] - 2026-11-20
 

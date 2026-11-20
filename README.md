@@ -12,7 +12,7 @@
 
 CoD2 Unbound ports the reconstructed [opencod2](https://github.com/opencod2/opencod2)
 engine to native macOS arm64. It runs directly on Apple silicon, with raw mouse
-input, native audio and an OpenGL renderer. Bring a licensed copy of Call of
+input, native audio and a Metal renderer. Bring a licensed copy of Call of
 Duty 2: no game content is included. Windows, Linux and the browser are on
 the [roadmap](docs/ROADMAP.md), which is where the name comes from; until
 0.3.6 the app was called CoD2 Silicon.
@@ -25,12 +25,12 @@ does the rest. A Windows 1.3 install's folder works as it is.
 
 ## Status
 
-Version `0.3.7` is playable on original 1.3 and CoD2x 1.4 servers, with a
+Version `0.4.0` is playable on original 1.3 and CoD2x 1.4 servers, with a
 native launcher, server browser and Config Studio. Movement, firing, grenades, mounted
 turrets, HTTP mod downloads and round restarts have been tested, and every
 menu is opened by an automated sweep. The picture is compared with the
 original Windows game frame by frame in replayed demos.
-Smoother frame pacing and active Game Mode remain goals. See the
+The game draws with Metal; OpenGL stays as a choice. Active Game Mode remains a goal. See the
 [verified results below](#verified-results) for compatibility coverage,
 rendering comparisons, fullscreen limits and measured performance.
 
@@ -53,7 +53,7 @@ have it installed nowhere, setup can download it for you. See
 ### Prebuilt app
 
 1. Open [GitHub Releases](https://github.com/cod2unbound/cod2-unbound/releases).
-2. Download `CoD2-Unbound-0.3.7-macos-arm64.dmg`. To check it first, download
+2. Download `CoD2-Unbound-0.4.0-macos-arm64.dmg`. To check it first, download
    `SHA256SUMS` into the same folder and run:
 
    ```sh
@@ -129,8 +129,9 @@ Three things worth knowing before friends try to join:
 
 **Settings** is a separate window, reached from the sidebar, app menu or ⌘,.
 Its seven panes cover the launcher, display, game data, privacy, updates,
-advanced launch options and About. Changes save automatically. The renderer
-is OpenGL; Metal controls are not shown in this release. New installs start borderless at the display’s native size up to 3840 × 2160,
+advanced launch options and About. Changes save automatically. The game
+draws with Metal; Display has a Graphics row to choose OpenGL instead, and a
+Render scale for 4K and 5K displays. New installs start borderless at the display’s native size up to 3840 × 2160,
 or half its width and height above that (2560 × 1440 on a 5K panel).
 The resolution and vertical sync belong to each loadout: change them in
 Configs or in the game’s own Graphics menu and they stay as you set them.
@@ -303,6 +304,8 @@ new performance claims for every release. Verified development results include:
 - 0.3.1 fixed two of the differences 0.3.0 listed (menu panel edges, and fog
   in the Direct3D 7 renderer) and measured a third, the near clip plane, as
   not a difference. [What was tested for 0.3.1](docs/macos-port/release-0.3.1-verification.md)
+- 0.4.0 moves the game from OpenGL to Metal and adds a render scale.
+  [What was tested for 0.4.0](docs/macos-port/release-0.4.0-verification.md)
 - 0.3.7 gives every launcher screen one look and changes nothing in the game.
   [What was tested for 0.3.7](docs/macos-port/release-0.3.7-verification.md)
 - 0.3.6 renames the app to CoD2 Unbound and changes nothing in the game.

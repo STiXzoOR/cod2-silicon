@@ -122,7 +122,7 @@ struct Dispatch: Codable, Equatable, Sendable {
     /// A place in the app that a news entry opens instead of a link (NewsFeed.places).
     var open: String? = nil
     static let bundled = [
-        Dispatch(stamp: "PREVIEW", title: "CoD2 Unbound 0.3.7", summary: "A tidier launcher: every page has the same titles, labels, buttons and switches. Nothing in the game changed.",
+        Dispatch(stamp: "PREVIEW", title: "CoD2 Unbound 0.4.0", summary: "The game now draws with Metal, the graphics system macOS uses today. OpenGL stays as a choice in Settings › Display.",
                  link: "https://github.com/cod2unbound/cod2-unbound/releases"),
         Dispatch(stamp: "AHEAD", title: "What’s next", summary: "The Metal renderer comes next. It isn’t in this release, and the original look stays until it matches.",
                  link: "https://github.com/cod2unbound/cod2-unbound/blob/main/docs/ROADMAP.md"),
@@ -186,7 +186,8 @@ enum NewsFeed {
 enum HomeDispatches {
     static func builtIn(version: String) -> Dispatch {
         Dispatch(stamp: "NOW", title: "CoD2 Unbound \(version)",
-                 summary: version == "0.3.7" ? "A tidier launcher: every page has the same titles, labels, buttons and switches. Nothing in the game changed."
+                 summary: version == "0.4.0" ? "The game now draws with Metal, the graphics system macOS uses today. OpenGL stays as a choice in Settings › Display."
+                        : version == "0.3.7" ? "A tidier launcher: every page has the same titles, labels, buttons and switches. Nothing in the game changed."
                         : version == "0.3.6" ? "A new name and a new icon. Your settings, loadouts and game files are where you left them."
                         : version == "0.3.5" ? "Setup can download your copy of the game from Steam: scan a QR code with the Steam app, and nothing about your account is typed."
                         : version == "0.3.4" ? "A switch in Settings › Privacy sends crash reports to the project. It is off until you turn it on."

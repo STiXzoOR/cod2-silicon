@@ -53,6 +53,19 @@ was tested and what was not.
 The [0.3.1 verification](macos-port/release-0.3.1-verification.md) says what
 was tested and what was not.
 
+## 0.4 — Metal (released 0.4.0)
+
+- **The game draws with Metal**, both game versions and both of the game's
+  renderers. OpenGL stays as a choice in Settings › Display.
+- **Render scale** for 4K and 5K displays: the 3D picture is drawn with fewer
+  pixels and scaled up, while the HUD and menus keep the display's size.
+- **Smoke in a layer of its own**, so several smoke grenades together no
+  longer bring the game down.
+
+With this the Mac version counts as complete. The
+[0.4.0 verification](macos-port/release-0.4.0-verification.md) says what was
+tested and what was not.
+
 ## 0.3.7 — One look across the launcher (released 0.3.7)
 
 - **Every screen follows one set of design rules**: the same titles, labels,
@@ -119,8 +132,6 @@ was tested and what was not.
 One platform at a time, each brought to a complete state before the next
 starts:
 
-- **0.4: the Metal renderer**, below. With it the Mac version counts as
-  complete.
 - **0.5: Windows.** The reconstructed engine has been built and run for
   Windows and Linux in separate work that is not in this repository yet. The
   app, its launcher and its packaging are Mac-only today.
@@ -136,34 +147,21 @@ Alongside these, in no fixed order:
   services against the CoD2x project's own servers come first.
 - **Launcher and Config Studio improvements**, including the player directory.
 
-## Metal renderer
+## Metal: what 0.4 did not take on
 
-Metal was planned for 0.3 and moved behind the work above; smooth frame
-pacing through Metal presentation moved with it. The
-[readiness plan](plans/2026-10-13-03-metal-readiness-plan.md) defines
-the integration order and certification gates. It builds on the preserved
-Metal implementation and the [IW4L/Highball source study](research/2026-10-13-iw4l-highball.md).
-This is preparation; Metal is not yet available in the released application.
+0.4.0 draws the game through Metal by way of mtld3d, a library that turns the
+engine's Direct3D 9 calls into Metal, so the engine's own renderer code is
+the code Windows and Linux will use too. These were on the earlier plan and
+are not in 0.4:
 
-- **Native Metal renderer.** Metal 4 on macOS 26 and later, implementing the
-  existing D3D9-style renderer contracts so engine code is unchanged. OpenGL
-  remains the classic fallback and visual parity reference on supported Macs
-  (macOS 26 and later).
-  The original Mac shaders are translated to Metal locally from the player's
-  own copy; they are never distributed.
-- **Modern options, with a faithful classic mode:**
-  - render scale with MetalFX upscaling;
-  - supersampling;
-  - anisotropic filtering;
-  - EDR/HDR output;
-  - ProMotion and variable refresh;
-  - correct widescreen FOV;
-  - HUD scaling for 4K–6K.
-
-  Server policy is respected, and there is no frame interpolation in
-  competitive play.
-- **Game Mode.** Native fullscreen Spaces, verified on and off with matched
+- upscaling with MetalFX (the render scale stretches the picture plainly);
+- supersampling, EDR/HDR output, ProMotion and variable refresh;
+- HUD scaling for 4K to 6K;
+- **Game Mode**: native fullscreen Spaces, verified on and off with matched
   measurements.
+
+Server policy is respected, and there is no frame interpolation in
+competitive play.
 
 ## Engine gaps
 

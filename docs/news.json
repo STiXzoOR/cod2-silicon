@@ -2,6 +2,12 @@
   "items": [
     {
       "date": "2026-11-20",
+      "title": "The game draws with Metal",
+      "summary": "0.4.0 moves the game from OpenGL to Metal. OpenGL stays as a choice in Settings, and Display gains a render scale for 4K and 5K screens.",
+      "open": "updates"
+    },
+    {
+      "date": "2026-11-20",
       "title": "A tidier launcher",
       "summary": "0.3.7 gives every page the same titles, labels, buttons and switches. Nothing in the game changed.",
       "open": "updates"
