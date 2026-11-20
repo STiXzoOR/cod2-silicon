@@ -69,7 +69,8 @@ struct RenameLoadoutSheet: View {
                                 .primary("Rename", enabled: reason == nil) {
                                     studio.rename(name, undo: model.launcherWindow?.undoManager); model.dismissSheet()
                                 }]) {
-            LauncherTextField("Loadout name", text: $name, shape: .capsule, invalid: reason != nil && !unchanged, autofocus: true)
+            // A taken name is said beside the buttons, and Rename stays off; the field keeps its usual edge.
+            LauncherTextField("Loadout name", text: $name, shape: .capsule, autofocus: true)
         } note: {
             if let reason { Text(reason) }
         }

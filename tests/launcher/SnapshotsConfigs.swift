@@ -1185,28 +1185,28 @@ extension Snapshots {
         defer { window.orderOut(nil); window.close(); try? FileManager.default.removeItem(at: home) }
         guard let session = model.studio.session else { return false }
         let file = home.appendingPathComponent("main/players/Main/config_mp.cfg")
-        guard let compare = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label == "Compare in Expert" }) else {
+        guard let compare = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label == "Compare" }) else {
             print("FAIL: Compare in Expert is not on screen"); return false
         }
         activate(window, element: compare)
         try? await Task.sleep(for: .milliseconds(900))
-        guard model.studio.player?.name == "[Player 1]", model.studio.level == .expert, model.discover.page == nil else {
-            print("FAIL: Compare in Expert did not open Expert with [Player 1]"); return false
+        guard model.studio.player?.name == "vargr", model.studio.level == .expert, model.discover.page == nil else {
+            print("FAIL: Compare in Expert did not open Expert with vargr"); return false
         }
         model.studio.group = .frame
         try? await Task.sleep(for: .milliseconds(700))
         guard let before = try? Data(contentsOf: file),
-              let take = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label.hasPrefix("Take [Player 1]’s Frame rate cap") }) else {
+              let take = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label.hasPrefix("Take vargr’s Frame rate cap") }) else {
             print("FAIL: Take Theirs for Frame rate cap is not on screen"); return false
         }
         activate(window, element: take)
         try? await Task.sleep(for: .milliseconds(700))
         var expected = ConfigDocument(data: before, dialect: .cod2x)
         do { try expected.setSetting(named: "com_maxfps", value: "250") } catch { return false }
-        guard (try? Data(contentsOf: file)) == expected.serialized(), session.history.first?.summary == "Took Frame rate cap from [Player 1]" else {
+        guard (try? Data(contentsOf: file)) == expected.serialized(), session.history.first?.summary == "Took Frame rate cap from vargr" else {
             print("FAIL: Take Theirs did not write exactly the player's frame-rate cap"); return false
         }
-        print("PASS: clicking Compare in Expert and Take Theirs wrote `seta com_maxfps \"250\"` from [Player 1] as one History row")
+        print("PASS: clicking Compare in Expert and Take Theirs wrote `seta com_maxfps \"250\"` from vargr as one History row")
         return true
     }
 
@@ -1336,8 +1336,8 @@ extension Snapshots {
         "configs-history": ["Restore This Snapshot"],
         "configs-binds-verify": ["Verify your keyboard", "Press the key just to the left of the space bar", "Cancel"],
         "configs-binds-learn": ["Learn your mouse buttons", "Press down on the scroll wheel", "I Don’t Have This Button"],
-        "configs-expert-player": ["Compare markers show [Player 1]’s values", "Take [Player 1]’s Mouse speed"],
-        "discover-player": ["Compare in Expert", "Try This Setup"],
+        "configs-expert-player": ["Compare markers show vargr’s values", "Take vargr’s Mouse speed"],
+        "discover-player": ["Compare", "Try This Setup"],
         "configs-checkup-measured": ["Your last match: Toujane, Search & Destroy", "Movement: STEADY", "Connection: 38 MS", "Show the movement figures", "Refresh match summaries"],
         "configs-checkup-off": ["Match summaries are off", "Refresh match summaries"],
         "configs-checkup-error": ["Couldn’t read your match summaries", "Connection: no value, Not measured"],
@@ -1353,7 +1353,7 @@ extension Snapshots {
         "configs-home": ["Featured setups", "See This Setup", "Next featured setup", "See all 3 Classic era setups", "Refresh the catalogue",
                          "Search players, teams or styles", "Check a Config", "Add a Config"],
         // Teams sit below the first screenful, and the page only builds what is in view.
-        "configs-home-end": ["[Team], 4 setups", "Check a Config", "Add a Config"],
+        "configs-home-end": ["Team Northwind, 4 setups", "Check a Config", "Add a Config"],
         "configs-home-all": ["Narrow the setups", "Player Setups", "Search players, teams or styles"],
         "configs-other-loadout": ["Use for Next Game", "Scrim"],
         "configs-delete-confirm": ["Delete the loadout “Scrim”?", "Delete Loadout", "Cancel"],
