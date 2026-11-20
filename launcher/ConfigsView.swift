@@ -106,12 +106,12 @@ struct ConfigsShell: View {
                     .disabled(studio.isReadOnly || session.current == nil)
                     .help(studio.isReadOnly ? "Configs are read-only while Call of Duty 2 is running" : "Save how this loadout is set up now as a snapshot")
             }
-            // The shortcut is a plain hint beside the label, never a boxed key.
+            // The shortcut is a plain hint beside the label, never a boxed key. A toolbar button is
+            // read by its title, so VoiceOver says the shortcut too.
             Button { studio.jumpPresented = true } label: {
                 Label { Text("Jump to Any Setting  \(Text("⌘K").foregroundStyle(palette.hint))") } icon: { Image(systemName: "magnifyingglass") }
                     .labelStyle(.titleAndIcon)
             }
-            .accessibilityLabel("Jump to Any Setting")
                 .keyboardShortcut("k", modifiers: .command)
                 .disabled(studio.catalog == nil || session.current == nil)
                 .help("Jump to any setting (⌘K)")
@@ -458,11 +458,18 @@ private struct TuneForPicker: View {
     @ObservedObject var checkup: ConfigCheckupModel
     @Environment(\.palette) private var palette
     var body: some View {
-        HStack(spacing: 10) {
-            Text("Tune for").font(.system(size: 13)).foregroundStyle(palette.secondary).accessibilityHidden(true)
-            Picker("Tune for", selection: $checkup.tuneFor) { ForEach(ConfigTuneFor.allCases, id: \.self) { Text($0.title).tag($0) } }
-                .segmentedChoice()
+        // In the narrowest window the words would wrap onto two lines; the control then stands alone.
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 10) {
+                Text("Tune for").font(.system(size: 13)).foregroundStyle(palette.secondary).fixedSize().accessibilityHidden(true)
+                picker
+            }
+            picker
         }
+    }
+    private var picker: some View {
+        Picker("Tune for", selection: $checkup.tuneFor) { ForEach(ConfigTuneFor.allCases, id: \.self) { Text($0.title).tag($0) } }
+            .segmentedChoice()
     }
 }
 

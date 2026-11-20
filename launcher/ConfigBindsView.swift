@@ -996,6 +996,8 @@ private struct KeyboardPanel: View {
                     .glassAction().controlSize(.large).fixedSize()
                     .help("Press a key or click a mouse button to select it. Escape cancels.")
                 }
+                // In a narrow window the keys take the panel's tighter inset; the bar above them keeps 20.
+                .padding([.top, .horizontal], 20 - inset)
                 // No scroll view around the drawing: one would take the arrow keys for scrolling,
                 // and the keys shrink to fit the launcher's narrowest window instead. The drawing
                 // is one Tab stop (the chosen key, else the first); the arrow keys move focus and

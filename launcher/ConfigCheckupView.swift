@@ -143,6 +143,14 @@ extension RulesBar {
 struct RulesMenu: View {
     @ObservedObject var checkup: ConfigCheckupModel
     @Environment(\.palette) private var palette
+    /// VoiceOver reads a menu button by its picture's description; a name put on the menu alone is
+    /// not read, and the bordered menu style reads no name at all. So the name rides on a picture
+    /// with nothing in it, and the capsule is drawn here.
+    private var name: NSImage {
+        let image = NSImage(size: NSSize(width: 1, height: 1))
+        image.accessibilityDescription = "Rules to check against: \(checkup.selectionTitle)"
+        return image
+    }
     var body: some View {
         HStack(spacing: 8) {
             Text("Rules").font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.secondary)
@@ -157,10 +165,17 @@ struct RulesMenu: View {
                 }
                 if !checkup.rulesetIDs.isEmpty { Divider(); Button("No Rules") { checkup.rulesetIDs = [] } }
             } label: {
-                Text(checkup.selectionTitle).lineLimit(1)
-                    .accessibilityLabel("Rules to check against: \(checkup.selectionTitle)")
+                Label {
+                    Text(checkup.selectionTitle).lineLimit(1)
+                        .accessibilityLabel("Rules to check against: \(checkup.selectionTitle)")
+                } icon: {
+                    Image(nsImage: name)
+                }
             }
-            .menuStyle(.button).fixedSize().capsuleControls().controlSize(.large)
+            .menuStyle(.borderlessButton).fixedSize()
+            .padding(.leading, 8).padding(.trailing, 10).frame(height: 28)
+            .background(palette.button, in: Capsule()).overlay(Capsule().strokeBorder(palette.buttonStroke, lineWidth: 1))
+            .shapeAudit(.control, .capsule, "rules menu")
             .accessibilityLabel("Rules to check against: \(checkup.selectionTitle)")
         }
     }

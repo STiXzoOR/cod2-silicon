@@ -1228,13 +1228,16 @@ extension Snapshots {
         defer { window.orderOut(nil); window.close() }
         guard let sheet = window.attachedSheet else { print("FAIL: the import review sheet is not attached"); return false }
         sheet.makeKey()
-        click(sheet, at: NSPoint(x: sheet.frame.width - 22 - 28, y: 16 + 18))
+        click(sheet, at: NSPoint(x: sheet.frame.width - 22 - 28, y: 22 + 18))
         try? await Task.sleep(for: .milliseconds(800))
-        let written = try? Data(contentsOf: players.appendingPathComponent("Player_1/config_mp.cfg"))
-        guard written == expected, (try? ConfigProfileStore(homeURL: home, dialect: .cod2x).history(id: "Player_1"))?.map(\.source) == [.import],
+        let written = try? Data(contentsOf: players.appendingPathComponent("vargr/config_mp.cfg"))
+        guard written == expected, (try? ConfigProfileStore(homeURL: home, dialect: .cod2x).history(id: "vargr"))?.map(\.source) == [.import],
               (try? Data(contentsOf: players.appendingPathComponent("Main/config_mp.cfg"))) == main,
               (try? Data(contentsOf: players.appendingPathComponent("active.txt"))) == active, model.discover.review == nil else {
-            print("FAIL: clicking Apply did not import exactly the reviewed lines (\(review.applyError ?? "no error shown"))"); return false
+            print("FAIL: clicking Apply did not import exactly the reviewed lines (\(review.applyError ?? "no error shown"); "
+                  + "new loadout \(written == nil ? "not written" : written == expected ? "as reviewed" : "differs"), "
+                  + "review \(model.discover.review == nil ? "closed" : "still open"), sheet \(sheet.frame.size), on top: \(sheet.attachedSheet.map { String(describing: type(of: $0)) } ?? "nothing"))")
+            return false
         }
         print("PASS: clicking the review's Apply button imported exactly the ticked lines into a new loadout as one Import transaction; Main and the active loadout are unchanged")
         return true
@@ -1413,9 +1416,12 @@ extension Snapshots {
         var press = false
         /// The click opens an alert on the window's sheet; the sheet alone isn't the overlay.
         var nested = false
+        /// The control sits below the fold: the page scrolls to its end first, as a popover opens
+        /// only from a control that is on screen.
+        var reveal = false
     }
     static let overlayCases: [Overlay] = [
-        Overlay(name: "configs-jump", screen: "configs-guided", target: { $0.role == "AXButton" && $0.label == "Jump to Any Setting" }, after: { window in
+        Overlay(name: "configs-jump", screen: "configs-guided", target: { $0.role == "AXButton" && $0.label.hasPrefix("Jump to Any Setting") }, after: { window in
             // Type “fps” the way VoiceOver would set a field's value.
             if let field = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXTextField" && $0.label == "Setting name or console name" }) {
                 AccessibilityTree.setValue(field, "fps")
@@ -1425,7 +1431,7 @@ extension Snapshots {
         Overlay(name: "configs-new-loadout", screen: "configs-guided", target: { $0.role == "AXButton" && $0.label == "New Loadout" }),
         Overlay(name: "configs-expert-note", screen: "configs-expert", target: { $0.role == "AXButton" && $0.label == "Edit the note on Mouse speed" }),
         Overlay(name: "configs-binds-keyboard", screen: "configs-binds-visual", target: { $0.role == "AXButton" && $0.label.hasPrefix("Magic Keyboard") }),
-        Overlay(name: "configs-binds-pointer", screen: "configs-binds-visual", target: { $0.role == "AXButton" && $0.label.hasPrefix("Mouse ·") }),
+        Overlay(name: "configs-binds-pointer", screen: "configs-binds-visual", target: { $0.role == "AXButton" && $0.label.hasPrefix("Mouse ·") }, reveal: true),
         Overlay(name: "configs-binds-confirm", screen: "configs-binds-advanced",
                 prepare: { model in model.studio.binds.updateDraft { $0.steps[0].text = "good luck" } },
                 target: { $0.role == "AXButton" && $0.label == "Save Bind" }),
@@ -1442,6 +1448,14 @@ extension Snapshots {
                 guard let (_, window, home) = await open(overlay.screen, dark: dark, setup: overlay.prepare) else { return false }
                 defer { try? FileManager.default.removeItem(at: home) }
                 let name = "\(overlay.name)-\(dark ? "dark" : "light")"
+                if overlay.reveal, let content = window.contentView,
+                   let scroll = views(NSScrollView.self, in: content).max(by: {
+                       ($0.documentView?.bounds.height ?? 0) - $0.contentSize.height < ($1.documentView?.bounds.height ?? 0) - $1.contentSize.height
+                   }), let document = scroll.documentView {
+                    scroll.contentView.scroll(to: NSPoint(x: 0, y: max(0, document.bounds.height - scroll.contentSize.height)))
+                    scroll.reflectScrolledClipView(scroll.contentView)
+                    try? await Task.sleep(for: .milliseconds(300))
+                }
                 guard let target = AccessibilityTree.elements(of: window).first(where: overlay.target) else {
                     print("FAIL: \(name): the control that opens it isn't in the accessibility tree"); ok = false
                     window.orderOut(nil); window.close(); continue
@@ -1704,7 +1718,7 @@ extension Snapshots {
         let before = disk(), count = session.history.count
         guard await chooseMoreAction(window, "Rename “Main”") else { return false }
         try? await Task.sleep(for: .milliseconds(900))
-        guard window.attachedSheet != nil, sheetElement("AXTextField", "Name") != nil, sheetElement("AXButton", "Rename") != nil else {
+        guard window.attachedSheet != nil, sheetElement("AXTextField", "Loadout name") != nil, sheetElement("AXButton", "Rename") != nil else {
             print("FAIL: Rename “Main”… did not open the rename sheet"); return false
         }
         // The sheet focuses its name field: select its text and type over it with key events, as a
@@ -1723,13 +1737,13 @@ extension Snapshots {
         let renamed = disk()
         guard model.studio.metadata?.displayName == "Scrim Night", renamed[0] == before[0], renamed[2] == before[2], renamed[1] != before[1],
               session.history.count == count + 1, session.history.first?.summary == "Renamed to Scrim Night", window.attachedSheet == nil else {
-            print("FAIL: Rename did not change only the display name (\(model.studio.metadata?.displayName ?? "none"); field “\(sheetElement("AXTextField", "Name")?.value ?? "gone")”, "
+            print("FAIL: Rename did not change only the display name (\(model.studio.metadata?.displayName ?? "none"); field “\(sheetElement("AXTextField", "Loadout name")?.value ?? "gone")”, "
                   + "sheet \(window.attachedSheet != nil ? "open" : "closed"), failure \(model.studio.failure?.message ?? "none"))"); return false
         }
         print("PASS: More Actions › Rename wrote only the display name, Scrim Night, as one History row; config and active loadout unchanged")
         guard await chooseMoreAction(window, "Rename “Scrim Night”") else { return false }
         try? await Task.sleep(for: .milliseconds(900))
-        guard let again = sheetElement("AXTextField", "Name"), let cancel = sheetElement("AXButton", "Cancel") else { print("FAIL: the rename sheet did not reopen"); return false }
+        guard let again = sheetElement("AXTextField", "Loadout name"), let cancel = sheetElement("AXButton", "Cancel") else { print("FAIL: the rename sheet did not reopen"); return false }
         _ = again
         typeName("Discarded")
         try? await Task.sleep(for: .milliseconds(300))
