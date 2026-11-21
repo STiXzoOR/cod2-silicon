@@ -177,6 +177,16 @@ import Foundation
         precondition(CrashReports.latest(in: reports, since: started)?.lastPathComponent == "cod2_freeze_202.txt")
         try report("cod2_crash_202.txt", 7)
         precondition(CrashReports.latest(in: reports, since: started)?.lastPathComponent == "cod2_crash_202.txt")
+
+        // How a game ended. A game the launcher reconnected to (after Quit Launcher Only) has no exit status: its
+        // ending is unexpected only when it left a crash or freeze report, never because a session log exists.
+        let log = URL(fileURLWithPath: "/Home/logs/session.log"), crash = URL(fileURLWithPath: "/Home/cod2_crash_1.txt")
+        precondition(GameExit.outcome(code: nil, sessionLog: { log }, crashReport: { nil }) == (false, nil), "a clean exit of a reconnected game read as a crash")
+        precondition(GameExit.outcome(code: nil, sessionLog: { log }, crashReport: { crash }) == (true, crash))
+        precondition(GameExit.outcome(code: 0, sessionLog: { log }, crashReport: { crash }) == (false, nil))
+        precondition(GameExit.outcome(code: 1, sessionLog: { log }, crashReport: { crash }) == (false, nil))
+        precondition(GameExit.outcome(code: 139, sessionLog: { log }, crashReport: { crash }) == (true, log))
+        precondition(GameExit.outcome(code: 139, sessionLog: { nil }, crashReport: { nil }) == (true, nil))
     }
 
     /// Settings › Privacy › crash reports, against a stand-in receiver on 127.0.0.1 (no other host).

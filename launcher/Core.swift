@@ -336,6 +336,21 @@ enum PathDisplay {
     }
 }
 
+/// How a game ended, as the launcher tells it. `code` is the exit status of a game this launcher started;
+/// nil for one it reconnected to (after Quit Launcher Only or a force-quit), whose status it can't see.
+enum GameExit {
+    /// unexpected: Home says the game closed unexpectedly; report: the file Show Game Log opens.
+    static func outcome(code: Int32?, sessionLog: () -> URL?, crashReport: () -> URL?) -> (unexpected: Bool, report: URL?) {
+        // 1 is Exit in CoD2x's machine identity dialog, a normal close.
+        if code == 0 || code == 1 { return (false, nil) }
+        if code != nil { return (true, sessionLog() ?? crashReport()) }
+        // Unknown status: only a crash or freeze report written during this game says something went wrong.
+        // The newest session log exists after every game, so it says nothing either way.
+        guard let report = crashReport() else { return (false, nil) }
+        return (true, report)
+    }
+}
+
 enum CrashReports {
     /// The newest report written since `since`.
     static func latest(in home: URL, since: Date) -> URL? {

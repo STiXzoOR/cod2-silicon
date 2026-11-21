@@ -810,15 +810,14 @@ struct MediaEntry: Identifiable {
         engine = nil; gameRunning = false
         restoreRegularPolicy()
         NSApp.windows.first?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
-        // 1 is Exit in CoD2x's machine identity dialog, a normal close.
         let closed = code == 0 || code == 1
-        if code != nil && !closed {
+        let started = gameStartedAt
+        let outcome = GameExit.outcome(code: code, sessionLog: { GameSessionLog.latest(home: home) },
+                                       crashReport: { CrashReports.latest(in: home, since: started) })
+        if outcome.unexpected {
+            crashReport = outcome.report
             notice = "The game closed unexpectedly. Your settings and loadouts are safe."
         }
-        if !closed {
-            crashReport = GameSessionLog.latest(home: home) ?? CrashReports.latest(in: home, since: gameStartedAt)
-        }
-        if code == nil && crashReport != nil { notice = "The game closed unexpectedly. Your settings and loadouts are safe." }
         if !closed { sendCrashReports(CrashReports.all(in: home, since: gameStartedAt)) }
         print("CoD2 Unbound: returned to launcher (game exit \(code.map(String.init) ?? "unavailable")).")
         fflush(stdout)
