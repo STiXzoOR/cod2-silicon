@@ -1619,6 +1619,8 @@ int RB_FxLayer_GateSplit(int count)
                  0.25 / 255.0);
         s_gateShader = CompileShader("fxlayer_gate", source);
     }
+    if (!s_opaqueShader)
+        s_opaqueShader = CompileShader("screenpass_opaque", "float4 main() : COLOR0 { return float4(1.0, 1.0, 1.0, 1.0); }\n");
     if (s_gateShader && !layer->gateSurface) {
         SurfaceDesc desc;
         memset(&desc, 0, sizeof(desc));
@@ -1627,7 +1629,7 @@ int RB_FxLayer_GateSplit(int count)
                                                              desc.Format, 0, &layer->gateTexture, NULL) >= 0)
             CALL(GetSurfaceFn, layer->gateTexture, TEX_GetSurfaceLevel)(layer->gateTexture, 0, &layer->gateSurface);
     }
-    if (!s_gateShader || !layer->gateSurface) {
+    if (!s_gateShader || !s_opaqueShader || !layer->gateSurface) {
         layer->gateFailed = 1;
         return 0;
     }
@@ -1662,6 +1664,13 @@ void RB_FxLayer_GateBegin(void)
     SetState(RS_STENCILMASK, 0xff);
     SetState(RS_STENCILWRITEMASK, 0xff);
     SetState(RS_STENCILPASS, OP_REPLACE);
+    /* Every texel's mark is written here, unmarked ones first. The Clear above does not
+     * reliably reach this stencil buffer, and a mark left from an earlier frame spared
+     * the far part where the near part no longer hides it: the scene showed through. */
+    SetState(RS_STENCILREF, 0);
+    CALL(SetObjectFn, device, DEV_SetPixelShader)(device, s_opaqueShader);
+    PassDraw(0.0f, 0.0f, (float)layer->width, (float)layer->height, 0.0f, 0.0f, 1.0f, 1.0f);
+    SetState(RS_STENCILREF, 1);
     CALL(SetObjectFn, device, DEV_SetPixelShader)(device, s_gateShader);
     PassTexture(0, layer->colorTexture, 1);
     PassDraw(0.0f, 0.0f, (float)layer->width, (float)layer->height, 0.0f, 0.0f, 1.0f, 1.0f);
