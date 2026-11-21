@@ -273,8 +273,8 @@ all of it before you post, and the app sends nothing itself.
   in place of a microphone, not yet with a real one. There is no choice of
   microphone in the launcher; the game uses the system's input. A server
   started from the launcher's Hosting page does not offer voice chat yet.
-- Servers that require PunkBuster cannot be joined: PunkBuster was never
-  made for this game on Apple silicon and is not part of the app.
+- PunkBuster is not part of the app, so a server that requires it will not
+  let you stay.
 - On Wi-Fi, macOS pauses the connection for a moment now and then while
   AirDrop or Handoff is in use, which shows as freezes and jumps, whether
   you host or just play. A network cable avoids it; the server guide's
