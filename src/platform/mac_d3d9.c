@@ -99,12 +99,15 @@ void *Win_D3D9_Direct3DCreate9(void)
              * display can; the game's picture is not made for that and is shown as it
              * is. With anti-aliasing the scene's samples are resolved by a copy of the
              * whole target (rb_scenetarget.c); the library takes that copy as the
-             * resolve itself instead of resolving and then copying. Entries are read in
-             * order and a later one wins, so what a developer puts in MTLD3D_CONFIG
-             * still holds. */
+             * resolve itself instead of resolving and then copying. A shader or
+             * pipeline seen for the first time is built before its draw runs: built in
+             * the background, the library would leave the draw out of the frame until
+             * it is ready, and a wall or a smoke cloud would be missing for those
+             * frames. Entries are read in order and a later one wins, so what a
+             * developer puts in MTLD3D_CONFIG still holds. */
             static char config[2048];
             const char *given = getenv("MTLD3D_CONFIG");
-            snprintf(config, sizeof config, "color.hdr.enable=false;render.directResolve=true%s%s",
+            snprintf(config, sizeof config, "color.hdr.enable=false;render.directResolve=true;shader.asyncCompile=false%s%s",
                      given && *given ? ";" : "", given ? given : "");
             setenv("MTLD3D_CONFIG", config, 1);
         }
