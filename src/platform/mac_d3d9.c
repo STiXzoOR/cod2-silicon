@@ -247,7 +247,10 @@ void Win_D3D9_PresentParameters(const int *words, void *window, void *out)
     parameters->SwapEffect = (uint32_t)words[6];
     parameters->hDeviceWindow = window;
     parameters->Windowed = 0;
-    parameters->EnableAutoDepthStencil = 1;
+    /* No depth buffer of the device's own: the engine makes its own frame buffer depth
+     * (r_rendertarget.c) and binds it, or none, before anything is drawn, so one the
+     * size of the display (about 60 MB at 5120 x 2880) would be held for nothing. */
+    parameters->EnableAutoDepthStencil = 0;
     parameters->AutoDepthStencilFormat = (uint32_t)words[8];
     parameters->Flags = (uint32_t)words[9];
     parameters->FullScreen_RefreshRateInHz = 0;
