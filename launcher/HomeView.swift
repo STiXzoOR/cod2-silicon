@@ -118,7 +118,7 @@ private struct HomeHero: View {
         if running {
             Button(action: model.returnToGame) { Label("Return to Game", systemImage: "play.fill").labelStyle(HeroLabelStyle()) }
                 .prominentAction().actionControlSize()
-            Button(action: model.quitGame) { Label(model.quittingGame ? "Quitting…" : "Quit Game", systemImage: "power").labelStyle(HeroLabelStyle()) }
+            Button { model.quitGame() } label: { Label(model.quittingGame ? "Quitting…" : "Quit Game", systemImage: "power").labelStyle(HeroLabelStyle()) }
                 .glassAction().actionControlSize().disabled(model.quittingGame)
                 .help("Quits Call of Duty 2. The launcher stays open.")
             hint("The game is running. Settings you change apply next time.")

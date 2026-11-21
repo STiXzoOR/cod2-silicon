@@ -258,24 +258,6 @@ enum PlayedDate {
         dataMissing = !dataPath.isEmpty && LauncherFindData(dataPath) == nil
         keyVerified = KeyStore.hasValidKey(at: preferences)
     }
-    /// Home's Quit Game (and the Quit alert's Quit Both): asks the game to quit the way the Dock's Quit does,
-    /// so it saves its own settings. The game monitor brings the launcher back when it has closed.
-    func quitGame() {
-        guard let pid = activeGamePID, !quittingGame else { return }
-        quittingGame = true
-        if NSRunningApplication(processIdentifier: pid)?.terminate() != true { engine?.terminate() }
-        Task { [weak self] in
-            for _ in 0..<40 {
-                try? await Task.sleep(for: .milliseconds(250))
-                guard let self else { return }
-                if !self.gameRunning { self.quittingGame = false; return }
-            }
-            guard let self, self.gameRunning else { return }
-            self.quittingGame = false
-            self.notice = "The game didn’t quit. Switch to it and quit from its own menu."
-        }
-    }
-
     // MARK: Library: matches
 
     /// The game's local match summaries as Check-up last read them, oldest first.

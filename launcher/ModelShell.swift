@@ -63,21 +63,29 @@ enum PlayerNameRules {
             game.activate(options: .activateAllWindows)
         }
     }
-    /// Home's Quit Game and Quit Both: asks the game to quit the way its own Quit does; if it hasn't
-    /// gone after ten seconds it is stopped. `completion` runs once it has gone.
+    /// Home's Quit Game and Quit Both: asks the game to quit the way its own Quit does (so it saves its
+    /// settings); if it hasn't gone after ten seconds it is stopped. `completion` runs once it has gone.
+    /// Home shows Quitting… meanwhile.
     func quitGame(then completion: (@MainActor () -> Void)? = nil) {
         guard let pid = activeGamePID, let game = NSRunningApplication(processIdentifier: pid) else { completion?(); return }
         quitGameTask?.cancel()
+        quittingGame = true
         notice = "Quitting Call of Duty 2…"
         if !game.terminate() { engine?.terminate() }
         quitGameTask = Task { [weak self] in
             for tick in 0..<80 {
+                // A later Quit Both takes over; this wait stops here rather than racing to the forced stop.
+                if Task.isCancelled { return }
                 if game.isTerminated || self?.activeGamePID != pid { break }
                 if tick == 40 { _ = game.forceTerminate() }
                 try? await Task.sleep(for: .milliseconds(250))
             }
-            guard let self else { return }
+            guard let self, !Task.isCancelled else { return }
+            self.quittingGame = false
             if self.notice == "Quitting Call of Duty 2…" { self.notice = "" }
+            if !game.isTerminated && self.activeGamePID == pid {
+                self.notice = "The game didn’t quit. Switch to it and quit from its own menu."
+            }
             completion?()
         }
     }

@@ -610,12 +610,13 @@ enum ServerPasswords {
                                     actionTitle: "Delete") { [weak self] in self?.hosting.delete(server) })
     }
     /// Quitting with servers running asks first: they can't keep running without the app.
-    func confirmQuitWithServers() {
+    /// gameAnswered: the player already chose Quit Launcher Only or Quit Both for a running game.
+    func confirmQuitWithServers(gameAnswered: Bool = false) {
         let count = hosting.running.count
         confirm(ConfirmationRequest(title: count == 1 ? "“\(hosting.running[0].name)” is still running" : "\(count) servers are still running",
                                     message: "Quitting CoD2 Unbound stops \(count == 1 ? "it" : "them"). Players on \(count == 1 ? "it" : "them") are disconnected.",
                                     actionTitle: count == 1 ? "Stop Server and Quit" : "Stop Servers and Quit") { [weak self] in
-            self?.hostingQuitConfirmed = true
+            self?.hostingQuitConfirmed = true; self?.quitConfirmed = gameAnswered
             NSApp.terminate(nil)
         })
     }
