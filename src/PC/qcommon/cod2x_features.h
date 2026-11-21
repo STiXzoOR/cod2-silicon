@@ -18,6 +18,14 @@ int Cod2x_TextEnabled(void);
 int Cod2x_TextCode(const char *p, char *code);
 int Cod2x_IsStyleCode(char code);
 int Cod2x_ConsoleCode(const char *text, int *color);
+#if defined(COD2_X64)
+/* con_printDoubleColors (CoD2x 1.4.6.8 drawing.cpp): 0 takes the colour codes out of the
+   killfeed's text instead of colouring it. Always 1 for a later revision, which has none. */
+int Cod2x_PrintDoubleColors(void);
+/* r_autopriority (Windows 1.3, kept by CoD2x 1.4.6.8 window.cpp): the game runs in the
+   background while its window is not in front. */
+void Cod2x_FocusPriority(int focused);
+#endif
 int Cod2x_ShadeColor(char code, float *rgb);
 /* The one CoD2x code stripper, shared with the server (cod2x_server.c). */
 void SV_Cod2xStripTextCodes(const char *text, char *out, size_t size);

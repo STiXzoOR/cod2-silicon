@@ -410,9 +410,15 @@ int SDL_PumpInputEvents(void)
                 mac_wheel_remainder = 0;
                 MacRawMouse_SetActive(0);
                 MacDisplay_FocusChanged(0);
+#if defined(__APPLE__) && defined(COD2_CODX) && COD2_CODX
+                { extern void Cod2x_FocusPriority(int focused); Cod2x_FocusPriority(0); }
+#endif
             } else if (ev.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
                 extern void MacDisplay_FocusChanged(int focused);
                 MacDisplay_FocusChanged(1);
+#if defined(__APPLE__) && defined(COD2_CODX) && COD2_CODX
+                { extern void Cod2x_FocusPriority(int focused); Cod2x_FocusPriority(1); }
+#endif
             }
 #if defined(COD2_X64) && COD2_X64
             else if (ev.window.event == SDL_WINDOWEVENT_MOVED)
