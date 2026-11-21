@@ -266,12 +266,23 @@ all of it before you post, and the app sends nothing itself.
   a person on the released Windows CoD2x. A CoD2x server still hosted from
   CoD2 Unbound 0.3.0 turns 0.3.1 players away until it updates. A server on
   the original 1.3 takes any 1.3 player.
-- Voice chat works with the original 1.3 only; CoD2x turns it off. It records
-  from your microphone only while you hold the voice chat
-  key on a server that has voice on. The sound path was tested with a
-  recording in place of a microphone, not yet with a real one, and the level
-  meter in the options moves only while you are sending. Device changes while
-  talking are not handled.
+- Voice chat works with the original 1.3 only; CoD2x turns it off, as CoD2x
+  does on Windows. It records from your microphone only while you hold the
+  voice chat key on a server that has voice on, and follows a change of
+  input device, even mid-sentence. The sound path was tested with a recording
+  in place of a microphone, not yet with a real one. There is no choice of
+  microphone in the launcher; the game uses the system's input. A server
+  started from the launcher's Hosting page does not offer voice chat yet.
+- Servers that require PunkBuster cannot be joined: PunkBuster was never
+  made for this game on Apple silicon and is not part of the app.
+- On Wi-Fi, macOS pauses the connection for a moment now and then while
+  AirDrop or Handoff is in use, which shows as freezes and jumps, whether
+  you host or just play. A network cable avoids it; the server guide's
+  [Wi-Fi section](docs/server.md#wi-fi-players-who-freeze-and-jump) has the
+  other remedies.
+- Everything here was checked on one Apple silicon Mac with a 5K display.
+  A MacBook's 16:10 screen, a 120 Hz display, a second display and a Mac
+  with 8 GB of memory have not been tried with the Metal engine.
 - The intro videos play once, the first time a new player launches to the
   game menu, as in the original; any key skips each part. `cinematic
   cod_intro` in the console plays the intro film again.
