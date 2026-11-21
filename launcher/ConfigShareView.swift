@@ -20,9 +20,11 @@ struct ShareSetupSheet: View {
         _share = StateObject(wrappedValue: ConfigShareSheetModel(loadout: profile, dialect: dialect, center: model.shareCenter, app: model.version))
     }
 
-    /// The board's `upload` (an up arrow over a line), drawn the way Settings draws its mirror
-    /// image `download` (`arrow.down.to.line`, Settings › Updates). The sheet and Player Setups' button.
-    static let symbol = "arrow.up.to.line"
+    /// The board's `upload`, by the mapping the app already uses for its mirror image `download` in
+    /// sheet icons and action buttons (Import's sheet, Add a Config: `square.and.arrow.down`). SF
+    /// Symbols has no up arrow over a line (`arrow.up.to.line` puts the line above), and this is
+    /// the system's Share symbol. The sheet and Player Setups' button.
+    static let symbol = "square.and.arrow.up"
 
     var body: some View {
         let name = share.loadout.displayName
