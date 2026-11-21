@@ -41,7 +41,9 @@ message readers, encode/decode wrappers, Speex, playback queues and native
 mode-5 synthetic packet must produce finite, nonzero mixer output for all 64
 talkers. It checks mute/`cl_voice` gates, the 299 ms talk indicator boundary,
 `+talk`/`-talk`, silent local input, microphone mixer call exclusion, two full
-lifecycles, late packets, output-device failure and the one-time stderr notice.
+lifecycles, late packets and output-device failure. The fixture stands in for
+an unavailable recorder; the native build has had real capture since
+`136ffb3c`, so the old "capture is unavailable" stderr notice must not appear.
 It also verifies that decode converts only the 160 produced samples and returns
 320 PCM bytes. ASan/UBSan stay enabled throughout.
 
@@ -237,14 +239,15 @@ Other enhanced modes retain differences, as recorded in
 [the WS91 report](../../docs/macos-port/reports/WS91-voice-original-fidelity.md).
 
 
-## Dormant recording queue
+## Recording queue
 
 `recording_queue.py` compiles the actual `Record_QueueAudioDataForEncoding`
 source with the selected engine flags and AddressSanitizer/UndefinedBehaviorSanitizer.
 It feeds synthetic mono 16-bit PCM through 90 cases covering frame boundaries,
 partial frames, gain, transmission gates, and modeled codec/network results.
-It does not enable microphone capture; this queue is excluded from the current
-macOS client build.
+It does not open a microphone. The queue is part of the macOS client build:
+`groupvoice/record.c` has been compiled in since `136ffb3c`, fed by
+`src/platform/macos_record.c` (see the next section).
 
 ```sh
 python3 tests/voice/recording_queue.py \
@@ -272,6 +275,55 @@ service order. It does not establish actual codec/network behavior, arbitrary
 inputs, unwinder behavior or whole-game fidelity. Floating-point controls are
 pinned for this fixture, not asserted to match every engine runtime state.
 
+
+## Microphone capture against a fake Core Audio
+
+```sh
+python3 tests/voice/capture_device.py \
+  --compile-db build-macos/compile_commands.json \
+  --output /absolute/private/path/capture
+```
+
+`capture_device.py` compiles the production `src/platform/macos_record.c`
+with its engine flags and links it with `capture_device.c`, which defines
+every Core Audio call the capture code makes (the input queue, its running
+listener, the system's default-input listener), the permission check
+`MacMicrophone_Allowed`, the engine's talk gate `Voice_SendVoiceData`, the
+recording callback and the playback voices. The test links without
+AudioToolbox and without `macos_microphone.m`, so no device opens and macOS
+is never asked for microphone permission. The fake queue runs its own capture
+thread that fills buffers with a running sample counter and calls the
+production input callback, as the real queue does.
+
+It runs the same cases twice, once with AddressSanitizer and
+UndefinedBehaviorSanitizer and once with ThreadSanitizer (`--sanitizer`
+selects one), and fails on any sanitizer report:
+
+- permission refused: no device opens, the check is retried about every
+  0.5 s while the talk key is held, and nothing is sent; once allowed, the
+  device opens within the next retry;
+- a 0.4 s open: no game frame waits for it (each frame must return within
+  20 ms; the measured worst is under 0.1 ms), and a stop during the open
+  returns at once while shutdown waits for it and closes the device;
+- linger: the device closes 2 s after the talk key is released, with no gap
+  in the captured samples, and does not open while nobody talks;
+- two failed opens: retried at 0.5 s steps, opened on the third try, one line
+  of log;
+- the device goes away while talking (the queue stops by itself): closed and
+  reopened once, and sound continues;
+- the system's default input changes while talking: reopened on the new
+  device, and a second change right after reopens at once (the 0.5 s wait is
+  only for failed opens); a change while closed opens nothing, and the next
+  talk uses the new device;
+- `winvoice_mic_mute`: 1 (the default) plays nothing back to the player; 0
+  plays back exactly the samples that are sent; sending is the same either way.
+
+Only the compiler runs at background priority: the run sleeps more than it
+computes, and background priority coalesces its timers by about a tenth of a
+second, which stretches the 0.5 s retry. `--baseline 6df105e7` compiles the
+0.4.0 capture code instead and fails at the slow open (a frame waited 0.4 s).
+This proves the capture logic, not a real microphone, the permission prompt
+or the menu bar's microphone indicator.
 
 ## Windows CRT random stream
 
