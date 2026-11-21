@@ -178,6 +178,13 @@ import Foundation
         try report("cod2_crash_202.txt", 7)
         precondition(CrashReports.latest(in: reports, since: started)?.lastPathComponent == "cod2_crash_202.txt")
 
+        // The game folder at start: an external drive that isn't connected keeps a set-up player out of first-run setup.
+        precondition(GameDataFolder.atStart(found: nil, remembered: "/Volumes/Games/CoD2\n", setupComplete: true) == "/Volumes/Games/CoD2",
+                     "a remembered folder on a disconnected drive sent a set-up player back to setup")
+        precondition(GameDataFolder.atStart(found: "/Users/a/Games/CoD2", remembered: "/Volumes/Games/CoD2", setupComplete: true) == "/Users/a/Games/CoD2")
+        precondition(GameDataFolder.atStart(found: nil, remembered: "/Volumes/Games/CoD2", setupComplete: false) == "", "setup that never finished starts over")
+        precondition(GameDataFolder.atStart(found: nil, remembered: nil, setupComplete: true) == "" && GameDataFolder.atStart(found: nil, remembered: " \n", setupComplete: true) == "")
+
         // How a game ended. A game the launcher reconnected to (after Quit Launcher Only) has no exit status: its
         // ending is unexpected only when it left a crash or freeze report, never because a session log exists.
         let log = URL(fileURLWithPath: "/Home/logs/session.log"), crash = URL(fileURLWithPath: "/Home/cod2_crash_1.txt")

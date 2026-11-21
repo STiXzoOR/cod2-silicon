@@ -384,7 +384,10 @@ struct MediaEntry: Identifiable {
         followEngine()
         studio.checkup.matchSummariesEnabled = settings.matchSummariesEnabled
         if let data = try? Data(contentsOf: home.appendingPathComponent("launcher-library.json")), let value = try? JSONDecoder().decode(LauncherLibrary.self, from: data) { library = value; servers = value.cache }
-        dataPath = LauncherFindData(nil) ?? ""
+        let found = LauncherFindData(nil)
+        let setupComplete = FileManager.default.fileExists(atPath: home.appendingPathComponent(".launcher-setup-complete").path)
+        dataPath = GameDataFolder.atStart(found: found, remembered: try? String(contentsOf: home.appendingPathComponent("data-path.txt"), encoding: .utf8),
+                                          setupComplete: setupComplete)
         refreshSteamUnfinished()
         refreshCoD2xFiles()
         keyVerified = KeyStore.hasValidKey(at: preferences)
@@ -392,9 +395,14 @@ struct MediaEntry: Identifiable {
         shaderCount = approximate ? 0 : Self.shaderTotal
         confirmedDataPath = dataPath
         readPlayerName()
-        let setupComplete = FileManager.default.fileExists(atPath: home.appendingPathComponent(".launcher-setup-complete").path)
         // ship-shell: a finished setup isn't asked again for a skipped CD key or approximate shaders.
         onboard = dataPath.isEmpty || (!setupComplete && (!keyVerified || approximate))
+        // The remembered game folder isn't there (an external drive not connected): Home says so, and Launch
+        // offers Choose Folder… (LaunchProblem.dataMissing).
+        if found == nil, !dataPath.isEmpty {
+            dataMissing = true
+            notice = LaunchProblem.dataMissing(dataPath).message + " It was " + PathDisplay.short(dataPath) + "."
+        }
         // Show the detected folder before asking for a key, so it can be reviewed or changed.
         step = 0
     }
@@ -682,6 +690,9 @@ struct MediaEntry: Identifiable {
         if demo == nil, let link = pendingLink, !admit(link) { return }
         do {
             try rememberData()
+            // A folder that went missing (its drive was disconnected) gets the sheet with Choose Folder…, not a game
+            // that starts without its files.
+            guard LauncherFindData(dataPath) != nil else { throw LauncherError(message: LaunchProblem.dataMissing(dataPath).message) }
             let gameEngine = chosenEngine
             let renderer = gameEngine.renderer(settings.renderer, in: gameBundle)
             let executable = gameEngine.executable(in: gameBundle, renderer: renderer)

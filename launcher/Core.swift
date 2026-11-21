@@ -336,6 +336,18 @@ enum PathDisplay {
     }
 }
 
+/// The game data folder the launcher starts with: the one found (the remembered folder when it is still
+/// there, else a usual place). A player who finished setup keeps the remembered one even when it isn't there
+/// now, because its drive isn't connected or it moved: Home then says so and offers Choose Folder…, rather
+/// than first-run setup starting over and offering to download the game again.
+enum GameDataFolder {
+    static func atStart(found: String?, remembered: String?, setupComplete: Bool) -> String {
+        if let found { return found }
+        guard setupComplete, let remembered = remembered?.trimmingCharacters(in: .whitespacesAndNewlines) else { return "" }
+        return remembered
+    }
+}
+
 /// How a game ended, as the launcher tells it. `code` is the exit status of a game this launcher started;
 /// nil for one it reconnected to (after Quit Launcher Only or a force-quit), whose status it can't see.
 enum GameExit {
