@@ -77,6 +77,17 @@ int RB_CalcSunSpriteSamples(void)
         if (result == 1)
             WinSleep(0);
     } while (result == 1);
+#if COD2_MAC_D3D9
+    {
+        /* The square is drawn here into the back buffer, which has one sample a
+         * pixel; the sun's square is drawn in the scene, and with anti-aliasing the
+         * scene has a multisampled target of its own (rb_scenetarget.c), where the
+         * query counts every sample. The full count there is this one times the
+         * samples, as on Windows, where the back buffer itself is multisampled. */
+        extern int RB_SceneTarget_Samples(void);
+        return (result ? 256 : samples) * RB_SceneTarget_Samples();
+    }
+#endif
     return result ? 256 : samples;
 }
 

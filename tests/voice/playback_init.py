@@ -118,6 +118,9 @@ def main():
         exe = build / 'playback-init'
         run([flags(paths[0])[0], '-arch', 'arm64', '-fsanitize=address,undefined', '-Wl,-dead_strip',
              *objects, '-framework', 'AudioToolbox', '-framework', 'CoreAudio', '-o', str(exe)], 'link')
+        # The native build used to print this when it had no capture. Capture is
+        # built since 136ffb3c and the fixture stands in for an unavailable
+        # recorder without it, so the notice must no longer appear.
         notice = 'Native microphone capture is unavailable; voice recording disabled.'
         observations = []
         passed = True
@@ -131,7 +134,7 @@ def main():
             result = subprocess.run(BACKGROUND + command, cwd=build, capture_output=True, text=True)
             log_name = 'run-' + case if args.rate_contract else 'run'
             (out / (log_name + '.log')).write_text(result.stdout + result.stderr)
-            passed &= result.returncode == 0 and result.stderr.count(notice) == 1
+            passed &= result.returncode == 0 and result.stderr.count(notice) == 0
             observations.append(dict(case=case, returncode=result.returncode,
                                      notice_count=result.stderr.count(notice), stdout=result.stdout))
             print(result.stdout + result.stderr)

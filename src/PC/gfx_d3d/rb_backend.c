@@ -4590,11 +4590,23 @@ static void RB_BlendSavedScreenCmd(GfxRenderCommandExecState *execState)
 #endif
     }
 
+#if COD2_MAC_D3D9
+    /* The OpenGL path's copy of the screen is stored bottom row first, which is what the
+     * flipped coordinates below undo. The Direct3D copy (StretchRect, RB_SaveScreenCmd)
+     * keeps the top row first, and drawn flipped the saved screen hung upside down over
+     * the picture through every shellshock. */
+    RB_DrawStretchPic(blendMaterial,
+                      0.0f, 0.0f, screenWidth, screenHeight,
+                      0.0f, 0.0f,
+                      screenWidth / pow2Width, screenHeight / pow2Height,
+                      blendColor, (GfxPrimStatsTarget)10);
+#else
     RB_DrawStretchPic(blendMaterial,
                       0.0f, 0.0f, screenWidth, screenHeight,
                       0.0f, screenHeight / pow2Height,
                       screenWidth / pow2Width, 0.0f,
                       blendColor, (GfxPrimStatsTarget)10);
+#endif
 
 advance:
     cmd = (byte *)execState->cmd;

@@ -36,6 +36,7 @@ extern void *MacDisplay_CreateD3D9Window(void);
 extern void *MacD3D9View_Layer(SDL_Window *window, int renderWidth, int renderHeight);
 extern const void *Dvar_RegisterBool(const char *name, unsigned char value, unsigned short flags);
 extern unsigned char Dvar_GetBool(const char *name);
+extern int Dvar_GetInt(const char *name);
 
 /* The window's Metal layer and the back buffer it is fitted to. */
 static void *metalLayer;
@@ -51,6 +52,35 @@ static void *Host_MetalLayer(void *user, void *hwnd, uint32_t *width, uint32_t *
     *width = layerWidth;
     *height = layerHeight;
     return metalLayer;
+}
+
+/* The display mode the library is told about. It reports nothing from it that the
+ * engine reads (r_init.c takes the display's modes from the display code), but
+ * with vertical sync on it holds presents to this refresh rate, and without a
+ * mode of ours it takes 60 Hz. It is the current mode of the window's display,
+ * updated whenever the window is set up, so it follows r_monitor, a move to
+ * another display and an exclusive mode's own rate. The library reads it again
+ * when the device is made or reset. */
+extern size_t sDisplayIndex;
+static D3D9MetalDisplayMode hostMode = {1920, 1080, 60};
+
+static void Host_UpdateMode(void)
+{
+    SDL_DisplayMode mode;
+    int display = sdl_gl_window ? SDL_GetWindowDisplayIndex(sdl_gl_window) : (int)sDisplayIndex;
+
+    if (display < 0)
+        display = 0;
+    if (SDL_GetCurrentDisplayMode(display, &mode) != 0 || mode.w <= 0 || mode.h <= 0)
+        return;
+    if (hostMode.width == (uint32_t)mode.w && hostMode.height == (uint32_t)mode.h &&
+        hostMode.refresh_hz == (uint32_t)(mode.refresh_rate > 0 ? mode.refresh_rate : 60))
+        return;
+    hostMode.width = (uint32_t)mode.w;
+    hostMode.height = (uint32_t)mode.h;
+    hostMode.refresh_hz = (uint32_t)(mode.refresh_rate > 0 ? mode.refresh_rate : 60);
+    fprintf(stderr, "CoD2 Unbound display %d: %ux%u at %u Hz (vertical sync paces to this rate)\n", display,
+            hostMode.width, hostMode.height, hostMode.refresh_hz);
 }
 
 static void *Host_Alloc(void *user, size_t size, size_t align)
@@ -99,13 +129,24 @@ void *Win_D3D9_Direct3DCreate9(void)
              * display can; the game's picture is not made for that and is shown as it
              * is. With anti-aliasing the scene's samples are resolved by a copy of the
              * whole target (rb_scenetarget.c); the library takes that copy as the
-             * resolve itself instead of resolving and then copying. Entries are read in
-             * order and a later one wins, so what a developer puts in MTLD3D_CONFIG
-             * still holds. */
+             * resolve itself instead of resolving and then copying. A shader or
+             * pipeline seen for the first time is built before its draw runs: built in
+             * the background, the library would leave the draw out of the frame until
+             * it is ready, and a wall or a smoke cloud would be missing for those
+             * frames. With r_gpuSync on (the default), at most two frames wait to
+             * be shown instead of the library's three: the game's own pacing,
+             * which keeps the processor about one frame ahead of the graphics
+             * chip on Windows, cannot work here (see the fence stand-ins below),
+             * so the library's limit is what bounds the delay between the mouse
+             * and the screen. Read when the game starts. Entries are read in
+             * order and a later one wins, so what a developer puts in
+             * MTLD3D_CONFIG still holds. */
             static char config[2048];
             const char *given = getenv("MTLD3D_CONFIG");
-            snprintf(config, sizeof config, "color.hdr.enable=false;render.directResolve=true%s%s",
-                     given && *given ? ";" : "", given ? given : "");
+            snprintf(config, sizeof config,
+                     "color.hdr.enable=false;render.directResolve=true;shader.asyncCompile=false%s%s%s",
+                     Dvar_GetInt("r_gpuSync") ? ";present.maxFrameLatency=2" : "", given && *given ? ";" : "",
+                     given ? given : "");
             setenv("MTLD3D_CONFIG", config, 1);
         }
         host.size = (uint32_t)sizeof host;
@@ -113,6 +154,9 @@ void *Win_D3D9_Direct3DCreate9(void)
         host.alloc_app = Host_Alloc;
         host.free_app = Host_Free;
         host.cache_dir = cache;
+        Host_UpdateMode();
+        host.modes = &hostMode;
+        host.mode_count = 1;
         int result = d3d9metal_init(&host);
         if (result != D3D9METAL_OK && result != D3D9METAL_E_ALREADY) {
             fprintf(stderr, "d3d9metal_init failed: %d\n", result);
@@ -148,6 +192,7 @@ static void *ConfigureWindow(int width, int height, int fullscreen, int refresh)
         applied[2] = mode;
         applied[3] = refresh;
     }
+    Host_UpdateMode();
     metalLayer = MacD3D9View_Layer(sdl_gl_window, width, height);
     if (!metalLayer) {
         fprintf(stderr, "Couldn't create the window's Metal layer\n");
@@ -202,7 +247,10 @@ void Win_D3D9_PresentParameters(const int *words, void *window, void *out)
     parameters->SwapEffect = (uint32_t)words[6];
     parameters->hDeviceWindow = window;
     parameters->Windowed = 0;
-    parameters->EnableAutoDepthStencil = 1;
+    /* No depth buffer of the device's own: the engine makes its own frame buffer depth
+     * (r_rendertarget.c) and binds it, or none, before anything is drawn, so one the
+     * size of the display (about 60 MB at 5120 x 2880) would be held for nothing. */
+    parameters->EnableAutoDepthStencil = 0;
     parameters->AutoDepthStencilFormat = (uint32_t)words[8];
     parameters->Flags = (uint32_t)words[9];
     parameters->FullScreen_RefreshRateInHz = 0;
@@ -439,8 +487,13 @@ done:
     return ok;
 }
 
-/* Stand-ins for the OpenGL fences the backend paces itself with (see
- * src/win32/gl_loader.c): a fence is always finished. */
+/* Stand-ins for the OpenGL fences the backend paces itself with (r_gpuSync; see
+ * src/win32/gl_loader.c): a fence is always finished. Windows paces with a
+ * Direct3D 9 event query here, but the Metal library reports an event as done
+ * only at the display's next refresh, so waiting on one held the game to the
+ * display's rate (60 frames a second at most on a 60 Hz display, with vertical
+ * sync off). The library's own limit on queued frames takes the pacing's place
+ * (present.maxFrameLatency above). */
 void MacD3D9_GenFences(int count, unsigned int *fences)
 {
     for (int i = 0; i < count; ++i)

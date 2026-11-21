@@ -114,6 +114,7 @@ typedef HRESULT (*SetFvfFn)(void *, DWORD);
 typedef HRESULT (*DrawUpFn)(void *, DWORD, unsigned, const void *, unsigned);
 typedef HRESULT (*GetDescFn)(void *, SurfaceDesc *);
 typedef HRESULT (*CreateShaderFn)(void *, const void *, void **);
+typedef HRESULT (*ShaderConstantFn)(void *, unsigned, float *, unsigned);
 typedef uint32_t (*ReleaseFn)(void *);
 typedef uint32_t (*AddRefFn)(void *);
 typedef void *(*BlobPointerFn)(void *);
@@ -125,6 +126,7 @@ enum {
     DEV_SetTextureStageState = 67, DEV_GetSamplerState = 68, DEV_SetSamplerState = 69, DEV_DrawPrimitiveUP = 83,
     DEV_SetVertexDeclaration = 87, DEV_GetVertexDeclaration = 88, DEV_SetFVF = 89, DEV_SetVertexShader = 92,
     DEV_GetVertexShader = 93, DEV_CreatePixelShader = 106, DEV_SetPixelShader = 107, DEV_GetPixelShader = 108,
+    DEV_SetPixelShaderConstantF = 109, DEV_GetPixelShaderConstantF = 110,
     DEV_CreateQuery = 118, QUERY_Issue = 6, QUERY_GetData = 7,
     TEX_GetSurfaceLevel = 18, SURF_GetDesc = 12, UNK_AddRef = 1, UNK_Release = 2, BLOB_GetBufferPointer = 3,
 };
@@ -170,6 +172,8 @@ typedef struct {
     void *nearTexture, *nearSurface, *nearColorTexture, *nearColorSurface, *reduceNearShader;
     /* A smaller layer: the scene's float-Z at this size, for the effects that feather (CopyFloatZ). */
     void *floatZTexture, *floatZSurface, *floatZShader;
+    /* ...and the nearest float-Z of each block, for the second picture. */
+    void *floatZNearTexture, *floatZNearSurface, *floatZNearShader;
     int floatZFailed;
     /* A smaller layer: the far part of a run, drawn behind the gate (RB_FxLayer_GateBegin). */
     void *gateTexture, *gateSurface;
@@ -185,6 +189,7 @@ static void *s_depthPassColor, *s_depthPassDepth; /* what was bound before it */
 static void *s_sceneDepthTexture, *s_sceneDepthSurface; /* the prepass's depth, at the picture's size */
 static void *s_sceneFloatZ; /* the engine's float-Z texture, when this frame's effects feather against it */
 static int s_floatZReady;   /* the layer in use holds this frame's copy of it */
+static int s_floatZNearReady; /* ...and the copy for its second picture */
 static unsigned s_sceneWidth, s_sceneHeight;
 static Layer s_layers[LEVELS], *s_layer; /* s_layer: the one in use */
 static Layer *GetLayer(int level);
@@ -194,9 +199,7 @@ static void *s_savedColor, *s_savedDepth;
 static Viewport s_viewport;             /* what the engine last asked for, at full size */
 /* The count of pixels the effects cover. */
 static void *s_opaqueShader; /* writes 1 to every channel it may */
-static void *s_filmShader[3]; /* RB_ScreenPass_Film: everything, sky alone, sky told apart by the prepass's depth */
-static float s_filmValues[11]; /* the settings those were written for */
-static int s_filmValued;
+static void *s_filmShader[2]; /* RB_ScreenPass_Film: one saturation, the sky's told apart by the prepass's depth */
 static int s_sceneDepthDrawn; /* the prepass has put this frame's scene, models included, into its depth */
 /* When the film pass last had to tell the sky by the depth texture (milliseconds on the
  * monotonic clock; 0 never). While that is recent, frames draw the scene's depth for it
@@ -304,6 +307,9 @@ static void ReleaseLayers(void)
         Release(&layer->floatZSurface);
         Release(&layer->floatZTexture);
         Release(&layer->floatZShader);
+        Release(&layer->floatZNearSurface);
+        Release(&layer->floatZNearTexture);
+        Release(&layer->floatZNearShader);
         Release(&layer->gateSurface);
         Release(&layer->gateTexture);
         memset(layer, 0, sizeof(*layer));
@@ -320,8 +326,7 @@ void RB_FxLayer_Release(void)
     Release(&s_opaqueShader);
     Release(&s_filmShader[0]);
     Release(&s_filmShader[1]);
-    Release(&s_filmShader[2]);
-    s_filmValued = s_sceneDepthDrawn = 0;
+    s_sceneDepthDrawn = 0;
     s_filmDepthAskedAt = 0;
     Release(&s_redShader);
     Release(&s_gateShader);
@@ -533,17 +538,25 @@ static void *FixShader(const Layer *layer, int nearer, int level)
  *   picture, which then holds all of it. Refusing these drew every roofline behind
  *   the smoke into it as a row of steps.
  *
- * The texels that count are blended by their usual weights. If there is none, all four
- * are blended, each counting for more the nearer its depth is to the pixel's.
+ * The texels of the first kind are blended by their usual weights. With two pictures
+ * a pixel always has one, the texel of its own block, and then the second kind is left
+ * out: such a texel holds the same sprites, but they fade against the surface its own
+ * block holds (CopyFloatZ), and taking them spread the sky's smoke a block wide over
+ * the edge of a roof. Without a texel of the first kind the second kind counts, and
+ * without either all four are blended, each counting for more the nearer its depth is
+ * to the pixel's.
  *
  * `pick` chooses the pixel's depth: the prepass's depth of the pixel itself (0), or
  * the nearest (1) or farthest (2) of the pixels around it, for the samples that
- * anti-aliasing puts on the surface next door. Nothing is given to the view weapon,
- * which is drawn in a depth range of its own (WEAPON_DEPTH). (One case is lost by
- * that: with soft particles off, or under Direct3D 7, a sprite that cuts the near
- * plane veils the weapon when drawn straight onto the frame buffer, and a smaller
- * layer leaves the weapon clear. Giving the weapon the texels tested against it was
- * tried and left dark blocks on the sleeve at a half.)
+ * anti-aliasing puts on the surface next door.
+ *
+ * The view weapon is drawn in a depth range of its own (WEAPON_DEPTH), in front of the
+ * whole world, and only a sprite that comes nearly to the eye passes the depth test
+ * there. Drawn straight onto the frame buffer such sprites veil the weapon, and the
+ * texels tested against it carry them: a block all of weapon in the first picture, a
+ * block with the weapon in front in the second. So a pixel of the weapon is treated as
+ * any other. Only when no texel counts does it get no smoke at all rather than the
+ * blend of all four, which would put the street's smoke on the sleeve.
  *
  * Sampler 0 is the layer's depth, 1 the layer, 2 the prepass's depth, 3 the depth the
  * layer's effects reach, 4 and 5 the layer's second depth and picture. */
@@ -567,7 +580,8 @@ static void *BlendShader(const Layer *layer, int level, int pick, int twice)
                  "    c1 = lerp(tex2D(nearMap, o + float2(e.x, 0.0)), c1, place.y);\n"
                  "    c2 = lerp(tex2D(nearMap, o + float2(0.0, e.y)), c2, place.z);\n"
                  "    c3 = lerp(tex2D(nearMap, o + e), c3, place.w);\n"
-                 "    float4 w = b * max(inside, front);\n",
+                 "    float4 wi = b * inside;\n"
+                 "    float4 w = lerp(b * max(inside, front), wi, step(0.0001, wi.x + wi.y + wi.z + wi.w));\n",
                  1.0 + tolerance, 1.0 + tolerance, 1.0 + tolerance);
     else
         snprintf(counted, sizeof counted,
@@ -612,7 +626,7 @@ static void *BlendShader(const Layer *layer, int level, int pick, int twice)
              "    float4 s = b / (abs(q - r) + r * 0.02 + 0.000001);\n"
              "    float4 soft = (c0 * s.x + c1 * s.y + c2 * s.z + c3 * s.w) / (s.x + s.y + s.z + s.w);\n"
              "    float4 result = lerp(soft, mixed, step(0.0001, sum));\n"
-             "    return lerp(result, float4(0.0, 0.0, 0.0, 1.0), step(d, %.9g));\n"
+             "    return lerp(result, float4(0.0, 0.0, 0.0, 1.0), step(d, %.9g) * step(sum, 0.0001));\n"
              "}\n",
              layer->width, layer->height, (double)s_sceneWidth / (layer->width << level),
              (double)s_sceneHeight / (layer->height << level), counted, WEAPON_DEPTH);
@@ -888,6 +902,10 @@ void *RB_FxLayer_FloatZ(int *slot)
 {
     if (!s_active || !s_level || !s_floatZReady)
         return NULL;
+    if (s_nearPass && s_floatZNearReady) {
+        *slot = s_level + 4;
+        return s_layer->floatZNearTexture;
+    }
     *slot = s_level;
     return s_layer->floatZTexture;
 }
@@ -898,57 +916,63 @@ void RB_FxLayer_SceneDepthDrawn(void)
     s_sceneDepthDrawn = 1;
 }
 
-/* The film pass's shader. `values` are contrast, bias, exponent, the gain at black
- * (three) and what full brightness adds to it (three). The numbers are written into
- * the source, like every shader here, so none of the engine's constants are touched;
- * players change these settings by hand and rarely. */
-static void *FilmShader(const float *values, const char *saturation)
+/* The film pass's shader. Its settings come in three pixel shader constants, so it
+ * is compiled once whatever they are: c0 holds contrast, bias, exponent and the
+ * saturation, c1 the gain at black (three) and the sky's saturation, c2 what full
+ * brightness adds to the gain (three). `saturation` is the expression the
+ * saturation is read from. */
+enum { FILM_CONSTANTS = 3 };
+static void *FilmShader(const char *saturation)
 {
     char source[2048];
     snprintf(source, sizeof source,
              "sampler image : register(s0);\n"
              "sampler depthMap : register(s1);\n"
+             "float4 film0 : register(c0);\n"
+             "float4 film1 : register(c1);\n"
+             "float4 film2 : register(c2);\n"
              "float4 main(float2 uv : TEXCOORD0) : COLOR0\n"
              "{\n"
              "    float4 pixel = tex2D(image, uv);\n"
-             "    float3 rgb = pixel.rgb * %.9g + %.9g;\n"
+             "    float3 rgb = pixel.rgb * film0.x + film0.y;\n"
              "    float grey = dot(rgb, float3(0.299, 0.587, 0.114));\n"
              "    rgb = grey + (rgb - grey) * %s;\n"
-             "    rgb *= float3(%.9g, %.9g, %.9g) + float3(%.9g, %.9g, %.9g) * saturate(grey);\n"
-             "    return float4(pow(saturate(rgb), %.9g), pixel.a);\n"
+             "    rgb *= film1.rgb + film2.rgb * saturate(grey);\n"
+             "    return float4(pow(saturate(rgb), film0.z), pixel.a);\n"
              "}\n",
-             values[0], values[1], saturation, values[3], values[4], values[5], values[6], values[7], values[8], values[2]);
+             saturation);
     return CompileShader("screenpass_film", source);
 }
 
+/* The film settings into c0 to c2, with the scene's saturation (or the sky's) in c0.w. */
+static void FilmConstants(void *device, const float *values, float saturation, float skySaturation)
+{
+    float constants[FILM_CONSTANTS * 4] = { values[0], values[1], values[2], saturation, values[3], values[4],
+                                            values[5], skySaturation, values[6], values[7], values[8], 0.0f };
+    CALL(ShaderConstantFn, device, DEV_SetPixelShaderConstantF)(device, 0, constants, FILM_CONSTANTS);
+}
+
 /* CoD2x's film colour controls: the rectangle x, y, w, h of the bound target, taken
- * from `source` (a copy of that target, `width` by `height`) and graded. The sky has a
- * saturation of its own. Where that differs it is told apart by depth: with a depth
- * buffer bound (or `depthIfNone` to bind), by drawing at the far plane twice, as the
- * OpenGL pass does; without one, from the prepass's depth texture. With neither, the
- * sky takes the scene's saturation. Returns NULL, or what went wrong. */
+ * from `source` (a copy of that target, `width` by `height`) and graded. `values` are
+ * contrast, bias, exponent, the gain at black (three) and what full brightness adds to
+ * it (three). The sky has a saturation of its own. Where that differs it is told apart
+ * by depth: with a depth buffer bound (or `depthIfNone` to bind), by drawing at the far
+ * plane twice, as the OpenGL pass does; without one, from the prepass's depth texture.
+ * With neither, the sky takes the scene's saturation. The engine's pixel shader
+ * constants c0 to c2 are put back afterwards. Returns NULL, or what went wrong. */
 const char *RB_ScreenPass_Film(void *device, void *source, void *depthIfNone, unsigned width, unsigned height, float x,
                                float y, float w, float h, const float *values, float saturation, float skySaturation)
 {
     enum { PLAIN, DEPTH_TEST, DEPTH_TEXTURE };
     static int told;
-    float key[11], u0 = x / width, v0 = y / height, u1 = (x + w) / width, v1 = (y + h) / height;
+    float u0 = x / width, v0 = y / height, u1 = (x + w) / width, v1 = (y + h) / height;
+    float engineConstants[FILM_CONSTANTS * 4];
     Viewport full = { 0, 0, width, height, 0.0f, 1.0f }, before;
     void *depth = NULL;
-    char text[128];
-    int how = PLAIN, boundDepth = 0, i;
+    int how = PLAIN, boundDepth = 0;
     Saved saved;
 
     s_device = device;
-    memcpy(key, values, 9 * sizeof(float));
-    key[9] = saturation;
-    key[10] = skySaturation;
-    if (!s_filmValued || memcmp(key, s_filmValues, sizeof key)) {
-        for (i = 0; i < 3; i++)
-            Release(&s_filmShader[i]);
-        memcpy(s_filmValues, key, sizeof key);
-        s_filmValued = 1;
-    }
     if (skySaturation != saturation) {
         CALL(GetDepthFn, device, DEV_GetDepthStencilSurface)(device, &depth);
         if (!depth && depthIfNone) {
@@ -977,19 +1001,11 @@ const char *RB_ScreenPass_Film(void *device, void *source, void *depthIfNone, un
     }
     s_sceneDepthDrawn = 0;
 
-    if (how != DEPTH_TEXTURE && !s_filmShader[0]) {
-        snprintf(text, sizeof text, "%.9g", saturation);
-        s_filmShader[0] = FilmShader(values, text);
-    }
-    if (how == DEPTH_TEST && !s_filmShader[1]) {
-        snprintf(text, sizeof text, "%.9g", skySaturation);
-        s_filmShader[1] = FilmShader(values, text);
-    }
-    if (how == DEPTH_TEXTURE && !s_filmShader[2]) {
-        snprintf(text, sizeof text, "lerp(%.9g, %.9g, step(1.0, tex2D(depthMap, uv).r))", saturation, skySaturation);
-        s_filmShader[2] = FilmShader(values, text);
-    }
-    if (!s_filmShader[how == DEPTH_TEXTURE ? 2 : 0] || (how == DEPTH_TEST && !s_filmShader[1])) {
+    if (how != DEPTH_TEXTURE && !s_filmShader[0])
+        s_filmShader[0] = FilmShader("film0.w");
+    if (how == DEPTH_TEXTURE && !s_filmShader[1])
+        s_filmShader[1] = FilmShader("lerp(film0.w, film1.w, step(1.0, tex2D(depthMap, uv).r))");
+    if (!s_filmShader[how == DEPTH_TEXTURE ? 1 : 0]) {
         if (boundDepth)
             CALL(SetDepthFn, device, DEV_SetDepthStencilSurface)(device, NULL);
         return "the film shader could not be compiled";
@@ -997,6 +1013,7 @@ const char *RB_ScreenPass_Film(void *device, void *source, void *depthIfNone, un
 
     CALL(ViewportFn, device, DEV_GetViewport)(device, &before);
     PassBegin(&saved);
+    CALL(ShaderConstantFn, device, DEV_GetPixelShaderConstantF)(device, 0, engineConstants, FILM_CONSTANTS);
     CALL(ViewportFn, device, DEV_SetViewport)(device, &full);
     SetState(RS_ALPHABLENDENABLE, 0);
     SetState(RS_COLORWRITEENABLE, 0xf); /* alpha is written as it was read */
@@ -1004,18 +1021,21 @@ const char *RB_ScreenPass_Film(void *device, void *source, void *depthIfNone, un
     if (how == DEPTH_TEST) {
         SetState(RS_ZENABLE, 1);
         SetState(RS_ZFUNC, 4); /* less or equal: the far plane shows only where nothing was drawn */
-        CALL(SetObjectFn, device, DEV_SetPixelShader)(device, s_filmShader[1]);
+        CALL(SetObjectFn, device, DEV_SetPixelShader)(device, s_filmShader[0]);
+        FilmConstants(device, values, skySaturation, skySaturation);
         PassDrawAt(1.0f, x, y, w, h, u0, v0, u1, v1);
         SetState(RS_ZFUNC, CMP_GREATER);
-        CALL(SetObjectFn, device, DEV_SetPixelShader)(device, s_filmShader[0]);
+        FilmConstants(device, values, saturation, skySaturation);
         PassDrawAt(1.0f, x, y, w, h, u0, v0, u1, v1);
     } else {
         SetState(RS_ZENABLE, 0);
         if (how == DEPTH_TEXTURE)
             PassTexture(1, s_sceneDepthTexture, 1);
-        CALL(SetObjectFn, device, DEV_SetPixelShader)(device, s_filmShader[how == DEPTH_TEXTURE ? 2 : 0]);
+        CALL(SetObjectFn, device, DEV_SetPixelShader)(device, s_filmShader[how == DEPTH_TEXTURE ? 1 : 0]);
+        FilmConstants(device, values, saturation, skySaturation);
         PassDraw(x, y, w, h, u0, v0, u1, v1);
     }
+    CALL(ShaderConstantFn, device, DEV_SetPixelShaderConstantF)(device, 0, engineConstants, FILM_CONSTANTS);
     PassEnd(&saved);
     CALL(ViewportFn, device, DEV_SetViewport)(device, &before);
     if (boundDepth)
@@ -1028,29 +1048,61 @@ const char *RB_ScreenPass_Film(void *device, void *source, void *depthIfNone, un
  * thick smoke covers each many times over. Read from the scene's own texture, a quarter
  * layer's pixels lie four texels apart in each direction, so every read lands on memory
  * the graphics chip does not have at hand: at 3840x2160 that took two thirds of the
- * time the smoke cost. The copy holds the texel the effect would have read, the one
- * above and left of the centre of the layer pixel's block.
+ * time the smoke cost.
+ *
+ * A texel of the copy stands for a block of the scene's pixels, and a sprite fades by
+ * how near it comes to the surface behind it. The layer's first picture is tested
+ * against the farthest depth of each block, so its copy holds the farthest float-Z
+ * there; the second picture, tested against the nearest, gets a copy of its own that
+ * holds the nearest (RB_FxLayer_FloatZ). With one sample for both, a block on the edge
+ * of a roof feathered the roof's smoke against the sky behind, or the reverse, and the
+ * edge came out in steps a block wide.
  * Returns 1 when the copy is there. Leaves the layer's colour target bound. */
+static void *FloatZShader(int level, int nearest)
+{
+    char source[4096];
+    int count = 1 << level, x, y, used;
+    used = snprintf(source, sizeof source,
+                    "sampler map : register(s0);\n"
+                    "float4 main(float2 uv : TEXCOORD0) : COLOR0\n"
+                    "{\n"
+                    "    float z = tex2D(map, uv + float2(%.9g, %.9g)).r;\n",
+                    (0.5 - count / 2.0) / s_sceneWidth, (0.5 - count / 2.0) / s_sceneHeight);
+    for (y = 0; y < count; y++)
+        for (x = 0; x < count; x++)
+            if (x || y)
+                used += snprintf(source + used, sizeof source - (size_t)used,
+                                 "    z = %s(z, tex2D(map, uv + float2(%.9g, %.9g)).r);\n", nearest ? "min" : "max",
+                                 (x + 0.5 - count / 2.0) / s_sceneWidth, (y + 0.5 - count / 2.0) / s_sceneHeight);
+    snprintf(source + used, sizeof source - (size_t)used, "    return z;\n}\n");
+    return CompileShader(nearest ? "fxlayer_floatz_near" : "fxlayer_floatz", source);
+}
+
+static int CreateFloatZ(Layer *layer, void **texture, void **surface)
+{
+    return CALL(CreateTextureFn, s_device, DEV_CreateTexture)(s_device, layer->width, layer->height, 1, USAGE_RENDERTARGET,
+                                                              114 /* R32F */, 0, texture, NULL) >= 0 &&
+           CALL(GetSurfaceFn, *texture, TEX_GetSurfaceLevel)(*texture, 0, surface) >= 0;
+}
+
 static int CopyFloatZ(void)
 {
     void *device = s_device;
     Layer *layer = s_layer;
     Viewport view = { 0, 0, layer->width, layer->height, 0.0f, 1.0f };
+    float u1 = (float)(view.Width << s_level) / (float)s_sceneWidth, v1 = (float)(view.Height << s_level) / (float)s_sceneHeight;
 
+    s_floatZNearReady = 0;
     if (!s_sceneFloatZ || layer->floatZFailed)
         return 0;
     if (!layer->floatZSurface) {
-        char source[512];
-        snprintf(source, sizeof source,
-                 "sampler map : register(s0);\n"
-                 "float4 main(float2 uv : TEXCOORD0) : COLOR0 { return tex2D(map, uv - float2(%.9g, %.9g)); }\n",
-                 0.25 / s_sceneWidth, 0.25 / s_sceneHeight);
-        if (CALL(CreateTextureFn, device, DEV_CreateTexture)(device, layer->width, layer->height, 1, USAGE_RENDERTARGET,
-                                                             114 /* R32F */, 0, &layer->floatZTexture, NULL) < 0 ||
-            CALL(GetSurfaceFn, layer->floatZTexture, TEX_GetSurfaceLevel)(layer->floatZTexture, 0, &layer->floatZSurface) < 0 ||
-            !(layer->floatZShader = CompileShader("fxlayer_floatz", source))) {
+        if (!CreateFloatZ(layer, &layer->floatZTexture, &layer->floatZSurface) ||
+            !CreateFloatZ(layer, &layer->floatZNearTexture, &layer->floatZNearSurface) ||
+            !(layer->floatZShader = FloatZShader(s_level, 0)) || !(layer->floatZNearShader = FloatZShader(s_level, 1))) {
             Release(&layer->floatZSurface);
             Release(&layer->floatZTexture);
+            Release(&layer->floatZNearSurface);
+            Release(&layer->floatZNearTexture);
             layer->floatZFailed = 1;
             return 0;
         }
@@ -1058,12 +1110,19 @@ static int CopyFloatZ(void)
     SetState(RS_ZENABLE, 0);
     SetState(RS_ALPHABLENDENABLE, 0);
     SetState(RS_COLORWRITEENABLE, 0xf);
-    CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, layer->floatZSurface);
     CALL(SetDepthFn, device, DEV_SetDepthStencilSurface)(device, NULL);
+    PassTexture(0, s_sceneFloatZ, 1);
+    CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, layer->floatZSurface);
     CALL(ViewportFn, device, DEV_SetViewport)(device, &view);
     CALL(SetObjectFn, device, DEV_SetPixelShader)(device, layer->floatZShader);
-    PassTexture(0, s_sceneFloatZ, 1);
-    PassDraw(0.0f, 0.0f, (float)view.Width, (float)view.Height, 0.0f, 0.0f, 1.0f, 1.0f);
+    PassDraw(0.0f, 0.0f, (float)view.Width, (float)view.Height, 0.0f, 0.0f, u1, v1);
+    if (s_nearFrame) {
+        CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, layer->floatZNearSurface);
+        CALL(ViewportFn, device, DEV_SetViewport)(device, &view);
+        CALL(SetObjectFn, device, DEV_SetPixelShader)(device, layer->floatZNearShader);
+        PassDraw(0.0f, 0.0f, (float)view.Width, (float)view.Height, 0.0f, 0.0f, u1, v1);
+        s_floatZNearReady = 1;
+    }
     CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, layer->colorSurface);
     return 1;
 }
@@ -1619,6 +1678,8 @@ int RB_FxLayer_GateSplit(int count)
                  0.25 / 255.0);
         s_gateShader = CompileShader("fxlayer_gate", source);
     }
+    if (!s_opaqueShader)
+        s_opaqueShader = CompileShader("screenpass_opaque", "float4 main() : COLOR0 { return float4(1.0, 1.0, 1.0, 1.0); }\n");
     if (s_gateShader && !layer->gateSurface) {
         SurfaceDesc desc;
         memset(&desc, 0, sizeof(desc));
@@ -1627,7 +1688,7 @@ int RB_FxLayer_GateSplit(int count)
                                                              desc.Format, 0, &layer->gateTexture, NULL) >= 0)
             CALL(GetSurfaceFn, layer->gateTexture, TEX_GetSurfaceLevel)(layer->gateTexture, 0, &layer->gateSurface);
     }
-    if (!s_gateShader || !layer->gateSurface) {
+    if (!s_gateShader || !s_opaqueShader || !layer->gateSurface) {
         layer->gateFailed = 1;
         return 0;
     }
@@ -1662,6 +1723,13 @@ void RB_FxLayer_GateBegin(void)
     SetState(RS_STENCILMASK, 0xff);
     SetState(RS_STENCILWRITEMASK, 0xff);
     SetState(RS_STENCILPASS, OP_REPLACE);
+    /* Every texel's mark is written here, unmarked ones first. The Clear above does not
+     * reliably reach this stencil buffer, and a mark left from an earlier frame spared
+     * the far part where the near part no longer hides it: the scene showed through. */
+    SetState(RS_STENCILREF, 0);
+    CALL(SetObjectFn, device, DEV_SetPixelShader)(device, s_opaqueShader);
+    PassDraw(0.0f, 0.0f, (float)layer->width, (float)layer->height, 0.0f, 0.0f, 1.0f, 1.0f);
+    SetState(RS_STENCILREF, 1);
     CALL(SetObjectFn, device, DEV_SetPixelShader)(device, s_gateShader);
     PassTexture(0, layer->colorTexture, 1);
     PassDraw(0.0f, 0.0f, (float)layer->width, (float)layer->height, 0.0f, 0.0f, 1.0f, 1.0f);

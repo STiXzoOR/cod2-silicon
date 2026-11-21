@@ -19,6 +19,9 @@
 #if defined(__linux__)
 #include <sched.h>
 #endif
+#if defined(__APPLE__)
+#include <sys/resource.h>
+#endif
 #if !defined(_WIN32)
 #include <unistd.h>
 #endif
@@ -55,6 +58,7 @@ static int ipHidden;
 static int playingDemo, lastClientState = -1;
 /* The update prompt's dvars (the CoD2x update check below). */
 static const dvar_t *updateAvailable, *updateFiles, *updateVersion, *updateOldVersion;
+static const dvar_t *printDoubleColors, *autoPriority;
 #if defined(_WIN32)
 /* src/win32/win_system.c */
 int Sys_Cod2xProcessorCount(void);
@@ -262,6 +266,16 @@ void Cod2x_FeaturesInit(void)
     Cmd_AddCommand("fs_processedList", Cod2x_ProcessedList_f);
     Dvar_RegisterBool("com_autoaffinity", 1, 0x1001);
     Cod2x_AutoAffinity();
+    /* CoD2x 1.4.6.8 drawing.cpp. */
+    printDoubleColors = Dvar_RegisterBool("con_printDoubleColors", 1, 0x1000);
+    /* Windows 1.3's window code, registered again by CoD2x 1.4.6.8 window.cpp: archived, off. */
+    autoPriority = Dvar_RegisterBool("r_autopriority", 0, 0x1001);
+#if defined(__APPLE__)
+    /* CoD2x 1.4.6.8 affinity.cpp's name for com_autoaffinity: -1 every core, 0 off, or a count
+       of cores. macOS has no process CPU affinity, so a config that sets it is accepted and
+       nothing changes, as with com_autoaffinity. */
+    Dvar_RegisterInt("com_affinity", -1, -1, Cod2x_ProcessorCount(), 0x1001);
+#endif
     /* The Windows 1.3 client's update dvars, which its menus read. */
     updateAvailable = Dvar_RegisterBool("cl_updateavailable", 0, 0x1040);
     updateFiles = Dvar_RegisterString("cl_updatefiles", "", 0x1040);
@@ -394,6 +408,28 @@ int Cod2x_ShadeColor(char code, float *rgb)
 int Cod2x_IsStyleCode(char code)
 {
     return code && strchr("*!+=-_.", code) != NULL;
+}
+
+int Cod2x_PrintDoubleColors(void)
+{
+    return Cod2x_HostRevision() >= 7 || !printDoubleColors || printDoubleColors->current.enabled;
+}
+
+void Cod2x_FocusPriority(int focused)
+{
+#if defined(__APPLE__)
+    /* Windows 1.3 drops to the idle priority class when its window loses focus and goes back
+       to normal when it gains it, while r_autopriority is on. macOS's nearest is running the
+       process in the background, which it can undo itself. */
+    static int background;
+    int wanted = !focused && autoPriority && autoPriority->current.enabled;
+    if (wanted == background || (!wanted && !background))
+        return;
+    if (setpriority(PRIO_DARWIN_PROCESS, 0, wanted ? PRIO_DARWIN_BG : 0) == 0)
+        background = wanted;
+#else
+    (void)focused;
+#endif
 }
 
 int Cod2x_TextEnabled(void)

@@ -985,6 +985,38 @@ static void R_InitNativeDeviceCaps(void)
             d3d, 0, 1, 0x15, 0, 1, 0x41415353) == 0;
 }
 
+#if COD2_MAC_D3D9
+/* The display's modes and the current one come from the display code, as the
+ * OpenGL build's Direct3D layer has them (src/Mac/DirectX_9/CDirect3D.c): the
+ * selected display's own sizes and refresh rates, read again when r_monitor or
+ * the display changes. The Metal library does not know the display; asked,
+ * it reports one 1920 x 1080 mode at 60 Hz. */
+extern int MacDisplay_GetNumModes(void);
+extern unsigned short MacDisplay_GetNthMode(int index, int *width, int *height, int *depth, int *refresh);
+extern unsigned short MacDisplay_GetCurrentMode(int *width, int *height, int *depth, int *refresh);
+
+static UINT R_MacDisplayModeCount(void)
+{
+    return (UINT)MacDisplay_GetNumModes();
+}
+
+static HRESULT R_MacDisplayMode(UINT index, D3DDISPLAYMODE *mode)
+{
+    int width = 0, height = 0, depth = 0, refresh = 0;
+    memset(mode, 0, sizeof(*mode));
+    if (index >= R_MacDisplayModeCount())
+        return (HRESULT)(int32_t)0x8876086cu;
+    MacDisplay_GetNthMode((int)index, &width, &height, &depth, &refresh);
+    if (depth == 32) {
+        mode->Width = width;
+        mode->Height = height;
+        mode->RefreshRate = refresh;
+        mode->Format = (D3DFORMAT)22;
+    }
+    return 0;
+}
+#endif
+
 static Bool R_InitNativeDisplayModes(void)
 {
     extern const dvar_t *r_mode;
@@ -1004,12 +1036,21 @@ static Bool R_InitNativeDisplayModes(void)
     int i;
     char *text = dx.modeText;
 
+#if COD2_MAC_D3D9
+    (void)methods;
+    modeCount = R_MacDisplayModeCount();
+#else
     modeCount = ((UINT(D3DVTCC *)(void *, UINT, int))methods[6])(d3d, dx.adapterIndex, 0x16);
+#endif
     dx.displayModeCount = 0;
     for (modeIndex = 0; modeIndex < modeCount && dx.displayModeCount < 256; ++modeIndex) {
         D3DDISPLAYMODE *mode = &dx.displayModes[dx.displayModeCount];
+#if COD2_MAC_D3D9
+        HRESULT hr = R_MacDisplayMode(modeIndex, mode);
+#else
         HRESULT hr = ((HRESULT(D3DVTCC *)(void *, UINT, int, UINT, D3DDISPLAYMODE *))methods[7])(
             d3d, dx.adapterIndex, 0x16, modeIndex, mode);
+#endif
         if (hr >= 0) {
             if (!mode->RefreshRate)
                 mode->RefreshRate = 60;
@@ -1126,6 +1167,14 @@ static void R_SetNativeAspectRatio(void)
         if (vidConfig.isFullscreen) {
             /* The original GetSystemMetrics facade reads the current display
              * dimensions. Use the native display provider, not its old stub. */
+#if COD2_MAC_D3D9
+            int current[4] = {0, 0, 0, 0};
+            MacDisplay_GetCurrentMode(&current[0], &current[1], &current[2], &current[3]);
+            if (current[0] > 0 && current[1] > 0) {
+                width = current[0];
+                height = current[1];
+            }
+#else
             D3DDISPLAYMODE mode;
             void *d3d = dx.d3d9;
             void **methods = *(void ***)d3d;
@@ -1134,6 +1183,7 @@ static void R_SetNativeAspectRatio(void)
                 width = mode.Width;
                 height = mode.Height;
             }
+#endif
         }
         int ratio = (int)floorf(((float)height * 16.0f) / (float)width + 0.5f);
         aspect = ratio == 10 ? 2 : ratio > 9 ? 1 : 3;

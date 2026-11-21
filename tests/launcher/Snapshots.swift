@@ -663,7 +663,7 @@ final class Watchdog: @unchecked Sendable {
         geometry(window, "second-set-frame")
         try? await Task.sleep(for: .milliseconds(400))
         geometry(window, "settled")
-        let keyTarget = window.attachedSheet ?? window
+        let keyTarget = window.attachedSheet.map { $0.attachedSheet ?? $0 } ?? window
         // Launch Services can finish activation after the initial layout pass. Keep the
         // actual focus assertion, allowing the normal activation request time to settle.
         for _ in 0..<10 {

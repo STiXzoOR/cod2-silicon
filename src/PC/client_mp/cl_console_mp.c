@@ -2465,7 +2465,8 @@ static void CL_WriteDeathMessageText(const char *text, int color)
         SV_Cod2xStripTextCodes(text, clean, sizeof(clean));
         text = clean;
     }
-    while (con.lineOffset < con.linewidth && (ch = Cod2x_NextConsoleChar(&text, color, 1, &currentColor)) >= 0)
+    while (con.lineOffset < con.linewidth &&
+           (ch = Cod2x_NextConsoleChar(&text, color, Cod2x_PrintDoubleColors(), &currentColor)) >= 0)
         CL_WriteConsoleEncodedByte(currentColor, ch);
 #else
     const char *cursor;

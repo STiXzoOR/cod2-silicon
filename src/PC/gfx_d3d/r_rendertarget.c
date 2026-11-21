@@ -333,6 +333,36 @@ void R_ShutdownRenderTargets(void)
 
     ((DxGlobals *)(dxPtr))->singleSampleDepthStencilSurface  = 0;
 }
+#if COD2_MAC_D3D9
+/* With anti-aliasing the scene has a multisampled colour target and depth buffer of
+ * its own (rb_scenetarget.c). If the graphics chip will not make them at the chosen
+ * count, half the samples are tried, then none, before giving up, as the original
+ * lowers r_aaSamples when it cannot make the device. */
+static int R_MacFewerSceneSamples(void)
+{
+    extern int RB_SceneTarget_Wanted(void);
+    DxGlobals *globals = (DxGlobals *)DX();
+    int samples = (int)globals->multiSampleType;
+    if (samples <= 1 || !RB_SceneTarget_Wanted())
+        return 0;
+    samples = samples / 2 >= 2 ? samples / 2 : 0;
+    ((void (*)(int, const char *, ...)) * (void (**)())&ri)(
+        0, "Couldn't make the scene's %i-sample render target; trying %i\n", (int)globals->multiSampleType, samples);
+    globals->multiSampleType = (D3DMULTISAMPLE_TYPE)samples;
+    globals->multiSampleQuality = 0;
+    return 1;
+}
+
+static HRESULT R_MacCreateSceneDepth(int width, int height)
+{
+    DxGlobals *globals = (DxGlobals *)DX();
+    void *device = globals->device;
+    return ((D3DDevice_CreateDepthStencilFn)VTABLE(device)[0x74 / 4])(
+        device, width, height, D3DFMT_D24S8, globals->multiSampleType, globals->multiSampleQuality, 0,
+        &globals->renderTargets[R_RENDERTARGET_FRAME_BUFFER].depthStencilSurface, NULL);
+}
+#endif
+
 
 void R_InitRenderTargets(void)
 {
@@ -402,6 +432,10 @@ void R_InitRenderTargets(void)
             ((DxGlobals *)(dxPtr))->multiSampleType       , ((DxGlobals *)(dxPtr))->multiSampleQuality ,
             0, &((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_FRAME_BUFFER].depthStencilSurface, NULL);
 
+#if COD2_MAC_D3D9
+        while (hr < 0 && R_MacFewerSceneSamples())
+            hr = R_MacCreateSceneDepth(fullWidth, fullHeight);
+#endif
         *creatingTex = 0;
 
         if (hr < 0) {
@@ -545,12 +579,24 @@ void R_InitRenderTargets(void)
                                          unsigned quality, void *resolved);
         DxGlobals *globals = (DxGlobals *)DX();
         GfxRenderTarget *frameBuffer = &globals->renderTargets[R_RENDERTARGET_FRAME_BUFFER];
-        if (!RB_SceneTarget_Create(globals->device, (void **)&frameBuffer->colorSurface,
-                                   (void **)&frameBuffer->depthStencilSurface, &frameBuffer->width,
-                                   &frameBuffer->height, s_sceneWidth, s_sceneHeight,
-                                   (unsigned)globals->backBufferFormat, (unsigned)globals->multiSampleType,
-                                   (unsigned)globals->multiSampleQuality, globals->renderTargets[2].colorSurface))
-            Com_Error(0, "Couldn't create a %i x %i multisampled render target\n", s_sceneWidth, s_sceneHeight);
+        while (!RB_SceneTarget_Create(globals->device, (void **)&frameBuffer->colorSurface,
+                                      (void **)&frameBuffer->depthStencilSurface, &frameBuffer->width,
+                                      &frameBuffer->height, s_sceneWidth, s_sceneHeight,
+                                      (unsigned)globals->backBufferFormat, (unsigned)globals->multiSampleType,
+                                      (unsigned)globals->multiSampleQuality, globals->renderTargets[2].colorSurface)) {
+            /* The depth buffer is made again with the colour target's new count. */
+            HRESULT made = -1;
+            if (!R_MacFewerSceneSamples())
+                Com_Error(0, "Couldn't create a %i x %i multisampled render target\n", s_sceneWidth, s_sceneHeight);
+            if (frameBuffer->depthStencilSurface) {
+                ((ULONG(D3DVTCC *)(void *))VTABLE(frameBuffer->depthStencilSurface)[2])(frameBuffer->depthStencilSurface);
+                frameBuffer->depthStencilSurface = NULL;
+            }
+            while ((made = R_MacCreateSceneDepth(s_sceneWidth, s_sceneHeight)) < 0 && R_MacFewerSceneSamples()) {
+            }
+            if (made < 0)
+                Com_Error(0, "Couldn't create a %i x %i depth-stencil surface\n", s_sceneWidth, s_sceneHeight);
+        }
         if (R_SceneScaled())
             ((void (*)(int, const char *, ...)) * (void (**)())&ri)(0, "The 3D scene is drawn at %i x %i (r_renderScale)\n",
                                                                     s_sceneWidth, s_sceneHeight);
