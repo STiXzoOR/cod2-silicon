@@ -599,12 +599,12 @@ extension KeyStore {
         }
     }
     static let automaticCheckKey = "CoD2UnboundLastAutomaticUpdateCheck"
-    /// Install and Relaunch: only on the player's click; refused while a game runs or where the app can't replace
-    /// itself (then the Releases page opens). Cancel stops it until the new app is about to take this one's place.
+    /// Install and Relaunch: only on the player's click; refused while a game or a hosted server runs or where the
+    /// app can't replace itself (then the Releases page opens). Cancel stops it until the new app is about to take this one's place.
     func installUpdate() {
         guard !snapshot, !installingUpdate, !checkingUpdates, let offer = updateOffer else { return }
         let app = Bundle.main.bundleURL, bundleID = Bundle.main.bundleIdentifier ?? ""
-        if let refusal = AppUpdate.refusal(app: app, gameRunning: gameRunning) { updateFailed(refusal); return }
+        if let refusal = AppUpdate.refusal(app: app, gameRunning: gameRunning, serversRunning: !hosting.running.isEmpty) { updateFailed(refusal); return }
         updateError = false; updateFailedStage = nil
         installingUpdate = true; updateMessage = AppUpdate.Message.downloading(offer.version)
         studio.announce(updateMessage)
@@ -622,7 +622,7 @@ extension KeyStore {
                     return unpacked
                 }.value
                 try Task.checkCancellation()
-                if let refusal = AppUpdate.refusal(app: app, gameRunning: gameRunning) { throw refusal }
+                if let refusal = AppUpdate.refusal(app: app, gameRunning: gameRunning, serversRunning: !hosting.running.isEmpty) { throw refusal }
                 updateMessage = AppUpdate.Message.installing(offer.version)
                 try AppUpdate.swap(app, with: candidate)
                 try? FileManager.default.removeItem(at: staged.folder)
@@ -651,10 +651,14 @@ extension KeyStore {
         helper.executableURL = URL(fileURLWithPath: "/bin/sh")
         helper.arguments = ["-c", "while /bin/kill -0 \"$1\" 2>/dev/null; do /bin/sleep 0.2; done; /usr/bin/open \"$2\"",
                             "cod2-unbound-update", String(getpid()), app.path]
+        let installed = "Version \(updateOffer?.version ?? "") is installed. Quit and open CoD2 Unbound to use it."
         do { try helper.run() } catch {
-            installingUpdate = false; updateMessage = "Version \(updateOffer?.version ?? "") is installed. Quit and open CoD2 Unbound to use it."; return
+            installingUpdate = false; updateMessage = installed; return
         }
         NSApp.terminate(nil)
+        // Still here: quitting was cancelled (a question about the game or servers was answered Cancel). The new
+        // version is in place and the helper opens it once this app quits, so the launcher goes on working.
+        installingUpdate = false; updateMessage = installed; studio.announce(updateMessage)
     }
     /// Try Again repeats what failed.
     func retryUpdate() { if updateFailedStage == .install, updateOffer != nil { installUpdate() } else { checkUpdates() } }

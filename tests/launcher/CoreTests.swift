@@ -358,6 +358,9 @@ import Foundation
         try makeApp(app, version: "0.3.0", marker: "old")
         precondition(AppUpdate.refusal(app: app, gameRunning: false) == nil)
         precondition(AppUpdate.refusal(app: app, gameRunning: true) == .gameRunning)
+        // A hosted server would be stopped by the restart: the update waits until the servers are stopped.
+        precondition(AppUpdate.refusal(app: app, gameRunning: false, serversRunning: true) == .serversRunning, "an update is refused while hosted servers run")
+        precondition(AppUpdate.Failure.serversRunning.errorDescription?.contains("Servers › Hosting") == true && !AppUpdate.Failure.serversRunning.opensReleases)
         precondition(AppUpdate.refusal(app: URL(fileURLWithPath: "/private/var/folders/xy/T/AppTranslocation/1234-5678/d/CoD2 Unbound.app"), gameRunning: false) == .readOnly)
         try fm.setAttributes([.posixPermissions: 0o555], ofItemAtPath: folder.path)
         precondition(AppUpdate.refusal(app: app, gameRunning: false) == .notWritable)

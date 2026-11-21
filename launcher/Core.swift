@@ -386,10 +386,11 @@ enum AppUpdate {
     }
 
     enum Failure: LocalizedError, Equatable {
-        case gameRunning, notWritable, readOnly, download, mismatch, notThisApp, signature, developer, install
+        case gameRunning, serversRunning, notWritable, readOnly, download, mismatch, notThisApp, signature, developer, install
         var errorDescription: String? {
             switch self {
             case .gameRunning: "Quit the game before installing the update."
+            case .serversRunning: "Stop your servers in Servers › Hosting before installing the update. Restarting would disconnect everyone on them."
             case .notWritable: "CoD2 Unbound can’t replace itself in this folder, so the Releases page opened instead."
             case .readOnly: "CoD2 Unbound can’t replace itself where it’s running from, so the Releases page opened instead. Move the app to your Applications folder to update it here next time."
             case .download: "Couldn’t download the update. Check your connection and try again."
@@ -411,10 +412,12 @@ enum AppUpdate {
         static let restarting = "Restarting CoD2 Unbound…"
     }
 
-    /// Why the app at `app` can't replace itself now, if it can't: a game is running, it runs from a
-    /// read-only volume or where macOS moved it (App Translocation), or its folder isn't writable.
-    static func refusal(app: URL, gameRunning: Bool) -> Failure? {
+    /// Why the app at `app` can't replace itself now, if it can't: a game or a hosted server is running
+    /// (the restart would stop it), it runs from a read-only volume or where macOS moved it (App
+    /// Translocation), or its folder isn't writable.
+    static func refusal(app: URL, gameRunning: Bool, serversRunning: Bool = false) -> Failure? {
         if gameRunning { return .gameRunning }
+        if serversRunning { return .serversRunning }
         if app.resolvingSymlinksInPath().path.contains("/AppTranslocation/") { return .readOnly }
         if (try? app.resourceValues(forKeys: [.volumeIsReadOnlyKey]).volumeIsReadOnly) == true { return .readOnly }
         if access(app.deletingLastPathComponent().path, W_OK) != 0 || access(app.path, W_OK) != 0 { return .notWritable }
