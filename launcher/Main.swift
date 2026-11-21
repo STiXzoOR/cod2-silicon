@@ -43,7 +43,10 @@ import UserNotifications
         }
         if !model.hosting.running.isEmpty && !model.hostingQuitConfirmed {
             LauncherState.showWindow()
-            model.confirmQuitWithServers()
+            // The answer about the game holds only if this quit goes ahead: Cancel here asks both again next time.
+            let gameAnswered = model.quitConfirmed
+            model.quitConfirmed = false
+            model.confirmQuitWithServers(gameAnswered: gameAnswered)
             return .terminateCancel
         }
         // Hosted servers are this app's children: they get their clean shutdown before it goes.

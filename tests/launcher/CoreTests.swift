@@ -6,6 +6,8 @@ import Foundation
         let fixtures = URL(fileURLWithPath: CommandLine.arguments[1])
         precondition(Dispatch.bundled.first?.title == "CoD2 Unbound 0.4.0", "bundled news must describe the shipping release")
         precondition(!Dispatch.bundled.contains { $0.summary.contains("Planned for 0.3") }, "future work has no promised version")
+        // Metal shipped in 0.4.0: nothing bundled may still call it the next thing.
+        precondition(!Dispatch.bundled.contains { $0.summary.contains("Metal renderer comes next") || $0.summary.contains("isn’t in this release") }, "What's New calls a shipped renderer future work")
         let master = try Data(contentsOf: fixtures.appendingPathComponent("master.cod2x.me-120.bin"))
         let servers = WireParser.master(master)
         precondition(servers.count > 50 && servers.contains("151.80.40.237:28962"))
@@ -54,6 +56,13 @@ import Foundation
         precondition((try? settings.config()) == nil)
         settings.advanced = "dpi 1600"
         precondition((try? settings.arguments()) == nil, "DPI is metadata, never an engine startup command")
+        // Reset Settings: everything the Settings window shows goes back; the intro films and the crash report question don't come back.
+        var used = GameSettings(); used.fps = 125; used.advanced = "cg_fov 90"; used.sendCrashReports = true
+        used.introFilmsPlayed = true; used.crashReportsAsked = true
+        let reset = used.reset(to: GameSettings())
+        precondition(reset.introFilmsPlayed && reset.crashReportsAsked, "Reset Settings brought back the intro films or the crash report question")
+        var expectedReset = GameSettings(); expectedReset.introFilmsPlayed = true; expectedReset.crashReportsAsked = true
+        precondition(reset == expectedReset && !reset.sendCrashReports && reset.fps == 250 && reset.advanced.isEmpty)
         var startup = GameSettings()
         startup.advanced = "fs_cdpath /Game\nfs_copyfiles 0\nfs_restrict 0\nloc_language 1\ndedicated 0\ncom_hunkMegs 512"
         let startupNames = try startup.launchDvars(migrated: true).map { $0.0.lowercased() }
@@ -67,8 +76,41 @@ import Foundation
         precondition(!plan.arguments.contains("password") && !plan.arguments.joined().contains("quit"))
         precondition(plan.link?.password == "p+quit ")
         precondition(plan.arguments.contains("\"/Game Data\""))
-        precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 32))) == nil)
-        precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 31))) != nil)
+        // Each engine's own command line: the original runs 31 `+` commands, CoD2x 32 and refuses 1,024 bytes or more.
+        precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 32), engine: .original)) == nil)
+        precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 31), engine: .original)) != nil)
+        precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 32), engine: .cod2x)) != nil)
+        precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 33), engine: .cod2x)) == nil)
+        let longest = ["+set", "a", String(repeating: "b", count: 1023 - 7)]
+        precondition(longest.joined(separator: " ").utf8.count == 1023 && EngineCommandLine.problem(longest, engine: .cod2x) == nil)
+        precondition(EngineCommandLine.problem(longest + ["c"], engine: .cod2x)?.contains("1,025 characters and CoD2x takes 1,023") == true, "CoD2x's 1,024-byte limit")
+        precondition(EngineCommandLine.problem(longest + ["c"], engine: .original) == nil)
+        precondition(EngineCommandLine.problem(Array(repeating: "+set x 1", count: 34), engine: .cod2x)
+                     == "This start needs 34 startup commands and CoD2x takes 32. Remove at least 2 lines from Extra launch options in Settings › Advanced.")
+        // Extra launch options are checked against the largest start they can make when they're saved: a first game
+        // (every first-run default supplied) with Metal below full size. Before, only the options themselves were checked
+        // and every launch could then be refused.
+        var crowded = GameSettings(); crowded.renderScale = 75; crowded.introFilmsPlayed = true
+        func lines(_ count: Int) -> String { (0..<count).map { "cg_test\($0) 1" }.joined(separator: "\n") }
+        func roomy(_ count: Int, _ engine: GameEngine, migrated: Bool = false) -> Bool {
+            crowded.advanced = lines(count)
+            return GameLaunchPlan.largestStartProblem(settings: crowded, dataPath: "/Game", homePath: "/Home", migrated: migrated, engine: engine, metal: true) == nil
+        }
+        let fitsOriginal = (0...40).last { roomy($0, .original) }!, fitsCoD2x = (0...40).last { roomy($0, .cod2x) }!
+        precondition(fitsCoD2x == fitsOriginal + 1, "CoD2x runs one command more than the original")
+        crowded.advanced = lines(fitsCoD2x + 1)
+        precondition((try? crowded.launchConfig(migrated: false)) != nil, "the options alone are valid")
+        precondition(GameLaunchPlan.largestStartProblem(settings: crowded, dataPath: "/Game", homePath: "/Home", migrated: false, engine: .cod2x, metal: true)?
+                        .hasSuffix("Remove at least one line.") == true)
+        do { _ = try GameLaunchPlan(settings: crowded, dataPath: "/Game", homePath: "/Home", loadout: { _ in nil }, metal: true, engine: .cod2x); fatalError("an over-long start was passed") }
+        catch { precondition("\(error.localizedDescription)".contains("from Extra launch options in Settings › Advanced."), "the launch says what to shorten") }
+        crowded.advanced = lines(fitsCoD2x)
+        precondition((try? GameLaunchPlan(settings: crowded, dataPath: "/Game", homePath: "/Home", loadout: { _ in nil }, metal: true, engine: .cod2x)) != nil)
+        // Long lines meet CoD2x's byte limit long before the original's.
+        crowded.advanced = (0..<3).map { "cg_long\($0) " + String(repeating: "x", count: 300) }.joined(separator: "\n")
+        precondition(GameLaunchPlan.largestStartProblem(settings: crowded, dataPath: "/Game", homePath: "/Home", migrated: false, engine: .cod2x, metal: false)?
+                        .contains("characters and CoD2x takes 1,023") == true)
+        precondition(GameLaunchPlan.largestStartProblem(settings: crowded, dataPath: "/Game", homePath: "/Home", migrated: false, engine: .original, metal: false) == nil)
         try sessionLogs(scratch: scratch)
         try engines(server: server, scratch: scratch)
         try cod2xFiles(scratch: scratch)
@@ -177,6 +219,23 @@ import Foundation
         precondition(CrashReports.latest(in: reports, since: started)?.lastPathComponent == "cod2_freeze_202.txt")
         try report("cod2_crash_202.txt", 7)
         precondition(CrashReports.latest(in: reports, since: started)?.lastPathComponent == "cod2_crash_202.txt")
+
+        // The game folder at start: an external drive that isn't connected keeps a set-up player out of first-run setup.
+        precondition(GameDataFolder.atStart(found: nil, remembered: "/Volumes/Games/CoD2\n", setupComplete: true) == "/Volumes/Games/CoD2",
+                     "a remembered folder on a disconnected drive sent a set-up player back to setup")
+        precondition(GameDataFolder.atStart(found: "/Users/a/Games/CoD2", remembered: "/Volumes/Games/CoD2", setupComplete: true) == "/Users/a/Games/CoD2")
+        precondition(GameDataFolder.atStart(found: nil, remembered: "/Volumes/Games/CoD2", setupComplete: false) == "", "setup that never finished starts over")
+        precondition(GameDataFolder.atStart(found: nil, remembered: nil, setupComplete: true) == "" && GameDataFolder.atStart(found: nil, remembered: " \n", setupComplete: true) == "")
+
+        // How a game ended. A game the launcher reconnected to (after Quit Launcher Only) has no exit status: its
+        // ending is unexpected only when it left a crash or freeze report, never because a session log exists.
+        let log = URL(fileURLWithPath: "/Home/logs/session.log"), crash = URL(fileURLWithPath: "/Home/cod2_crash_1.txt")
+        precondition(GameExit.outcome(code: nil, sessionLog: { log }, crashReport: { nil }) == (false, nil), "a clean exit of a reconnected game read as a crash")
+        precondition(GameExit.outcome(code: nil, sessionLog: { log }, crashReport: { crash }) == (true, crash))
+        precondition(GameExit.outcome(code: 0, sessionLog: { log }, crashReport: { crash }) == (false, nil))
+        precondition(GameExit.outcome(code: 1, sessionLog: { log }, crashReport: { crash }) == (false, nil))
+        precondition(GameExit.outcome(code: 139, sessionLog: { log }, crashReport: { crash }) == (true, log))
+        precondition(GameExit.outcome(code: 139, sessionLog: { nil }, crashReport: { nil }) == (true, nil))
     }
 
     /// Settings › Privacy › crash reports, against a stand-in receiver on 127.0.0.1 (no other host).
@@ -358,6 +417,9 @@ import Foundation
         try makeApp(app, version: "0.3.0", marker: "old")
         precondition(AppUpdate.refusal(app: app, gameRunning: false) == nil)
         precondition(AppUpdate.refusal(app: app, gameRunning: true) == .gameRunning)
+        // A hosted server would be stopped by the restart: the update waits until the servers are stopped.
+        precondition(AppUpdate.refusal(app: app, gameRunning: false, serversRunning: true) == .serversRunning, "an update is refused while hosted servers run")
+        precondition(AppUpdate.Failure.serversRunning.errorDescription?.contains("Servers › Hosting") == true && !AppUpdate.Failure.serversRunning.opensReleases)
         precondition(AppUpdate.refusal(app: URL(fileURLWithPath: "/private/var/folders/xy/T/AppTranslocation/1234-5678/d/CoD2 Unbound.app"), gameRunning: false) == .readOnly)
         try fm.setAttributes([.posixPermissions: 0o555], ofItemAtPath: folder.path)
         precondition(AppUpdate.refusal(app: app, gameRunning: false) == .notWritable)
@@ -639,6 +701,17 @@ import Foundation
         let demo = MediaFacts(name: "toujane_tdm_1004_2114.dm_1", date: date, bytes: 3_100_000, calendar: utc)
         precondition(demo.map == "toujane" && demo.size == "3.1 MB" && demo.stamp == "04 OCT 21:14")
         precondition(MediaFacts.mapHint("shot0001.jpg") == nil && MediaFacts.sizeLabel(512) == "512 B" && MediaFacts.sizeLabel(48_200) == "48 KB")
+        // A recording saved as “round (1).dm_1” or “Best round.dm_1” joins the demos folder under a name the game can play.
+        precondition(!DemoName.playable("round (1)") && !DemoName.playable("Best round") && DemoName.playable("toujane_tdm-1004.2114"))
+        precondition(DemoName.playableName("round (1)") == "round__1_" && DemoName.playableName("Best round") == "Best_round"
+                     && DemoName.playableName("café") == "caf_" && DemoName.playableName(".hidden") == "demo.hidden" && DemoName.playableName("") == "demo")
+        for name in ["round (1)", "Best round", "café", ".hidden", "a+b;c\"d"] {
+            let copy = DemoName.playableName(name)
+            precondition(DemoName.playable(copy), "copy name \(copy) can't be played")
+            let plan = try GameLaunchPlan(settings: GameSettings(), dataPath: "/Game", homePath: "/Home", demo: copy)
+            precondition(plan.arguments.suffix(2) == ["+demo", copy])
+        }
+        precondition((try? GameLaunchPlan(settings: GameSettings(), dataPath: "/Game", homePath: "/Home", demo: "round (1)")) == nil, "a demo name the game can't take was passed")
 
         // CD key display: grouped, uppercased, bounded, stamped onto the tag without exposing extra input.
         precondition(KeyFormat.display("ab12-cd34 ef56gh78ij90kl12mn") == "AB12 CD34 EF56 GH78 IJ90")

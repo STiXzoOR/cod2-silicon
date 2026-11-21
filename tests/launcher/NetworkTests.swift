@@ -24,6 +24,7 @@ import Foundation
         precondition(conflicting.queryConflicts?.contains("g_competitive") == true, "status/info contradiction was discarded")
         guard let rejected = await ServerQueries.server("127.0.0.1:\(port)") else { fatalError("Info fallback did not answer") }
         precondition(rejected.observedAt == nil, "a rejected contradictory status acquired a fresh status timestamp through info fallback")
+        precondition((40..<350).contains(rejected.ping), "an info-only answer kept a 0 ms ping (\(rejected.ping) ms)")
         let task = Task { await UDPRequest(host: "127.0.0.1", port: port + 1).exchange("getstatus", seconds: 5) }
         try await Task.sleep(for: .milliseconds(20)); task.cancel()
         let start = ContinuousClock.now

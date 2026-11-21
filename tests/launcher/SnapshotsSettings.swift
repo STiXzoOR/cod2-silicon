@@ -123,10 +123,12 @@ extension Snapshots {
         guard !model.alwaysUseServerVersion else { print("FAIL: Reset Warnings did not restore the version question"); return false }
         model.dismissWarning(DismissibleWarning.switchVersion)
         print("PASS: hide during play, refresh on opening Servers and Reset Warnings share the Settings choices")
+        model.settings.introFilmsPlayed = true; model.settings.crashReportsAsked = true
         model.resetSettings()
         model.flushSettings()
         let reset = try JSONDecoder().decode(GameSettings.self, from: Data(contentsOf: saved))
-        guard reset == model.defaultSettings, reset.hideWhilePlaying, !reset.refreshServersOnOpen, reset.dismissedWarnings.isEmpty, reset.advanced.isEmpty,
+        var expected = model.defaultSettings; expected.introFilmsPlayed = true; expected.crashReportsAsked = true
+        guard reset == expected, reset.hideWhilePlaying, !reset.refreshServersOnOpen, reset.dismissedWarnings.isEmpty, reset.advanced.isEmpty,
               FileManager.default.fileExists(atPath: demo.path), model.settingsFeedback?.pane == .advanced else {
             print("FAIL: Reset Settings did not restore the defaults, or touched the player's files"); return false
         }

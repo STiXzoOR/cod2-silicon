@@ -33,7 +33,11 @@ struct ConfigReadyCheck: Sendable {
     let catalog: ConfigCatalog
     let rules: ConfigRules
 
-    func evaluate(server: GameServer?, profile: ConfigProfileRead, mode: ConfigCatalogMode, advancedChain: ConfigDocument? = nil) -> ConfigReadyReport {
+    /// requireFresh: a review needs a status answer from the last 60 seconds. The launch that consumes a fix the
+    /// player already confirmed passes false: it then compares the same observed facts the fix was made from, and
+    /// any newer answer that differs, or a changed loadout, still makes the fix stale.
+    func evaluate(server: GameServer?, profile: ConfigProfileRead, mode: ConfigCatalogMode, advancedChain: ConfigDocument? = nil,
+                  requireFresh: Bool = true) -> ConfigReadyReport {
         var facts: [String: String] = [:], ambiguous = false
         let observedKeys: Set<String> = ["protocol", "shortversion", "fs_game", "mod", "_zpam", "g_competitive",
                                          "sv_fps", "sv_minrate", "sv_maxrate", "sv_ruleset", "sv_maxfps", "g_maxfps", "com_maxfps_limit"]
@@ -46,7 +50,7 @@ struct ConfigReadyCheck: Sendable {
         let ids = identity.ids
         var limitations = ["Only the cited, listed config rules are checked; full match, league and live compatibility are not certified.",
                            "Frame pacing, mouse polling and packet loss: Not measured. Server status ping is a query round trip."]
-        let fresh = server?.observedAt.map { (0...60).contains(Date().timeIntervalSince($0)) } == true
+        let fresh = server?.observedAt.map { !requireFresh || (0...60).contains(Date().timeIntervalSince($0)) } == true
         let address = server.flatMap { try? LaunchLink.canonicalAddress($0.address) }
         var unknown = !fresh || address == nil || ambiguous || identity.reason != nil || !rules.knownSelection(ids, mode: mode)
         if !fresh { limitations.append("No fresh status observation is available. Refresh before reviewing a connection fix.") }

@@ -258,24 +258,6 @@ enum PlayedDate {
         dataMissing = !dataPath.isEmpty && LauncherFindData(dataPath) == nil
         keyVerified = KeyStore.hasValidKey(at: preferences)
     }
-    /// Home's Quit Game (and the Quit alert's Quit Both): asks the game to quit the way the Dock's Quit does,
-    /// so it saves its own settings. The game monitor brings the launcher back when it has closed.
-    func quitGame() {
-        guard let pid = activeGamePID, !quittingGame else { return }
-        quittingGame = true
-        if NSRunningApplication(processIdentifier: pid)?.terminate() != true { engine?.terminate() }
-        Task { [weak self] in
-            for _ in 0..<40 {
-                try? await Task.sleep(for: .milliseconds(250))
-                guard let self else { return }
-                if !self.gameRunning { self.quittingGame = false; return }
-            }
-            guard let self, self.gameRunning else { return }
-            self.quittingGame = false
-            self.notice = "The game didn’t quit. Switch to it and quit from its own menu."
-        }
-    }
-
     // MARK: Library: matches
 
     /// The game's local match summaries as Check-up last read them, oldest first.
@@ -367,6 +349,10 @@ enum PlayedDate {
         guard !name.hasPrefix(".") else { return "Choose a name that doesn’t start with a dot, so the recording stays visible." }
         guard !name.isEmpty, ![".", ".."].contains(name), !name.contains("/"), !name.contains(":"),
               !name.unicodeScalars.contains(where: { $0.value < 32 }) else { return "Enter a name without slashes or colons." }
+        // The game plays a recording by a one-word name.
+        if entry.url.pathExtension.lowercased() == "dm_1", !DemoName.playable(name) {
+            return "Use only letters, numbers, dots, underscores or hyphens, so the game can play it."
+        }
         let target = entry.url.deletingLastPathComponent().appendingPathComponent(name).appendingPathExtension(entry.url.pathExtension)
         if target == entry.url { return nil }
         guard !FileManager.default.fileExists(atPath: target.path) else { return "A recording already has that name. Choose another." }
@@ -508,7 +494,7 @@ enum PlayedDate {
         library.dispatches = [Dispatch(stamp: StencilDate.day(day(18)), title: "CoD2 Unbound \(version)", summary: HomeDispatches.builtIn(version: "0.3.0").summary,
                                        link: "https://github.com/cod2unbound/cod2-unbound/releases", date: day(18), version: version)]
         library.news = [Dispatch(stamp: StencilDate.day(day(21)), title: "14 more player setups", summary: "New in Configs: setups from the 2008 and 2009 seasons.", date: day(21), open: "configs")]
-        library.newsNext = Dispatch(stamp: "NEXT", title: "A Metal renderer", summary: "In the works. The original look stays until it matches.",
+        library.newsNext = Dispatch(stamp: "NEXT", title: "CoD2 Unbound for Windows", summary: "Next on the roadmap, then Linux.",
                                     link: "https://github.com/cod2unbound/cod2-unbound/blob/main/docs/ROADMAP.md")
         library.dispatchesCheckedAt = Calendar.current.date(bySettingHour: 14, minute: 2, second: 0, of: Date())
     }

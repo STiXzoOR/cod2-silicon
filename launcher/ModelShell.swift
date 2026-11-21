@@ -63,21 +63,29 @@ enum PlayerNameRules {
             game.activate(options: .activateAllWindows)
         }
     }
-    /// Home's Quit Game and Quit Both: asks the game to quit the way its own Quit does; if it hasn't
-    /// gone after ten seconds it is stopped. `completion` runs once it has gone.
+    /// Home's Quit Game and Quit Both: asks the game to quit the way its own Quit does (so it saves its
+    /// settings); if it hasn't gone after ten seconds it is stopped. `completion` runs once it has gone.
+    /// Home shows Quitting… meanwhile.
     func quitGame(then completion: (@MainActor () -> Void)? = nil) {
         guard let pid = activeGamePID, let game = NSRunningApplication(processIdentifier: pid) else { completion?(); return }
         quitGameTask?.cancel()
+        quittingGame = true
         notice = "Quitting Call of Duty 2…"
         if !game.terminate() { engine?.terminate() }
         quitGameTask = Task { [weak self] in
             for tick in 0..<80 {
+                // A later Quit Both takes over; this wait stops here rather than racing to the forced stop.
+                if Task.isCancelled { return }
                 if game.isTerminated || self?.activeGamePID != pid { break }
                 if tick == 40 { _ = game.forceTerminate() }
                 try? await Task.sleep(for: .milliseconds(250))
             }
-            guard let self else { return }
+            guard let self, !Task.isCancelled else { return }
+            self.quittingGame = false
             if self.notice == "Quitting Call of Duty 2…" { self.notice = "" }
+            if !game.isTerminated && self.activeGamePID == pid {
+                self.notice = "The game didn’t quit. Switch to it and quit from its own menu."
+            }
             completion?()
         }
     }
@@ -105,7 +113,8 @@ enum PlayerNameRules {
     /// The menu item's name for what ⌘↩ does now.
     var launchMenuTitle: String { "Launch" }
     /// A launch that failed before the game started: the sheet says why and offers the fix.
-    func launchFailed(_ error: Error) {
+    func launchFailed(_ error: Error, demo: URL? = nil) {
+        failedDemo = demo
         let problem: LaunchProblem
         if !dataPath.isEmpty, LauncherFindData(dataPath) == nil { problem = .dataMissing(dataPath) }
         else if !FileManager.default.isExecutableFile(atPath: chosenEngine.executable(in: gameBundle).path) { problem = .helperMissing }
@@ -116,12 +125,13 @@ enum PlayerNameRules {
     }
     /// The Game Couldn't Start sheet's default action.
     func fixLaunchProblem() {
-        let problem = launchProblem
-        dismissSheet(); launchProblem = nil
+        let problem = launchProblem, demo = failedDemo
+        dismissSheet(); launchProblem = nil; failedDemo = nil
         switch problem {
         case .dataMissing: chooseGameFolderAndLaunch()
         case .helperMissing: NSWorkspace.shared.open(AppUpdate.releases)
-        case .other, nil: play()
+        // Try Again repeats what failed: the recording, when one was starting, not the game's menu.
+        case .other, nil: play(demo: demo)
         }
     }
     /// Choose Folder… from the sheet: a valid folder is remembered and the game starts; a wrong one says what's missing.
@@ -196,11 +206,12 @@ enum PlayerNameRules {
         guard !onboard else { notice = "Finish setup, then open the recording again."; return }
         guard !gameRunning else { notice = "Close the game before playing a recording."; return }
         let folder = home.appendingPathComponent("main/demos")
-        var target = folder.appendingPathComponent(url.lastPathComponent)
+        // The copy gets a name the game can play (a browser's “round (1).dm_1” becomes “round__1_.dm_1”).
+        let base = DemoName.playableName(url.deletingPathExtension().lastPathComponent)
+        var target = folder.appendingPathComponent(base + ".dm_1")
         if url.standardizedFileURL.deletingLastPathComponent().path != folder.standardizedFileURL.path {
             do {
                 try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-                let base = url.deletingPathExtension().lastPathComponent
                 var index = 2
                 while FileManager.default.fileExists(atPath: target.path) {
                     if FileManager.default.contentsEqual(atPath: target.path, andPath: url.path) { break }
