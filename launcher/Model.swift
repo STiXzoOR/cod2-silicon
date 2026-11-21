@@ -196,6 +196,8 @@ struct MediaEntry: Identifiable {
     var hideLauncherWindowOnAppear = false
     /// Why the last Launch failed, for the Game Couldn't Start sheet's fix.
     @Published var launchProblem: LaunchProblem?
+    /// The recording a failed launch was starting, so the sheet's Try Again plays it again.
+    var failedDemo: URL?
 
     // MARK: - ship-settings state (settings saving, CoD2x files, updates)
     @Published var settingsSaveError: String?
@@ -759,7 +761,7 @@ struct MediaEntry: Identifiable {
             sessionLog?.finish(); sessionLog = nil
             // ship-shell: the Game Couldn't Start sheet says why and offers the fix (ModelShell.swift).
             do { try configStudio?.cancelLaunch() } catch { notice = error.localizedDescription }
-            launchFailed(error)
+            launchFailed(error, demo: demo)
         }
     }
     /// Gives the game keyboard and mouse focus. Since macOS 14 an app can only take focus when

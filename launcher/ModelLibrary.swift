@@ -367,6 +367,10 @@ enum PlayedDate {
         guard !name.hasPrefix(".") else { return "Choose a name that doesn’t start with a dot, so the recording stays visible." }
         guard !name.isEmpty, ![".", ".."].contains(name), !name.contains("/"), !name.contains(":"),
               !name.unicodeScalars.contains(where: { $0.value < 32 }) else { return "Enter a name without slashes or colons." }
+        // The game plays a recording by a one-word name.
+        if entry.url.pathExtension.lowercased() == "dm_1", !DemoName.playable(name) {
+            return "Use only letters, numbers, dots, underscores or hyphens, so the game can play it."
+        }
         let target = entry.url.deletingLastPathComponent().appendingPathComponent(name).appendingPathExtension(entry.url.pathExtension)
         if target == entry.url { return nil }
         guard !FileManager.default.fileExists(atPath: target.path) else { return "A recording already has that name. Choose another." }

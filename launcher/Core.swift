@@ -228,7 +228,7 @@ struct GameLaunchPlan {
             }
         }
         if let demo {
-            guard demo.range(of: "^[A-Za-z0-9_.-]+$", options: .regularExpression) != nil else { throw LauncherError(message: "Rename this demo using letters, numbers, dots, underscores or hyphens before playback.") }
+            guard DemoName.playable(demo) else { throw LauncherError(message: DemoName.problem) }
             args += ["+demo", demo]
         }
         if connection != nil && (configStudio == nil || demo != nil) {
@@ -240,6 +240,22 @@ struct GameLaunchPlan {
         arguments = try EngineCommandLine.validate(args + forwarded + (try connection?.arguments(for: link) ?? []))
         // Links are delivered as Apple events after startup, never serialized into argv (both engines).
         self.link = link
+    }
+}
+
+/// The names the game can play a recording by: `+demo` takes one word, so only letters, numbers, dots,
+/// underscores and hyphens.
+enum DemoName {
+    static let problem = "Rename this demo using letters, numbers, dots, underscores or hyphens before playback."
+    static func playable(_ name: String) -> Bool { name.range(of: "^[A-Za-z0-9_.-]+$", options: .regularExpression) != nil }
+    /// A name the game can play, for a copy of a recording saved under any other: every other character
+    /// becomes an underscore (“round (1)” becomes “round__1_”).
+    static func playableName(_ name: String) -> String {
+        let scalars = name.unicodeScalars.map { scalar -> Character in
+            scalar.isASCII && (CharacterSet.alphanumerics.contains(scalar) || "_.-".unicodeScalars.contains(scalar)) ? Character(scalar) : "_"
+        }
+        let result = String(scalars)
+        return result.isEmpty || result.hasPrefix(".") ? "demo" + result : result
     }
 }
 

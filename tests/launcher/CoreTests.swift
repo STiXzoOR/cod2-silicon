@@ -642,6 +642,17 @@ import Foundation
         let demo = MediaFacts(name: "toujane_tdm_1004_2114.dm_1", date: date, bytes: 3_100_000, calendar: utc)
         precondition(demo.map == "toujane" && demo.size == "3.1 MB" && demo.stamp == "04 OCT 21:14")
         precondition(MediaFacts.mapHint("shot0001.jpg") == nil && MediaFacts.sizeLabel(512) == "512 B" && MediaFacts.sizeLabel(48_200) == "48 KB")
+        // A recording saved as “round (1).dm_1” or “Best round.dm_1” joins the demos folder under a name the game can play.
+        precondition(!DemoName.playable("round (1)") && !DemoName.playable("Best round") && DemoName.playable("toujane_tdm-1004.2114"))
+        precondition(DemoName.playableName("round (1)") == "round__1_" && DemoName.playableName("Best round") == "Best_round"
+                     && DemoName.playableName("café") == "caf_" && DemoName.playableName(".hidden") == "demo.hidden" && DemoName.playableName("") == "demo")
+        for name in ["round (1)", "Best round", "café", ".hidden", "a+b;c\"d"] {
+            let copy = DemoName.playableName(name)
+            precondition(DemoName.playable(copy), "copy name \(copy) can't be played")
+            let plan = try GameLaunchPlan(settings: GameSettings(), dataPath: "/Game", homePath: "/Home", demo: copy)
+            precondition(plan.arguments.suffix(2) == ["+demo", copy])
+        }
+        precondition((try? GameLaunchPlan(settings: GameSettings(), dataPath: "/Game", homePath: "/Home", demo: "round (1)")) == nil, "a demo name the game can't take was passed")
 
         // CD key display: grouped, uppercased, bounded, stamped onto the tag without exposing extra input.
         precondition(KeyFormat.display("ab12-cd34 ef56gh78ij90kl12mn") == "AB12 CD34 EF56 GH78 IJ90")

@@ -105,7 +105,8 @@ enum PlayerNameRules {
     /// The menu item's name for what ⌘↩ does now.
     var launchMenuTitle: String { "Launch" }
     /// A launch that failed before the game started: the sheet says why and offers the fix.
-    func launchFailed(_ error: Error) {
+    func launchFailed(_ error: Error, demo: URL? = nil) {
+        failedDemo = demo
         let problem: LaunchProblem
         if !dataPath.isEmpty, LauncherFindData(dataPath) == nil { problem = .dataMissing(dataPath) }
         else if !FileManager.default.isExecutableFile(atPath: chosenEngine.executable(in: gameBundle).path) { problem = .helperMissing }
@@ -116,12 +117,13 @@ enum PlayerNameRules {
     }
     /// The Game Couldn't Start sheet's default action.
     func fixLaunchProblem() {
-        let problem = launchProblem
-        dismissSheet(); launchProblem = nil
+        let problem = launchProblem, demo = failedDemo
+        dismissSheet(); launchProblem = nil; failedDemo = nil
         switch problem {
         case .dataMissing: chooseGameFolderAndLaunch()
         case .helperMissing: NSWorkspace.shared.open(AppUpdate.releases)
-        case .other, nil: play()
+        // Try Again repeats what failed: the recording, when one was starting, not the game's menu.
+        case .other, nil: play(demo: demo)
         }
     }
     /// Choose Folder… from the sheet: a valid folder is remembered and the game starts; a wrong one says what's missing.
@@ -196,11 +198,12 @@ enum PlayerNameRules {
         guard !onboard else { notice = "Finish setup, then open the recording again."; return }
         guard !gameRunning else { notice = "Close the game before playing a recording."; return }
         let folder = home.appendingPathComponent("main/demos")
-        var target = folder.appendingPathComponent(url.lastPathComponent)
+        // The copy gets a name the game can play (a browser's “round (1).dm_1” becomes “round__1_.dm_1”).
+        let base = DemoName.playableName(url.deletingPathExtension().lastPathComponent)
+        var target = folder.appendingPathComponent(base + ".dm_1")
         if url.standardizedFileURL.deletingLastPathComponent().path != folder.standardizedFileURL.path {
             do {
                 try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-                let base = url.deletingPathExtension().lastPathComponent
                 var index = 2
                 while FileManager.default.fileExists(atPath: target.path) {
                     if FileManager.default.contentsEqual(atPath: target.path, andPath: url.path) { break }
