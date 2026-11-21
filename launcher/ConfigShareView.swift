@@ -20,9 +20,15 @@ struct ShareSetupSheet: View {
         _share = StateObject(wrappedValue: ConfigShareSheetModel(loadout: profile, dialect: dialect, center: model.shareCenter, app: model.version))
     }
 
+    /// The board's `upload`, by the mapping the app already uses for its mirror image `download` in
+    /// sheet icons and action buttons (Import's sheet, Add a Config: `square.and.arrow.down`). SF
+    /// Symbols has no up arrow over a line (`arrow.up.to.line` puts the line above), and this is
+    /// the system's Share symbol. The sheet and Player Setups' button.
+    static let symbol = "square.and.arrow.up"
+
     var body: some View {
         let name = share.loadout.displayName
-        SheetScaffold(icon: .symbol("square.and.arrow.up"), title: "Share “\(name)” with other players",
+        SheetScaffold(icon: .symbol(Self.symbol), title: "Share “\(name)” with other players",
                       message: "It joins Player Setups, the public list in Configs that every CoD2 Unbound player can browse. A person looks at each setup before it is listed.",
                       actions: [.cancel { share.cancel(); model.dismissSheet() },
                                 .primary(share.actionTitle, enabled: share.canSend) { share.send() }]) {
@@ -36,11 +42,15 @@ struct ShareSetupSheet: View {
                         .fixedSize(horizontal: false, vertical: true)
                         .accessibilityLabel("Problem: \(problem)")
                 }
-                FormGroup {
-                    ForEach(Array(rows.enumerated()), id: \.offset) { _, row in ShareFactRow(symbol: row.symbol, title: row.title, detail: row.detail) }
+                // Nothing to share (ShareSetup board): only the neutral banner says why; the rows and
+                // their counts would describe a setup that isn't sent.
+                if share.phase != .nothingToShare {
+                    FormGroup {
+                        ForEach(Array(rows.enumerated()), id: \.offset) { _, row in ShareFactRow(symbol: row.symbol, title: row.title, detail: row.detail) }
+                    }
+                    .opacity(share.busy ? 0.45 : 1)
                 }
-                .opacity(share.busy ? 0.45 : 1)
-                if let refusal = share.refusal { Banner(.error, message: refusal) }
+                if let refusal = share.refusal { Banner(share.phase == .nothingToShare ? .neutral : .error, message: refusal) }
             }
         } note: {
             Button("See What’s Sent…") { share.previewShown = true }.quietAction().padding(.horizontal, -6)
@@ -139,7 +149,12 @@ struct SharePreviewSheet: View {
         Text(prepared?.text.trimmingCharacters(in: .newlines) ?? "")
             .font(.typewriter(12)).foregroundStyle(palette.secondary).lineSpacing(3)
             .textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
+            // Selectable text keeps its own words as its name, so the well is one element that says
+            // what it is, then reads the text.
+            .accessibilityElement(children: .ignore)
             .accessibilityLabel("The text that is sent")
+            .accessibilityValue(prepared?.text.trimmingCharacters(in: .newlines) ?? "")
+            .accessibilityAddTraits(.isStaticText)
     }
     @ViewBuilder private func leftOutLines(_ prepared: ConfigShare.Prepared?) -> some View {
         let lines = prepared?.leftOut ?? []
@@ -178,16 +193,19 @@ struct ShareSentSheet: View {
     var loadout: String
     @Environment(\.palette) private var palette
     var body: some View {
-        SheetScaffold(icon: .symbol("checkmark.circle"), title: "Your setup was sent",
+        SheetScaffold(icon: .symbol("checkmark.circle", positive: true), title: "Your setup was sent",
                       message: "It shows up in Player Setups under the name \(record.name) once a person has looked at it, usually within a few days. There is nothing more for you to do.",
-                      width: 480, actions: [.primary("Done") { model.dismissSheet() }]) {
+                      width: 480, actions: [SheetAction(title: "Done", role: .primary, initialFocus: true) { model.dismissSheet() }]) {
             VStack(alignment: .leading, spacing: 12) {
-                FormGroup {
-                    Text(Self.shortAddress(record.url)).font(.typewriter(12)).foregroundStyle(palette.address)
-                        .textSelection(.enabled).padding(.horizontal, 14).padding(.vertical, 12)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .accessibilityLabel("Request address: \(Self.shortAddress(record.url))")
-                }
+                // The address well, as the app's other wells of config text (12-point corners).
+                Text(Self.shortAddress(record.url)).font(.typewriter(12)).foregroundStyle(palette.address)
+                    .textSelection(.enabled).padding(.horizontal, 14).padding(.vertical, 12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(palette.well, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(palette.wellStroke, lineWidth: 1))
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Request address: \(Self.shortAddress(record.url))")
+                    .accessibilityAddTraits(.isStaticText)
                 Text("To take it back, choose Stop Sharing from this loadout’s menu. No reason is asked for.")
                     .font(.system(size: 12)).foregroundStyle(palette.tertiary).padding(.leading, 6).fixedSize(horizontal: false, vertical: true)
             }
@@ -215,7 +233,7 @@ struct ShareYourSetupButton: View {
 
     var body: some View {
         Button { open() } label: {
-            Label("Share Your Setup…", systemImage: "square.and.arrow.up")
+            Label("Share Your Setup…", systemImage: ShareSetupSheet.symbol)
         }
         .glassAction().actionControlSize().fixedSize()
         .background(MenuAnchor(box: anchor))

@@ -306,7 +306,7 @@ struct ConfigShareStart {
             page = .configs; studio.level = .guided; studio.group = .frame
             try? shareCenter.remember(ConfigSharePreview.record, loadout: "Main")
             confirmation = stopSharingConfirmation(ConfigProfile(id: "Main", displayName: "Main", isActive: true))
-        case "configs-home-share", "discover-player-shared": page = .configs; discover.page = .home
+        case "configs-home-share", "discover-player-shared", "discover-player-shared-credit": page = .configs; discover.page = .home
         default: return false
         }
         return true

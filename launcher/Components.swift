@@ -333,6 +333,9 @@ struct SheetAction {
     var enabled = true
     /// A default action that Return must not press: a question with no default answer.
     var returnKey = true
+    /// Takes the keyboard focus when the sheet opens, so the default answer is where focus starts
+    /// rather than on the note's quiet button (Sent's Done).
+    var initialFocus = false
     var action: () -> Void
     static func cancel(_ title: String = "Cancel", _ action: @escaping () -> Void) -> SheetAction { SheetAction(title: title, role: .cancel, action: action) }
     static func primary(_ title: String, symbol: String? = nil, enabled: Bool = true, _ action: @escaping () -> Void) -> SheetAction {
@@ -340,10 +343,10 @@ struct SheetAction {
     }
 }
 
-/// The leading mark of a sheet: an SF Symbol on a 44-point tile (accent, or negative for a failure),
-/// or the app's mark for update sheets.
+/// The leading mark of a sheet: an SF Symbol on a 44-point tile (accent, negative for a failure or
+/// positive for a success), or the app's mark for update sheets.
 enum SheetIcon {
-    case symbol(String, negative: Bool = false)
+    case symbol(String, negative: Bool = false, positive: Bool = false)
     case mark
 }
 
@@ -360,6 +363,7 @@ struct SheetScaffold<Content: View, Note: View>: View {
     @ViewBuilder var content: Content
     @ViewBuilder var note: Note
     @Environment(\.palette) private var palette
+    @FocusState private var focusedAction: Int?
     init(icon: SheetIcon, title: String, message: String? = nil, width: CGFloat = 520, actions: [SheetAction],
          @ViewBuilder content: () -> Content, @ViewBuilder note: () -> Note) {
         self.icon = icon; self.title = title; self.message = message; self.width = width; self.actions = actions
@@ -388,8 +392,9 @@ struct SheetScaffold<Content: View, Note: View>: View {
     }
     @ViewBuilder private var iconView: some View {
         switch icon {
-        case .symbol(let name, let negative):
-            Image(systemName: name).font(.system(size: 20, weight: .medium)).foregroundStyle(negative ? palette.negative : palette.accent)
+        case .symbol(let name, let negative, let positive):
+            Image(systemName: name).font(.system(size: 20, weight: .medium))
+                .foregroundStyle(negative ? palette.negative : positive ? palette.positive : palette.accent)
                 .frame(width: 44, height: 44)
                 .background(palette.selection, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .accessibilityHidden(true)
@@ -404,11 +409,22 @@ struct SheetScaffold<Content: View, Note: View>: View {
         let escape = hasCancel ? nil : (actions.first { $0.role == .primary } ?? (lone ? actions.first : nil))
         return HStack(spacing: 8) {
             note.font(.system(size: 12)).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
-            ForEach(Array(actions.enumerated()).filter { $0.element.role == .leading }, id: \.offset) { _, action in button(action) }
+            ForEach(Array(actions.enumerated()).filter { $0.element.role == .leading }, id: \.offset) { index, action in
+                button(action).focused($focusedAction, equals: index)
+            }
             Spacer(minLength: 8)
-            ForEach(Array(actions.enumerated()).filter { $0.element.role != .leading }, id: \.offset) { _, action in button(action) }
+            ForEach(Array(actions.enumerated()).filter { $0.element.role != .leading }, id: \.offset) { index, action in
+                button(action).focused($focusedAction, equals: index)
+            }
         }
         .padding(.top, 2)
+        .task {
+            // As Setup's bar does: the sheet must be mounted, and AppKit done placing its own first
+            // responder, before the button can take the focus.
+            guard let first = actions.firstIndex(where: \.initialFocus) else { return }
+            try? await Task.sleep(for: .milliseconds(250))
+            if !Task.isCancelled { focusedAction = first }
+        }
         .background {
             if let escape { Button("", action: escape.action).keyboardShortcut(.cancelAction).opacity(0).accessibilityHidden(true) }
         }

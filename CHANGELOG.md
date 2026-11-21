@@ -6,6 +6,90 @@ was called CoD2 Silicon, and the entries from before then still use that name.
 
 ## [Unreleased]
 
+Fixes found by going over 0.4.0 after it shipped, on Metal and in the
+launcher, and one new thing: sharing your setup with other players.
+
+### Added
+
+- **Share your setup.** Send one of your loadouts to Player Setups from
+  Configs: choose **Share with Other Players…** in the loadout's menu, or
+  **Share Your Setup…** on Player Setups, type the name players know you by
+  and press **Share Setup**. No account and no browser. Before anything is
+  sent, the launcher leaves out your name in the game, chat lines, passwords,
+  server addresses and file paths, and says how many lines that was; **See
+  What's Sent…** shows the exact text. A person looks at every setup before
+  it is listed, and **Stop Sharing** in the loadout's menu takes it back.
+- Three settings from CoD2x 1.4.6.8 that the Mac game did not know:
+  `con_printDoubleColors 0` shows killfeed names without colours,
+  `r_autopriority 1` lowers the game's priority while it is in the
+  background, and `com_affinity` is accepted (it does nothing on a Mac).
+
+### Fixed
+
+- **Thick smoke could let a wall behind it show through.** With Metal at
+  high resolutions, when the game drew smoke at half size, a step that skips
+  smoke already hidden by nearer smoke could go on skipping it after the
+  smoke had moved, so a wall's texture showed through smoke that hides it at
+  full size. This was in 0.4.0, whose notes said smoke on Metal hides
+  everything the original hides; at that smoke size it did not.
+- Roof and wall edges seen through thick smoke stay smooth at every smoke
+  size, and the weapon in your hands is veiled by smoke as the original
+  veils it. Both were listed as known differences in 0.4.0. Drawing smoke at
+  quarter size takes a little longer for it.
+- With Metal, the first time you visit a map, walls, players and smoke no
+  longer go missing for a few frames while the game prepares them.
+- With Metal and anti-aliasing on, the sun dazzles you as it does without
+  anti-aliasing; before, the glare stayed off.
+- With Metal, the game was told every display is 1920 × 1080 at 60 Hz. In
+  borderless and full screen it now takes the picture's shape from the real
+  display, so a display that is not 16:9, such as a MacBook's, should no
+  longer be stretched, and the refresh rates offered are the display's own.
+  This was checked on a 16:9 display only.
+- With Metal, `r_gpuSync` did nothing. Turned on, it now keeps fewer finished
+  frames waiting to be shown.
+- With Metal, changing CoD2x's film colour settings no longer stalls the
+  game while it rebuilds the effect.
+- With Metal at very large sizes with anti-aliasing, the game steps down to
+  less anti-aliasing when it has to, instead of stopping with an error, and
+  it uses less memory.
+- With Metal, the blurred screen after a grenade kills you was drawn upside
+  down.
+- If the game folder holds more than one profile, the game no longer asks
+  you to pick one when the launcher has already chosen your loadout.
+- Voice chat (original 1.3) no longer makes the game stutter the first time
+  you press the talk key, and it keeps working when you switch microphones
+  or unplug a headset while talking. `winvoice_mic_mute 0` now lets you hear
+  your own microphone, as on Windows. Still untried with a real microphone.
+- Installing an update waits until the servers you host have stopped, and
+  the launcher no longer gets stuck on "Restarting…" if you cancel quitting.
+- A server fix you confirmed with **Fix for This Server Only** no longer
+  stops Launch when you press it more than a minute later.
+- Recordings with spaces or brackets in their names play when you open
+  them, and **Try Again** after a failed recording plays the recording
+  instead of starting the game.
+- After the launcher reconnects to a running game, a normal quit no longer
+  reports that the game closed unexpectedly.
+- If the game folder is on a drive that is not connected, the launcher says
+  so and offers **Choose Folder…** instead of starting setup again.
+- **Reset Settings** no longer replays the intro films or asks about crash
+  reports again.
+- Extra launch options are checked, when you save them, against everything
+  the game starts with and each game version's limits, so a set that would
+  stop the game from starting is caught there.
+- **Connect to Address** no longer says nothing answered when a server's
+  name is slow to look up, and servers that answer only part of the query
+  show their real ping.
+- Player setups stay available from the saved copy when the catalogue
+  refuses a refresh, and a damaged saved copy no longer blocks them.
+- **Quit Game** on Home stops a game that does not quit within ten seconds,
+  and cancelling a quit means the next one asks again.
+
+### Changed
+
+- Settings › Display no longer says macOS Full Screen turns on Game Mode;
+  that has not been confirmed. What's New no longer says Metal is coming.
+  Config Studio says the `cinematic` commands play films, as they do.
+
 ## [0.4.0] - 2026-11-20
 
 The game draws with Metal. Until now it drew through OpenGL, which macOS
