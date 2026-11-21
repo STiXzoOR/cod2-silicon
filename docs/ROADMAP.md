@@ -66,6 +66,10 @@ With this the Mac version counts as complete. The
 [0.4.0 verification](macos-port/release-0.4.0-verification.md) says what was
 tested and what was not.
 
+0.4.1 followed with fixes found by going over 0.4.0, and with sharing a setup
+from the launcher. The [0.4.1 verification](macos-port/release-0.4.1-verification.md)
+says what was tested for it.
+
 ## 0.3.7 — One look across the launcher (released 0.3.7)
 
 - **Every screen follows one set of design rules**: the same titles, labels,

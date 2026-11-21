@@ -4,7 +4,7 @@ import Foundation
     static func main() throws {
         try displayResolutions()
         let fixtures = URL(fileURLWithPath: CommandLine.arguments[1])
-        precondition(Dispatch.bundled.first?.title == "CoD2 Unbound 0.4.0", "bundled news must describe the shipping release")
+        precondition(Dispatch.bundled.first?.title == "CoD2 Unbound 0.4.1", "bundled news must describe the shipping release")
         precondition(!Dispatch.bundled.contains { $0.summary.contains("Planned for 0.3") }, "future work has no promised version")
         // Metal shipped in 0.4.0: nothing bundled may still call it the next thing.
         precondition(!Dispatch.bundled.contains { $0.summary.contains("Metal renderer comes next") || $0.summary.contains("isn’t in this release") }, "What's New calls a shipped renderer future work")

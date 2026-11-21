@@ -1,6 +1,12 @@
 {
   "items": [
     {
+      "date": "2026-11-21",
+      "title": "Share your setup",
+      "summary": "0.4.1 lets you send one of your loadouts to Player Setups from Configs, and fixes what going over 0.4.0 turned up on Metal, in voice chat and in the launcher.",
+      "open": "updates"
+    },
+    {
       "date": "2026-11-20",
       "title": "The game draws with Metal",
       "summary": "0.4.0 moves the game from OpenGL to Metal. OpenGL stays as a choice in Settings, and Display gains a render scale for 4K and 5K screens.",

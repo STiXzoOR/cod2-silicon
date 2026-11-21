@@ -6,6 +6,8 @@ was called CoD2 Silicon, and the entries from before then still use that name.
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-11-21
+
 Fixes found by going over 0.4.0 after it shipped, on Metal and in the
 launcher, and one new thing: sharing your setup with other players.
 
@@ -1104,6 +1106,7 @@ Evidence and historical qualifications are preserved in the
 [workstream reports](docs/macos-port/README.md).
 
 [Unreleased]: https://github.com/cod2unbound/cod2-unbound/compare/v0.4.0...HEAD
+[0.4.1]: https://github.com/cod2unbound/cod2-unbound/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/cod2unbound/cod2-unbound/compare/v0.3.7...v0.4.0
 [0.3.7]: https://github.com/cod2unbound/cod2-unbound/compare/v0.3.6...v0.3.7
 [0.3.6]: https://github.com/cod2unbound/cod2-unbound/compare/v0.3.5...v0.3.6
