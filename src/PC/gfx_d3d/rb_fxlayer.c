@@ -538,12 +538,15 @@ static void *FixShader(const Layer *layer, int nearer, int level)
  *
  * `pick` chooses the pixel's depth: the prepass's depth of the pixel itself (0), or
  * the nearest (1) or farthest (2) of the pixels around it, for the samples that
- * anti-aliasing puts on the surface next door. Nothing is given to the view weapon,
- * which is drawn in a depth range of its own (WEAPON_DEPTH). (One case is lost by
- * that: with soft particles off, or under Direct3D 7, a sprite that cuts the near
- * plane veils the weapon when drawn straight onto the frame buffer, and a smaller
- * layer leaves the weapon clear. Giving the weapon the texels tested against it was
- * tried and left dark blocks on the sleeve at a half.)
+ * anti-aliasing puts on the surface next door.
+ *
+ * The view weapon is drawn in a depth range of its own (WEAPON_DEPTH), in front of the
+ * whole world, and only a sprite that comes nearly to the eye passes the depth test
+ * there. Drawn straight onto the frame buffer such sprites veil the weapon, and the
+ * texels tested against it carry them: a block all of weapon in the first picture, a
+ * block with the weapon in front in the second. So a pixel of the weapon is treated as
+ * any other. Only when no texel counts does it get no smoke at all rather than the
+ * blend of all four, which would put the street's smoke on the sleeve.
  *
  * Sampler 0 is the layer's depth, 1 the layer, 2 the prepass's depth, 3 the depth the
  * layer's effects reach, 4 and 5 the layer's second depth and picture. */
@@ -612,7 +615,7 @@ static void *BlendShader(const Layer *layer, int level, int pick, int twice)
              "    float4 s = b / (abs(q - r) + r * 0.02 + 0.000001);\n"
              "    float4 soft = (c0 * s.x + c1 * s.y + c2 * s.z + c3 * s.w) / (s.x + s.y + s.z + s.w);\n"
              "    float4 result = lerp(soft, mixed, step(0.0001, sum));\n"
-             "    return lerp(result, float4(0.0, 0.0, 0.0, 1.0), step(d, %.9g));\n"
+             "    return lerp(result, float4(0.0, 0.0, 0.0, 1.0), step(d, %.9g) * step(sum, 0.0001));\n"
              "}\n",
              layer->width, layer->height, (double)s_sceneWidth / (layer->width << level),
              (double)s_sceneHeight / (layer->height << level), counted, WEAPON_DEPTH);
