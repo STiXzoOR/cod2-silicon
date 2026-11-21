@@ -36,6 +36,10 @@ extern int Voice_SendVoiceData(void);
 extern int MacMicrophone_Allowed(void);
 /* Where Record_Init leaves the engine's callback. */
 extern void *const imp_current_audioCallback;
+/* Playback voices (macos_voice.c), for hearing one's own microphone. */
+extern void *DSound_NewSample(void);
+extern int DSound_UpdateSample(void *handle, char *data, unsigned int length);
+extern int DSOUNDRecord_DestroySample(void *sample);
 
 int g_sound_recordVolume = 0xff;
 char g_recording_initialized;
@@ -71,6 +75,7 @@ static int record_thread_started;
 static double record_last_wanted;
 static float record_gain = 1.0f;
 static int record_level = 0xffff;
+static void *record_monitor;
 static struct { int unused; } record_sample;
 
 static const AudioObjectPropertyAddress record_default_input = {
@@ -362,6 +367,8 @@ void DSOUNDRecord_Frame(void)
             for (size_t i = 0; i < samples; ++i)
                 pcm[i] = (int16_t)((float)pcm[i] * record_gain);
         }
+        if (record_monitor)
+            DSound_UpdateSample(record_monitor, (char *)pcm, (unsigned int)(samples * sizeof(int16_t)));
         MacRecordBlock block;
         memset(&block, 0, sizeof(block));
         block.buffer = (unsigned char *)pcm;
@@ -406,9 +413,21 @@ int mixerSetRecordLevel(const char *source, int level)
     return 0;
 }
 
+/* winvoice_mic_mute. On Windows this mutes the microphone's line in the
+ * speakers' mix, the sound card playing the microphone straight back to the
+ * player; what is recorded and sent is not affected. Voice_Init passes the
+ * setting (1 by default) and Voice_Shutdown passes 1. Here 0 plays the
+ * captured sound back through one playback voice while the microphone is
+ * open, and 1 stops that; what is sent never changes. Voice_Shutdown has
+ * released every playback voice before it calls this with 1. */
 int mixerSetMicrophoneMute(int muted)
 {
-    (void)muted;
+    if (!muted && !record_monitor) {
+        record_monitor = DSound_NewSample();
+    } else if (muted && record_monitor) {
+        DSOUNDRecord_DestroySample(record_monitor);
+        record_monitor = NULL;
+    }
     return 0;
 }
 #endif
