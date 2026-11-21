@@ -34,6 +34,18 @@ Source layout:
   player setups from the signed catalogue (`ConfigDirectory.swift` reads and verifies it,
   `ConfigDiscoverModel.swift` holds the page's state). With no public key in the build
   (`ConfigDirectory.productionPublicKey`) the page says player setups aren't available.
+- `ConfigClean.swift`: prepares a config for other players with the import review (what
+  is left out, and why). The catalogue tool (`tools/config-directory/Clean.swift`) compiles
+  the same file, so the catalogue and Share Your Setup leave out the same lines.
+- `ConfigShare.swift`, `ConfigShareModel.swift`, `ConfigShareView.swift`: Share Your Setup.
+  The first is what is sent (the loadout's config and its advanced binds' companion file,
+  cleaned, then checked against the service's own line rules), the client for
+  `POST /api/configs/share` and `/api/configs/withdraw` on cod2unbound.com (or
+  `COD2_SHARE_URL`), and the record of each shared loadout in `shared-setups.json` in the
+  launcher's folder, which Reset Settings leaves alone. The model runs the sheet and Stop
+  Sharing; the views are the sheet in each state, See What’s Sent…, Sent, and the Share Your
+  Setup… button on Player Setups. `tests/launcher/config_share.sh` tests it against
+  `tools/config-directory/share_standin.py` on 127.0.0.1.
 - `ConfigChecker.swift` and `ConfigCheckerView.swift`: Check a Config. The first is the
   checks themselves, over the importer's parse, the settings catalogue and the rulesets,
   with no window; `tests/launcher/config_checker.sh` covers each finding and fix.
