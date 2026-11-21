@@ -67,6 +67,7 @@ static int s_plain; /* one sample a pixel: the scene's target is the engine's re
 static void *s_resolved; /* the engine's resolved-scene texture's surface (not owned) */
 static int s_sceneWidth, s_sceneHeight, s_backWidth, s_backHeight;
 static int s_scaled; /* the scene is smaller than the back buffer */
+static int s_samples; /* the scene target's samples a pixel; 0 without a target of its own */
 typedef struct {
     void *texture, *surface;
     unsigned width, height;
@@ -107,7 +108,7 @@ void RB_SceneTarget_Release(void)
     s_sceneColor = s_sceneDepth = s_backBuffer = s_resolved = NULL;
     s_colorSlot = s_depthSlot = NULL;
     s_widthSlot = s_heightSlot = NULL;
-    s_inScene = s_plain = s_scaled = 0;
+    s_inScene = s_plain = s_scaled = s_samples = 0;
 }
 
 /* Called once the engine has the back buffer in *colorSlot and the scene's depth
@@ -133,6 +134,7 @@ int RB_SceneTarget_Create(void *device, void **colorSlot, void **depthSlot, int 
         s_scaled = 0;
         return 0;
     }
+    s_samples = samples > 1 ? (int)samples : 1;
     s_device = device;
     s_colorSlot = colorSlot;
     s_depthSlot = depthSlot;
@@ -154,6 +156,14 @@ int RB_SceneTarget_Create(void *device, void **colorSlot, void **depthSlot, int 
 int RB_SceneTarget_Scaled(void)
 {
     return s_scaled;
+}
+
+/* How many samples a pixel of the scene has: 1 unless the scene is drawn into a
+ * multisampled target of its own. An occlusion query counts samples, so a count taken
+ * in the scene is this many times one taken on the back buffer. */
+int RB_SceneTarget_Samples(void)
+{
+    return s_samples > 1 ? s_samples : 1;
 }
 
 /* Is the scene's target the resolved-scene texture itself (no anti-aliasing)? */
