@@ -494,7 +494,7 @@ enum PlayedDate {
         library.dispatches = [Dispatch(stamp: StencilDate.day(day(18)), title: "CoD2 Unbound \(version)", summary: HomeDispatches.builtIn(version: "0.3.0").summary,
                                        link: "https://github.com/cod2unbound/cod2-unbound/releases", date: day(18), version: version)]
         library.news = [Dispatch(stamp: StencilDate.day(day(21)), title: "14 more player setups", summary: "New in Configs: setups from the 2008 and 2009 seasons.", date: day(21), open: "configs")]
-        library.newsNext = Dispatch(stamp: "NEXT", title: "A Metal renderer", summary: "In the works. The original look stays until it matches.",
+        library.newsNext = Dispatch(stamp: "NEXT", title: "CoD2 Unbound for Windows", summary: "Next on the roadmap, then Linux.",
                                     link: "https://github.com/cod2unbound/cod2-unbound/blob/main/docs/ROADMAP.md")
         library.dispatchesCheckedAt = Calendar.current.date(bySettingHour: 14, minute: 2, second: 0, of: Date())
     }

@@ -818,7 +818,7 @@ private struct AboutFacts: View {
             } else {
                 fact("Graphics", model.approximate ? "OpenGL, approximate shaders" : "OpenGL, original look",
                      model.approximate ? "Setup builds the original ones from your game"
-                        : model.offersRenderers ? "Metal is a choice in Settings" : "Metal is planned, not in this release", edge: true)
+                        : model.offersRenderers ? "Metal is a choice in Settings" : "Metal isn’t in this copy of the app", edge: true)
             }
         }
         .background(palette.panel, in: shape)

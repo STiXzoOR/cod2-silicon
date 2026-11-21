@@ -124,7 +124,7 @@ struct Dispatch: Codable, Equatable, Sendable {
     static let bundled = [
         Dispatch(stamp: "PREVIEW", title: "CoD2 Unbound 0.4.0", summary: "The game now draws with Metal, the graphics system macOS uses today. OpenGL stays as a choice in Settings › Display.",
                  link: "https://github.com/cod2unbound/cod2-unbound/releases"),
-        Dispatch(stamp: "AHEAD", title: "What’s next", summary: "The Metal renderer comes next. It isn’t in this release, and the original look stays until it matches.",
+        Dispatch(stamp: "AHEAD", title: "What’s next", summary: "CoD2 Unbound for Windows comes next, then Linux. These are plans, not promises.",
                  link: "https://github.com/cod2unbound/cod2-unbound/blob/main/docs/ROADMAP.md"),
     ]
 }
