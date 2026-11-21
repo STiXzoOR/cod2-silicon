@@ -66679,8 +66679,8 @@
       ],
       "group": "other",
       "title": "Cinematic playback command",
-      "summary": "The native Mac handler skips cinematic playback.",
-      "details": "On the native Apple path it clears nextmap and marks the intro as played. The legacy path calls the video player; this native handler does not play the requested video.",
+      "summary": "Play a film from the game's video folder. Escape skips it.",
+      "details": "Plays the named .roq video with the game's video player; an optional second argument chooses how it is drawn. Escape stops it.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:226471",
         "src/PC/client_mp/cl_main_mp.c:226670"
@@ -66688,7 +66688,9 @@
       "bindable": false,
       "menuLabel": null,
       "effectSources": [
-        "src/PC/client_mp/cl_cin_mp.c: CL_PlayCinematic_f"
+        "src/PC/client_mp/cl_cin_mp.c: CL_PlayCinematic_f",
+        "src/PC/win32/cinematics.c: ROQ_PlayCinematic_f",
+        "src/PC/client_mp/cl_keys_mp.c: CL_HandleEscapeKey"
       ]
     },
     {
@@ -73045,8 +73047,8 @@
       ],
       "group": "other",
       "title": "Unskippable cinematic command",
-      "summary": "The native Mac handler skips cinematic playback.",
-      "details": "Sets the cinematic skip flag to false. On the native Apple path it clears nextmap and marks the intro as played without playing the requested video. The legacy video-player path starts playback with skipping disabled.",
+      "summary": "Play a film from the game's video folder that can't be skipped.",
+      "details": "Plays the named .roq video like cinematic, but Escape and other requests to stop it are ignored until it ends.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:226473",
         "src/PC/client_mp/cl_main_mp.c:226672"
@@ -73055,7 +73057,8 @@
       "menuLabel": null,
       "effectSources": [
         "src/PC/client_mp/cl_cin_mp.c: CL_PlayUnskippableCinematic_f",
-        "src/PC/client_mp/cl_cin_mp.c: SCR_StopCinematic"
+        "src/PC/client_mp/cl_cin_mp.c: SCR_StopCinematic",
+        "src/PC/win32/cinematics.c: ROQ_PlayCinematic_f"
       ]
     },
     {
