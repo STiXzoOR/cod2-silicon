@@ -241,7 +241,7 @@ extension KeyStore {
     static func displayModeDetail(_ mode: String) -> String {
         switch mode {
         case "borderless": "Borderless fills the screen and switches apps instantly."
-        case "spaces": "macOS full screen gives the game its own Space, which Game Mode needs."
+        case "spaces": "macOS full screen gives the game its own Space; switching apps slides between Spaces."
         case "windowed": "A window at the chosen size, beside your other apps."
         default: "Full Screen shows the chosen size pixel for pixel; switching apps takes a moment. Borderless stretches it to the desktop."
         }
