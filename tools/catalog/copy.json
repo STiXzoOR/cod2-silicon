@@ -5614,6 +5614,24 @@
       "title": "Sky saturation",
       "summary": "How vivid the colours of the sky are.",
       "details": "From 0 to 2, and 1 (unchanged) by default. When it differs from the colour saturation, the sky and the rest of the scene are adjusted separately. It needs the colour adjustment switch on."
+    },
+    "con_printdoublecolors": {
+      "group": "hud",
+      "title": "Colours in killfeed names",
+      "summary": "Shows the colours players put in their names in the killfeed.",
+      "details": "CoD2x only. On by default. Turned off, names in the killfeed are shown as plain text."
+    },
+    "r_autopriority": {
+      "group": "other",
+      "title": "Lower priority in the background",
+      "summary": "Lets other apps have more of the processor while the game is not in front.",
+      "details": "CoD2x only. Off by default. Turned on, the game runs at background priority after you switch to another app, and at normal priority again when you come back."
+    },
+    "com_affinity": {
+      "group": "other",
+      "title": "Processor cores to use",
+      "summary": "On Windows, sets how many processor cores the game runs on.",
+      "details": "CoD2x only. -1 means every core and 0 leaves it alone. macOS has no per-process core affinity, so on a Mac this setting is accepted and changes nothing."
     }
   },
   "commands": {
