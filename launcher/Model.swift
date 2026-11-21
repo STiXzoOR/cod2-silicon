@@ -701,7 +701,7 @@ struct MediaEntry: Identifiable {
                 if let configStudio {
                     try configStudio.refresh()
                     if let profile = try connectionProfileID.map(configStudio.readProfile) ?? configStudio.readActive(),
-                       let report = try readyCheck(for: link.address) {
+                       let report = try readyCheck(for: link.address, requireFresh: false) {
                         connectionLaunch = try serverConnection.launch(for: link, profile: profile, report: report)
                         if connectionLaunch != nil {
                             connectionProfileID = profile.profile.id; connectionExpectedVersion = profile.version

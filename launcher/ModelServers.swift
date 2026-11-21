@@ -517,14 +517,15 @@ enum ServerPasswords {
         try serverConnection.useProfile(id)
         objectWillChange.send()
     }
-    func readyCheck(for address: String) throws -> ConfigReadyReport? {
+    /// requireFresh false: the launch re-checking a fix the player confirmed (ConfigReadyCheck.evaluate).
+    func readyCheck(for address: String, requireFresh: Bool = true) throws -> ConfigReadyReport? {
         guard let readyChecker, let configStudio = readySession else { return nil }
         let normalized = try LaunchLink.canonicalAddress(address)
         let server = servers.first { (try? LaunchLink.canonicalAddress($0.address)) == normalized }
         let chosenID = serverConnection.address == normalized ? serverConnection.profileID : nil
         guard let profile = try chosenID.map(configStudio.readProfile) ?? configStudio.readActive() else { return nil }
         return readyChecker.evaluate(server: server, profile: profile, mode: launchEngine(for: server).catalogMode,
-            advancedChain: try configStudio.readAdvancedChain(profileID: profile.profile.id))
+            advancedChain: try configStudio.readAdvancedChain(profileID: profile.profile.id), requireFresh: requireFresh)
     }
     /// Another saved loadout that already suits this server (“Use “Scrim””), or nil: one the ready check
     /// would pass, needing no change of its own (values the server sets while you play don't count).

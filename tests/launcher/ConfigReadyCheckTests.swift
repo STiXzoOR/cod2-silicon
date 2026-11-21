@@ -174,6 +174,27 @@ import Foundation
         catch is LauncherError {}
         print("PASS: stale review and unsafe/credential/protected launch boundaries")
 
+        // Fix for This Server Only, then Launch more than a minute after the status answer (a password sheet, a
+        // version question, or just reading): the launch re-checks the facts the fix was made from and keeps it.
+        var aged = competitive; aged.observedAt = Date(timeIntervalSinceNow: -300)
+        let agedConnection = ConfigServerConnection()
+        try agedConnection.select(address: competitive.address)
+        try agedConnection.fix(report: report)
+        do { _ = try agedConnection.launch(for: link, profile: profile, report: checker.evaluate(server: aged, profile: profile, mode: .cod2x)); fatalError("an aged review offered a fresh judgment") }
+        catch ConfigReadyCheckError.staleReview {}
+        let atLaunch = checker.evaluate(server: aged, profile: profile, mode: .cod2x, requireFresh: false)
+        require(try agedConnection.launch(for: link, profile: profile, report: atLaunch)?.values == ["com_maxfps": "250"],
+                "a confirmed fix expired a minute after the status answer")
+        var answeredAgain = try server(["protocol": "120", "fs_game": "", "g_competitive": "0"]); answeredAgain.observedAt = Date(timeIntervalSinceNow: -300)
+        do { _ = try agedConnection.launch(for: link, profile: profile, report: checker.evaluate(server: answeredAgain, profile: profile, mode: .cod2x, requireFresh: false))
+             fatalError("a confirmed fix survived a server whose rules changed") }
+        catch ConfigReadyCheckError.staleReview {}
+        do { _ = try agedConnection.launch(for: link, profile: changed, report: checker.evaluate(server: aged, profile: changed, mode: .cod2x, requireFresh: false))
+             fatalError("a confirmed fix survived a changed loadout") }
+        catch ConfigReadyCheckError.staleReview {}
+        require(checker.evaluate(server: unobserved, profile: match, mode: .cod2x, requireFresh: false).status == .unknown, "a status never observed became positive at launch")
+        print("PASS: a confirmed connection fix outlives the 60-second review window at launch, and still goes stale when the rules or loadout change")
+
         try connection.useProfile(match.profile.id)
         require(connection.overrides.isEmpty, "loadout choice retained old-profile fix")
         try PrivateFile.write(Data((active + "\r\n// retained selection\r\n").utf8), to: home.appendingPathComponent("main/players/active.txt"))
