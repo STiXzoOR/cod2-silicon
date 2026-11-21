@@ -34,7 +34,7 @@ under "What was not".
   render scale. The engine logs differ from 0.4.0's only in the lines the
   fixes are meant to change. So nothing below changed a picture it was not
   meant to change.
-- **Smoke** (issues 5 and 33). With a frozen cloud at 1920 × 1080 and 4x
+- **Smoke** (issues 33 and 56). With a frozen cloud at 1920 × 1080 and 4x
   anti-aliasing, pixels along roof and wall edges that differ from the
   full-size smoke layer by more than 12 of 255 went from 217 to 0 at quarter
   size and from 180 to 0 at half size; what is left is no more than two
@@ -73,7 +73,7 @@ under "What was not".
   by a temporary switch, the game started with 2 samples, then with none,
   drew normally and survived a renderer restart. Without the buffer it no
   longer makes, the game uses 65 to 85 MB less in a 5120 × 2880 window.
-- **The screen after a grenade kills you.** It was drawn upside down on
+- **The screen after a grenade kills you** (issue 57). It was drawn upside down on
   Metal, at Full and at a 67% render scale; it is now upright and framed as
   OpenGL frames it. A blast you survive was not triggered.
 - **Select Profile** (issue 34). With two profiles in a private game folder,
@@ -85,18 +85,18 @@ under "What was not".
   killfeed name without its colours; `r_autopriority 1` lowered the game's
   priority when another app came to the front and restored it after;
   `com_affinity` is accepted without an error.
-- **Voice chat** (issue 35), without a microphone. The capture tests ran
+- **Voice chat** (issue 5), without a microphone. The capture tests ran
   under the address, undefined-behaviour and thread sanitizers with no
   report: opening the microphone no longer blocks a frame (the slowest frame
   during a 0.4-second open took under 0.11 ms; 0.4.0's code fails this
   test), and capture reopens after access is granted, after the device is
   lost and after the default input changes. The playback, relay and queue
   tests pass (55 of 55 checks; 90 queue cases).
-- **The launcher's fixes** (issues 37 and 38). Each has a check in the
+- **The launcher's fixes** (issue 35). Each has a check in the
   launcher's tests, and the two that could be shown failing first were:
   the ping test stopped on 0.4.0's code, and the catalogue test failed with
   the server's refusal before the fix.
-- **Share your setup** (issue 39). The launcher's cleaning is the catalogue
+- **Share your setup** (issue 37). The launcher's cleaning is the catalogue
   tool's own, moved to one place: on 639 configs the old and the new give
   identical output. `tests/launcher/config_share.sh` covers the cleaning,
   the name rules, the request, every reply the service can give, the saved
