@@ -122,11 +122,35 @@ struct LaunchLink: Sendable {
     }
 }
 
+/// The command line each engine takes. `main` (src/unix/linux_common.c) joins the arguments with spaces.
+/// CoD2x (`Com_Cod2xParseCommandLine`, src/PC/qcommon/common.c) refuses a line of 1,024 bytes or more with
+/// "Command line too long" and runs at most 32 commands; the original 1.3 (`Com_Init`, same file) runs at
+/// most 31 `+` commands and silently merges the rest into the last one. Its 4,096-byte buffer is kept
+/// under 3,900 bytes. Only `+` starts a command in what the launcher writes: values are quoted and can't
+/// hold one (`GameSettings.safeValue`).
 enum EngineCommandLine {
-    static func validate(_ arguments: [String]) throws -> [String] {
-        let text = arguments.joined(separator: " ")
-        guard text.utf8.count < 3900 else { throw LauncherError(message: "Launch arguments exceed the game's byte limit.") }
-        guard text.filter({ $0 == "+" }).count <= 31 else { throw LauncherError(message: "Too many startup commands. Reduce the number of advanced dvars before playing.") }
+    struct Limits: Equatable { let commands: Int; let bytes: Int }
+    static func limits(for engine: GameEngine) -> Limits {
+        engine == .cod2x ? Limits(commands: 32, bytes: 1023) : Limits(commands: 31, bytes: 3899)
+    }
+    /// What is too long for `engine`, in a sentence with the fix; nil when it fits. inEditor: shown under Extra
+    /// launch options itself, so the fix doesn't say where they are.
+    static func problem(_ arguments: [String], engine: GameEngine, inEditor: Bool = false) -> String? {
+        let text = arguments.joined(separator: " "), limits = limits(for: engine)
+        let commands = text.filter { $0 == "+" }.count, bytes = text.utf8.count
+        if commands > limits.commands {
+            let extra = commands - limits.commands
+            return "This start needs \(commands) startup commands and \(engine.versionName) takes \(limits.commands). Remove at least "
+                + (extra == 1 ? "one line" : "\(extra) lines") + (inEditor ? "." : " from Extra launch options in Settings › Advanced.")
+        }
+        if bytes > limits.bytes {
+            return "This start’s command line is \(bytes.formatted()) characters and \(engine.versionName) takes \(limits.bytes.formatted()). Shorten or remove lines"
+                + (inEditor ? "." : " in Extra launch options in Settings › Advanced.")
+        }
+        return nil
+    }
+    static func validate(_ arguments: [String], engine: GameEngine) throws -> [String] {
+        if let problem = problem(arguments, engine: engine) { throw LauncherError(message: problem) }
         return arguments
     }
 }
@@ -179,6 +203,8 @@ enum GameEngine: String, Codable, Sendable, CaseIterable {
     case cod2x, original
     var executableName: String { self == .cod2x ? "cod2_macos" : "cod2_macos_stock" }
     func executableName(_ renderer: GameRenderer) -> String { executableName + (renderer == .metal ? "_metal" : "") }
+    /// The version a player picks: “CoD2x” or “Original 1.3”.
+    var versionName: String { self == .cod2x ? "CoD2x" : "Original 1.3" }
     /// The engines a game app carries, by their executables.
     static func installed(in gameBundle: URL) -> Set<GameEngine> {
         Set(allCases.filter { FileManager.default.isExecutableFile(atPath: $0.executable(in: gameBundle).path) })
@@ -201,8 +227,10 @@ struct GameLaunchPlan {
     let playsIntroFilms: Bool
     /// loadout: the value the game's profile config gives a dvar; with it, what that config leaves
     /// unset is supplied from GameSettings.loadoutDefaults.
+    /// engine: the one that will start; its command line limits apply (EngineCommandLine). Only
+    /// `largestStartProblem` passes nil, to count the arguments itself.
     init(settings: GameSettings, dataPath: String, homePath: String, link: LaunchLink? = nil, demo: String? = nil, forwarded: [String] = [], configStudio: ConfigStudioLaunch? = nil, connection: ConfigConnectionLaunch? = nil,
-         loadout: ((String) -> String?)? = nil, metal: Bool = false) throws {
+         loadout: ((String) -> String?)? = nil, metal: Bool = false, engine: GameEngine? = .cod2x) throws {
         guard GameSettings.safeValue(dataPath), GameSettings.safeValue(homePath) else { throw LauncherError(message: "Game paths contain unsupported characters.") }
         // The engine plays its three intro films when com_introPlayed is false and then records them as
         // played. Only a plain launch to the game menu shows them: a server link, a demo or forwarded
@@ -237,7 +265,8 @@ struct GameLaunchPlan {
         if connection?.values.isEmpty == false && configStudio?.connectionIsolated != true {
             throw LauncherError(message: "Temporary server settings require an isolated connection write owner.")
         }
-        arguments = try EngineCommandLine.validate(args + forwarded + (try connection?.arguments(for: link) ?? []))
+        let line = args + forwarded + (try connection?.arguments(for: link) ?? [])
+        arguments = try engine.map { try EngineCommandLine.validate(line, engine: $0) } ?? line
         // Links are delivered as Apple events after startup, never serialized into argv (both engines).
         self.link = link
     }
@@ -256,6 +285,22 @@ enum DemoName {
         }
         let result = String(scalars)
         return result.isEmpty || result.hasPrefix(".") ? "demo" + result : result
+    }
+}
+
+extension GameLaunchPlan {
+    /// Settings › Advanced, when options are saved: whether the largest plain start these settings can make fits
+    /// `engine`'s command line. That is a loadout's first game (it sets nothing yet, so every default is
+    /// supplied) with, once loadouts are in use, its advanced chain; nil when it fits, else what to shorten.
+    static func largestStartProblem(settings: GameSettings, dataPath: String, homePath: String, migrated: Bool,
+                                    engine: GameEngine, metal: Bool) -> String? {
+        let chain = migrated ? ["+exec", "cs_" + String(repeating: "0", count: 40) + ".cfg"] : []
+        do {
+            let plan = try GameLaunchPlan(settings: settings, dataPath: dataPath, homePath: homePath,
+                                          configStudio: migrated ? ConfigStudioLaunch(profileID: "loadout", chain: nil) : nil,
+                                          loadout: { _ in nil }, metal: metal, engine: nil)
+            return EngineCommandLine.problem(plan.arguments + chain, engine: engine, inEditor: true)
+        } catch { return error.localizedDescription }
     }
 }
 

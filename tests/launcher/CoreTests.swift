@@ -74,8 +74,41 @@ import Foundation
         precondition(!plan.arguments.contains("password") && !plan.arguments.joined().contains("quit"))
         precondition(plan.link?.password == "p+quit ")
         precondition(plan.arguments.contains("\"/Game Data\""))
-        precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 32))) == nil)
-        precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 31))) != nil)
+        // Each engine's own command line: the original runs 31 `+` commands, CoD2x 32 and refuses 1,024 bytes or more.
+        precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 32), engine: .original)) == nil)
+        precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 31), engine: .original)) != nil)
+        precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 32), engine: .cod2x)) != nil)
+        precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 33), engine: .cod2x)) == nil)
+        let longest = ["+set", "a", String(repeating: "b", count: 1023 - 7)]
+        precondition(longest.joined(separator: " ").utf8.count == 1023 && EngineCommandLine.problem(longest, engine: .cod2x) == nil)
+        precondition(EngineCommandLine.problem(longest + ["c"], engine: .cod2x)?.contains("1,025 characters and CoD2x takes 1,023") == true, "CoD2x's 1,024-byte limit")
+        precondition(EngineCommandLine.problem(longest + ["c"], engine: .original) == nil)
+        precondition(EngineCommandLine.problem(Array(repeating: "+set x 1", count: 34), engine: .cod2x)
+                     == "This start needs 34 startup commands and CoD2x takes 32. Remove at least 2 lines from Extra launch options in Settings › Advanced.")
+        // Extra launch options are checked against the largest start they can make when they're saved: a first game
+        // (every first-run default supplied) with Metal below full size. Before, only the options themselves were checked
+        // and every launch could then be refused.
+        var crowded = GameSettings(); crowded.renderScale = 75; crowded.introFilmsPlayed = true
+        func lines(_ count: Int) -> String { (0..<count).map { "cg_test\($0) 1" }.joined(separator: "\n") }
+        func roomy(_ count: Int, _ engine: GameEngine, migrated: Bool = false) -> Bool {
+            crowded.advanced = lines(count)
+            return GameLaunchPlan.largestStartProblem(settings: crowded, dataPath: "/Game", homePath: "/Home", migrated: migrated, engine: engine, metal: true) == nil
+        }
+        let fitsOriginal = (0...40).last { roomy($0, .original) }!, fitsCoD2x = (0...40).last { roomy($0, .cod2x) }!
+        precondition(fitsCoD2x == fitsOriginal + 1, "CoD2x runs one command more than the original")
+        crowded.advanced = lines(fitsCoD2x + 1)
+        precondition((try? crowded.launchConfig(migrated: false)) != nil, "the options alone are valid")
+        precondition(GameLaunchPlan.largestStartProblem(settings: crowded, dataPath: "/Game", homePath: "/Home", migrated: false, engine: .cod2x, metal: true)?
+                        .hasSuffix("Remove at least one line.") == true)
+        do { _ = try GameLaunchPlan(settings: crowded, dataPath: "/Game", homePath: "/Home", loadout: { _ in nil }, metal: true, engine: .cod2x); fatalError("an over-long start was passed") }
+        catch { precondition("\(error.localizedDescription)".contains("from Extra launch options in Settings › Advanced."), "the launch says what to shorten") }
+        crowded.advanced = lines(fitsCoD2x)
+        precondition((try? GameLaunchPlan(settings: crowded, dataPath: "/Game", homePath: "/Home", loadout: { _ in nil }, metal: true, engine: .cod2x)) != nil)
+        // Long lines meet CoD2x's byte limit long before the original's.
+        crowded.advanced = (0..<3).map { "cg_long\($0) " + String(repeating: "x", count: 300) }.joined(separator: "\n")
+        precondition(GameLaunchPlan.largestStartProblem(settings: crowded, dataPath: "/Game", homePath: "/Home", migrated: false, engine: .cod2x, metal: false)?
+                        .contains("characters and CoD2x takes 1,023") == true)
+        precondition(GameLaunchPlan.largestStartProblem(settings: crowded, dataPath: "/Game", homePath: "/Home", migrated: false, engine: .original, metal: false) == nil)
         try sessionLogs(scratch: scratch)
         try engines(server: server, scratch: scratch)
         try cod2xFiles(scratch: scratch)

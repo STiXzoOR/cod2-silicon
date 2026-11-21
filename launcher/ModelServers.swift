@@ -82,11 +82,6 @@ enum ServerVersion {
     }
 }
 
-extension GameEngine {
-    /// The version a player picks: “CoD2x” or “Original 1.3”.
-    var versionName: String { self == .cod2x ? "CoD2x" : "Original 1.3" }
-}
-
 /// What Connect to Address accepts, and the join link Copy Join Link writes.
 enum ServerAddressInput {
     /// `host:port`, a host name with or without a port, or a `cod2x://` or `cod2://` link, pasted or typed.

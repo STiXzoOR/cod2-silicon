@@ -125,8 +125,18 @@ extension KeyStore {
             advancedError = "These options are too long. Remove some lines and try again."
             return
         }
+        // The whole start must fit the command line of the engine and renderer that will start (EngineCommandLine).
+        if let problem = advancedStartProblem(candidate) { advancedError = problem; return }
         advancedError = nil
         settings = candidate
+    }
+    /// Whether the largest plain start these settings can make fits the chosen engine's command line, with the
+    /// chosen renderer and render scale; else what to shorten. Launch checks the real start again.
+    func advancedStartProblem(_ candidate: GameSettings) -> String? {
+        let engine = chosenEngine
+        return GameLaunchPlan.largestStartProblem(settings: candidate, dataPath: dataPath, homePath: home.path,
+                                                  migrated: configStudio?.migrationCompleted == true, engine: engine,
+                                                  metal: engine.renderer(candidate.renderer, in: gameBundle) == .metal)
     }
     /// Lines that are valid but that the game takes from the loadout instead, once loadouts are in use.
     // MARK: - ship-integrate

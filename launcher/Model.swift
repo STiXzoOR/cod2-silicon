@@ -729,7 +729,7 @@ struct MediaEntry: Identifiable {
             let loadout = ConfigDocument.launchLoadout(home: home, profileID: configLaunch?.profileID)
             let plan = try GameLaunchPlan(settings: settings, dataPath: dataPath, homePath: home.path, link: pendingLink,
                 demo: demo?.deletingPathExtension().lastPathComponent, forwarded: forwardedArguments, configStudio: configLaunch, connection: connectionLaunch,
-                loadout: { loadout?.effectiveSetting(named: $0) }, metal: renderer == .metal)
+                loadout: { loadout?.effectiveSetting(named: $0) }, metal: renderer == .metal, engine: gameEngine)
             let process = Process(); process.executableURL = executable; process.arguments = plan.arguments
             process.currentDirectoryURL = home
             var environment = ProcessInfo.processInfo.environment
