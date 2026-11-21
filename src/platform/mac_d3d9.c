@@ -36,6 +36,7 @@ extern void *MacDisplay_CreateD3D9Window(void);
 extern void *MacD3D9View_Layer(SDL_Window *window, int renderWidth, int renderHeight);
 extern const void *Dvar_RegisterBool(const char *name, unsigned char value, unsigned short flags);
 extern unsigned char Dvar_GetBool(const char *name);
+extern int Dvar_GetInt(const char *name);
 
 /* The window's Metal layer and the back buffer it is fitted to. */
 static void *metalLayer;
@@ -132,12 +133,20 @@ void *Win_D3D9_Direct3DCreate9(void)
              * pipeline seen for the first time is built before its draw runs: built in
              * the background, the library would leave the draw out of the frame until
              * it is ready, and a wall or a smoke cloud would be missing for those
-             * frames. Entries are read in order and a later one wins, so what a
-             * developer puts in MTLD3D_CONFIG still holds. */
+             * frames. With r_gpuSync on (the default), at most two frames wait to
+             * be shown instead of the library's three: the game's own pacing,
+             * which keeps the processor about one frame ahead of the graphics
+             * chip on Windows, cannot work here (see the fence stand-ins below),
+             * so the library's limit is what bounds the delay between the mouse
+             * and the screen. Read when the game starts. Entries are read in
+             * order and a later one wins, so what a developer puts in
+             * MTLD3D_CONFIG still holds. */
             static char config[2048];
             const char *given = getenv("MTLD3D_CONFIG");
-            snprintf(config, sizeof config, "color.hdr.enable=false;render.directResolve=true;shader.asyncCompile=false%s%s",
-                     given && *given ? ";" : "", given ? given : "");
+            snprintf(config, sizeof config,
+                     "color.hdr.enable=false;render.directResolve=true;shader.asyncCompile=false%s%s%s",
+                     Dvar_GetInt("r_gpuSync") ? ";present.maxFrameLatency=2" : "", given && *given ? ";" : "",
+                     given ? given : "");
             setenv("MTLD3D_CONFIG", config, 1);
         }
         host.size = (uint32_t)sizeof host;
@@ -475,8 +484,13 @@ done:
     return ok;
 }
 
-/* Stand-ins for the OpenGL fences the backend paces itself with (see
- * src/win32/gl_loader.c): a fence is always finished. */
+/* Stand-ins for the OpenGL fences the backend paces itself with (r_gpuSync; see
+ * src/win32/gl_loader.c): a fence is always finished. Windows paces with a
+ * Direct3D 9 event query here, but the Metal library reports an event as done
+ * only at the display's next refresh, so waiting on one held the game to the
+ * display's rate (60 frames a second at most on a 60 Hz display, with vertical
+ * sync off). The library's own limit on queued frames takes the pacing's place
+ * (present.maxFrameLatency above). */
 void MacD3D9_GenFences(int count, unsigned int *fences)
 {
     for (int i = 0; i < count; ++i)
