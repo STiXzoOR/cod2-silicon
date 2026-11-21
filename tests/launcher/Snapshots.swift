@@ -597,7 +597,7 @@ final class Watchdog: @unchecked Sendable {
 
     /// Reach validation through the actual sheet controls, without a production preview override.
     @MainActor static func preparePageWindow(_ window: NSWindow, screen: String?) async {
-        if (screen?.hasPrefix("settings-legacy") == true || screen == "about-footer" || screen == "configs-home-end"), let content = window.contentView,
+        if (screen?.hasPrefix("settings-legacy") == true || screen == "about-footer" || screen == "configs-home-end" || screen == "discover-player-shared-credit"), let content = window.contentView,
            let scroll = ConfigsPreview.views(NSScrollView.self, in: content).max(by: {
                ($0.documentView?.bounds.height ?? 0) - $0.contentSize.height < ($1.documentView?.bounds.height ?? 0) - $1.contentSize.height
            }), let document = scroll.documentView {

@@ -21,10 +21,12 @@ extension Snapshots {
                                 "configs-home", "configs-home-end", "configs-home-all", "configs-home-search", "configs-home-nomatch",
                                 "configs-checker-empty", "configs-checker", "configs-checker-fixed", "configs-checker-clean",
                                 // share-launcher: Share Your Setup's sheet in each state, See What’s Sent…, Sent, the Stop
-                                // Sharing alert, Player Setups' Share Your Setup… button, and a shared setup's credit.
+                                // Sharing alert, Player Setups' Share Your Setup… button, and a shared setup's page with
+                                // its credit line (the page's footer, scrolled to).
                                 "configs-share-empty", "configs-share-sheet", "configs-share-sending", "configs-share-preview",
                                 "configs-share-offline", "configs-share-limit", "configs-share-already", "configs-share-nothing",
-                                "configs-share-sent", "configs-share-stop-confirm", "configs-home-share", "discover-player-shared"]
+                                "configs-share-sent", "configs-share-stop-confirm", "configs-home-share", "discover-player-shared",
+                                "discover-player-shared-credit"]
 }
 
 /// Synthetic loadouts for the Config Studio screens, written through the real store into a
@@ -238,8 +240,8 @@ extension Snapshots {
         case "discover-saved":
             try await fixture()
             discover.setSaved("player-2", true); discover.setSaved("player-4", true)
-        case "discover-player", "configs-expert-player", "discover-player-shared":
-            if screen == "discover-player-shared" {
+        case "discover-player", "configs-expert-player", "discover-player-shared", "discover-player-shared-credit":
+            if screen.hasPrefix("discover-player-shared") {
                 // A setup a player sent from the app: credited as shared, with its day.
                 discover.use(try DirectoryFixture.directory(cacheURL: home.appendingPathComponent("directory/index.json"), shared: ["player-1"]))
                 await discover.reload()
@@ -1386,6 +1388,7 @@ extension Snapshots {
         "configs-share-stop-confirm": ["Stop sharing “Main”?", "Stop Sharing", "Cancel"],
         "configs-home-share": ["Share Your Setup", "Add a Config"],
         "discover-player-shared": ["Compare", "Try This Setup"],
+        "discover-player-shared-credit": ["Shared by its player from CoD2 Unbound on", "Ask to remove or correct this setup"],
     ]
 
     /// Every Config Studio screen's accessibility tree in reading order, with unnamed controls as failures.
