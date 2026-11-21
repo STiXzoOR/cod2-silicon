@@ -126,6 +126,11 @@ Both builds use the same gcc, libraries, locale, timezone, fixed source mtimes,
 Git discovery is stopped above each archive via `GIT_CEILING_DIRECTORIES`, so
 CMake's existing missing-git fallback gives both crash reporters `unknown`.
 Passing `-DCOD2_GIT_HASH=...` alone would not work: upstream overwrites it.
+Both builds also get `-D__cdecl= -D__stdcall=`: GCC on Linux has no such
+keywords, so the defines change only files that would otherwise fail to parse
+(objects that compiled without them come out byte-identical with them).
+Upstream `410342a` still fails in seven files for other reasons and never links,
+so the comparison does not yet complete (tracking issue 10).
 No source file is patched, stripped or excluded from comparison. Every game
 object, the object path set and both unstripped ELF32 binaries must match;
 build IDs are retained. Debug line-number changes from added source guards also

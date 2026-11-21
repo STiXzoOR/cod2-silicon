@@ -34,9 +34,15 @@ for name in base head; do
     # Identical source mtimes also cover any future __TIMESTAMP__ use.
     find "$root" -type f -exec touch -d "@$SOURCE_DATE_EPOCH" {} +
     map="-ffile-prefix-map=$root=/cod2-reference -fdebug-prefix-map=$root=/cod2-reference"
+    # The MSVC calling-convention keywords appear in a few declarations that
+    # GCC on Linux cannot parse (upstream 410342a fails in bg_misc.c). GCC has
+    # no such macros here, so defining them empty only changes translation
+    # units that would otherwise not compile, and both snapshots get the same
+    # flags. The __attribute__((stdcall)) spellings are untouched.
+    keywords="-D__cdecl= -D__stdcall="
     cmake -S "$root" -B "$root/build-verify" \
         -DCOD2_X64=OFF -DCMAKE_C_COMPILER="$compiler" -DCMAKE_ASM_COMPILER="$compiler" \
-        -DCMAKE_C_FLAGS="-m32 $map" -DCMAKE_ASM_FLAGS="-m32 $map" \
+        -DCMAKE_C_FLAGS="-m32 $keywords $map" -DCMAKE_ASM_FLAGS="-m32 $map" \
         2>&1 | tee "$out/$name-configure.log"
     cmake --build "$root/build-verify" --parallel "${JOBS:-2}" \
         --target cod2_lnxded cod2_linux 2>&1 | tee "$out/$name-build.log"
