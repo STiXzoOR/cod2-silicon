@@ -521,7 +521,7 @@ extension KeyStore {
     }
     func resetSettings() {
         advancedDraft = nil; advancedError = nil
-        settings = defaultSettings
+        settings = settings.reset(to: defaultSettings)
         settingsFeedback = .init(pane: .advanced, text: "Settings are back to how they started.")
     }
 

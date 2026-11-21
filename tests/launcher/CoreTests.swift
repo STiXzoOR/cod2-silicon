@@ -54,6 +54,13 @@ import Foundation
         precondition((try? settings.config()) == nil)
         settings.advanced = "dpi 1600"
         precondition((try? settings.arguments()) == nil, "DPI is metadata, never an engine startup command")
+        // Reset Settings: everything the Settings window shows goes back; the intro films and the crash report question don't come back.
+        var used = GameSettings(); used.fps = 125; used.advanced = "cg_fov 90"; used.sendCrashReports = true
+        used.introFilmsPlayed = true; used.crashReportsAsked = true
+        let reset = used.reset(to: GameSettings())
+        precondition(reset.introFilmsPlayed && reset.crashReportsAsked, "Reset Settings brought back the intro films or the crash report question")
+        var expectedReset = GameSettings(); expectedReset.introFilmsPlayed = true; expectedReset.crashReportsAsked = true
+        precondition(reset == expectedReset && !reset.sendCrashReports && reset.fps == 250 && reset.advanced.isEmpty)
         var startup = GameSettings()
         startup.advanced = "fs_cdpath /Game\nfs_copyfiles 0\nfs_restrict 0\nloc_language 1\ndedicated 0\ncom_hunkMegs 512"
         let startupNames = try startup.launchDvars(migrated: true).map { $0.0.lowercased() }

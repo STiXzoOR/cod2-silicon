@@ -1042,6 +1042,13 @@ struct GameSettings: Codable, Sendable, Equatable {
     /// the original. False only for a new player; settings saved before this key existed count as played.
     var introFilmsPlayed = false
     // MARK: - end ship-settings
+    /// Settings › Advanced › Reset Settings: `defaults` for everything the Settings window shows, keeping what it
+    /// doesn't: whether the intro films have played and whether the crash report question was answered.
+    func reset(to defaults: GameSettings) -> GameSettings {
+        var reset = defaults
+        reset.introFilmsPlayed = introFilmsPlayed; reset.crashReportsAsked = crashReportsAsked
+        return reset
+    }
     static let anisotropyLevels = [2, 4, 8, 16]
     /// The render scales Settings › Display offers, largest first. Anything else reads as full size.
     static let renderScales = [100, 85, 75, 67, 50]
