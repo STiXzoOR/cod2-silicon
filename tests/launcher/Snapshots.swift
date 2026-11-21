@@ -575,8 +575,10 @@ final class Watchdog: @unchecked Sendable {
             if !popovers.contains(where: { $0 === child }) { popovers.append(child) }
         }
         let image = popovers.isEmpty ? WindowCapture.image(of: window) : WindowCapture.image(of: popovers + [window], in: window)
-        let sheet = window.attachedSheet.flatMap { WindowCapture.image(of: $0) }
-        let sheetSize = window.attachedSheet?.frame.size
+        // A sheet opened over a sheet (See What’s Sent… over Share) is the one in front, so it is the image.
+        let front = window.attachedSheet.map { $0.attachedSheet ?? $0 }
+        let sheet = front.flatMap { WindowCapture.image(of: $0) }
+        let sheetSize = front?.frame.size
         let parent = WindowCapture.image(of: window)
         let receipt: [String: Any] = [
             "parent": WindowCapture.frameJSON(window.frame),
@@ -586,6 +588,7 @@ final class Watchdog: @unchecked Sendable {
             "capture": WindowCapture.frameJSON(popovers.isEmpty ? window.frame : WindowCapture.bounds(of: popovers, in: window))
         ]
         geometry(window, "capture", image: image)
+        if let nested = window.attachedSheet?.attachedSheet { window.attachedSheet?.endSheet(nested) }
         window.attachedSheet.map { window.endSheet($0) }
         popovers.forEach { $0.orderOut(nil) }
         window.orderOut(nil); window.close()

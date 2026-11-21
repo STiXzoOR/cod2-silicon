@@ -12,7 +12,8 @@ came from. It does not claim that a player approved the listing, and it removes 
 when the player or the page asks, through an issue on that repository. Each `entries/<slug>/` holds
 `config.cfg` and `entry.json` (see `entry.schema.json`):
 
-- `config.cfg` is the published text after `clean` (built by `build-audit.sh` from `Clean.swift`):
+- `config.cfg` is the published text after `clean` (built by `build-audit.sh` from `Clean.swift` and
+  `launcher/ConfigClean.swift`, the cleaning Share Your Setup runs in the launcher too):
   the launcher's own import review reads it for both game versions, and every line it blocks, and
   every line that says who the player is, what they typed, a secret, a path or a setting of another
   game, is left out. The rest keeps its order and bytes.

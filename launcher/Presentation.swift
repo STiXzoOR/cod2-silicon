@@ -429,6 +429,7 @@ enum PrivacyContacts {
         ("Servers you host", "Only while one runs. Set to The Internet, it lists itself on the master servers. A CoD2x server asks the CoD2x project about new versions."),
         ("Crash reports", "Only with a switch above on, once for each crash or freeze."),
         ("Config links", "Only a link you paste into Configs to import from it."),
+        ("cod2unbound.com", "Only when you choose Share Setup: the cleaned config, the name you type and the app’s version. It posts them publicly on GitHub and keeps no address."),
     ]
 }
 

@@ -231,6 +231,12 @@ all of it before you post, and the app sends nothing itself.
   deleted when the download ends, stops or is cancelled.
 - **Configs** fetches the player setups catalogue from GitHub when its home page
   opens, and a setup's config when you look at it.
+- **Sharing a setup** sends nothing unless you choose **Share Setup** for one
+  of your loadouts. Then the cleaned config (with your name in the game, chat
+  lines, passwords, server addresses and file paths left out), the name you
+  typed and the app's version go to cod2unbound.com, which posts them as a
+  public request on GitHub and keeps no address. **Stop Sharing** in the
+  loadout's menu takes it back.
 - **A server you host** contacts nothing while it is set to My Network. Set to
   The Internet, it lists itself on the master servers. A CoD2x server asks the
   CoD2x project's update service about new versions while it runs, and players'

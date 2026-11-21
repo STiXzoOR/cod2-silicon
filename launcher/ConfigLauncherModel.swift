@@ -168,7 +168,8 @@ import UniformTypeIdentifiers
         case "servers-ready", "servers-ready-fixed": page = .servers
         case "configs-binds-list", "configs-binds-visual", "configs-binds-advanced": page = .configs; studio.tab = .binds
         case "configs-checkup", "configs-checkup-match": page = .configs; studio.tab = .checkup
-        default: return false
+        // Share Your Setup (ConfigShareModel.swift).
+        default: return previewShare(screen)
         }
         return true
     }
