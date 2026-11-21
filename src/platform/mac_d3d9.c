@@ -53,6 +53,35 @@ static void *Host_MetalLayer(void *user, void *hwnd, uint32_t *width, uint32_t *
     return metalLayer;
 }
 
+/* The display mode the library is told about. It reports nothing from it that the
+ * engine reads (r_init.c takes the display's modes from the display code), but
+ * with vertical sync on it holds presents to this refresh rate, and without a
+ * mode of ours it takes 60 Hz. It is the current mode of the window's display,
+ * updated whenever the window is set up, so it follows r_monitor, a move to
+ * another display and an exclusive mode's own rate. The library reads it again
+ * when the device is made or reset. */
+extern size_t sDisplayIndex;
+static D3D9MetalDisplayMode hostMode = {1920, 1080, 60};
+
+static void Host_UpdateMode(void)
+{
+    SDL_DisplayMode mode;
+    int display = sdl_gl_window ? SDL_GetWindowDisplayIndex(sdl_gl_window) : (int)sDisplayIndex;
+
+    if (display < 0)
+        display = 0;
+    if (SDL_GetCurrentDisplayMode(display, &mode) != 0 || mode.w <= 0 || mode.h <= 0)
+        return;
+    if (hostMode.width == (uint32_t)mode.w && hostMode.height == (uint32_t)mode.h &&
+        hostMode.refresh_hz == (uint32_t)(mode.refresh_rate > 0 ? mode.refresh_rate : 60))
+        return;
+    hostMode.width = (uint32_t)mode.w;
+    hostMode.height = (uint32_t)mode.h;
+    hostMode.refresh_hz = (uint32_t)(mode.refresh_rate > 0 ? mode.refresh_rate : 60);
+    fprintf(stderr, "CoD2 Unbound display %d: %ux%u at %u Hz (vertical sync paces to this rate)\n", display,
+            hostMode.width, hostMode.height, hostMode.refresh_hz);
+}
+
 static void *Host_Alloc(void *user, size_t size, size_t align)
 {
     void *block = NULL;
@@ -116,6 +145,9 @@ void *Win_D3D9_Direct3DCreate9(void)
         host.alloc_app = Host_Alloc;
         host.free_app = Host_Free;
         host.cache_dir = cache;
+        Host_UpdateMode();
+        host.modes = &hostMode;
+        host.mode_count = 1;
         int result = d3d9metal_init(&host);
         if (result != D3D9METAL_OK && result != D3D9METAL_E_ALREADY) {
             fprintf(stderr, "d3d9metal_init failed: %d\n", result);
@@ -151,6 +183,7 @@ static void *ConfigureWindow(int width, int height, int fullscreen, int refresh)
         applied[2] = mode;
         applied[3] = refresh;
     }
+    Host_UpdateMode();
     metalLayer = MacD3D9View_Layer(sdl_gl_window, width, height);
     if (!metalLayer) {
         fprintf(stderr, "Couldn't create the window's Metal layer\n");
