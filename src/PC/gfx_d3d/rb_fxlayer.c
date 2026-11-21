@@ -170,6 +170,8 @@ typedef struct {
     void *nearTexture, *nearSurface, *nearColorTexture, *nearColorSurface, *reduceNearShader;
     /* A smaller layer: the scene's float-Z at this size, for the effects that feather (CopyFloatZ). */
     void *floatZTexture, *floatZSurface, *floatZShader;
+    /* ...and the nearest float-Z of each block, for the second picture. */
+    void *floatZNearTexture, *floatZNearSurface, *floatZNearShader;
     int floatZFailed;
     /* A smaller layer: the far part of a run, drawn behind the gate (RB_FxLayer_GateBegin). */
     void *gateTexture, *gateSurface;
@@ -185,6 +187,7 @@ static void *s_depthPassColor, *s_depthPassDepth; /* what was bound before it */
 static void *s_sceneDepthTexture, *s_sceneDepthSurface; /* the prepass's depth, at the picture's size */
 static void *s_sceneFloatZ; /* the engine's float-Z texture, when this frame's effects feather against it */
 static int s_floatZReady;   /* the layer in use holds this frame's copy of it */
+static int s_floatZNearReady; /* ...and the copy for its second picture */
 static unsigned s_sceneWidth, s_sceneHeight;
 static Layer s_layers[LEVELS], *s_layer; /* s_layer: the one in use */
 static Layer *GetLayer(int level);
@@ -304,6 +307,9 @@ static void ReleaseLayers(void)
         Release(&layer->floatZSurface);
         Release(&layer->floatZTexture);
         Release(&layer->floatZShader);
+        Release(&layer->floatZNearSurface);
+        Release(&layer->floatZNearTexture);
+        Release(&layer->floatZNearShader);
         Release(&layer->gateSurface);
         Release(&layer->gateTexture);
         memset(layer, 0, sizeof(*layer));
@@ -533,8 +539,13 @@ static void *FixShader(const Layer *layer, int nearer, int level)
  *   picture, which then holds all of it. Refusing these drew every roofline behind
  *   the smoke into it as a row of steps.
  *
- * The texels that count are blended by their usual weights. If there is none, all four
- * are blended, each counting for more the nearer its depth is to the pixel's.
+ * The texels of the first kind are blended by their usual weights. With two pictures
+ * a pixel always has one, the texel of its own block, and then the second kind is left
+ * out: such a texel holds the same sprites, but they fade against the surface its own
+ * block holds (CopyFloatZ), and taking them spread the sky's smoke a block wide over
+ * the edge of a roof. Without a texel of the first kind the second kind counts, and
+ * without either all four are blended, each counting for more the nearer its depth is
+ * to the pixel's.
  *
  * `pick` chooses the pixel's depth: the prepass's depth of the pixel itself (0), or
  * the nearest (1) or farthest (2) of the pixels around it, for the samples that
@@ -570,7 +581,8 @@ static void *BlendShader(const Layer *layer, int level, int pick, int twice)
                  "    c1 = lerp(tex2D(nearMap, o + float2(e.x, 0.0)), c1, place.y);\n"
                  "    c2 = lerp(tex2D(nearMap, o + float2(0.0, e.y)), c2, place.z);\n"
                  "    c3 = lerp(tex2D(nearMap, o + e), c3, place.w);\n"
-                 "    float4 w = b * max(inside, front);\n",
+                 "    float4 wi = b * inside;\n"
+                 "    float4 w = lerp(b * max(inside, front), wi, step(0.0001, wi.x + wi.y + wi.z + wi.w));\n",
                  1.0 + tolerance, 1.0 + tolerance, 1.0 + tolerance);
     else
         snprintf(counted, sizeof counted,
@@ -891,6 +903,10 @@ void *RB_FxLayer_FloatZ(int *slot)
 {
     if (!s_active || !s_level || !s_floatZReady)
         return NULL;
+    if (s_nearPass && s_floatZNearReady) {
+        *slot = s_level + 4;
+        return s_layer->floatZNearTexture;
+    }
     *slot = s_level;
     return s_layer->floatZTexture;
 }
@@ -1031,29 +1047,61 @@ const char *RB_ScreenPass_Film(void *device, void *source, void *depthIfNone, un
  * thick smoke covers each many times over. Read from the scene's own texture, a quarter
  * layer's pixels lie four texels apart in each direction, so every read lands on memory
  * the graphics chip does not have at hand: at 3840x2160 that took two thirds of the
- * time the smoke cost. The copy holds the texel the effect would have read, the one
- * above and left of the centre of the layer pixel's block.
+ * time the smoke cost.
+ *
+ * A texel of the copy stands for a block of the scene's pixels, and a sprite fades by
+ * how near it comes to the surface behind it. The layer's first picture is tested
+ * against the farthest depth of each block, so its copy holds the farthest float-Z
+ * there; the second picture, tested against the nearest, gets a copy of its own that
+ * holds the nearest (RB_FxLayer_FloatZ). With one sample for both, a block on the edge
+ * of a roof feathered the roof's smoke against the sky behind, or the reverse, and the
+ * edge came out in steps a block wide.
  * Returns 1 when the copy is there. Leaves the layer's colour target bound. */
+static void *FloatZShader(int level, int nearest)
+{
+    char source[4096];
+    int count = 1 << level, x, y, used;
+    used = snprintf(source, sizeof source,
+                    "sampler map : register(s0);\n"
+                    "float4 main(float2 uv : TEXCOORD0) : COLOR0\n"
+                    "{\n"
+                    "    float z = tex2D(map, uv + float2(%.9g, %.9g)).r;\n",
+                    (0.5 - count / 2.0) / s_sceneWidth, (0.5 - count / 2.0) / s_sceneHeight);
+    for (y = 0; y < count; y++)
+        for (x = 0; x < count; x++)
+            if (x || y)
+                used += snprintf(source + used, sizeof source - (size_t)used,
+                                 "    z = %s(z, tex2D(map, uv + float2(%.9g, %.9g)).r);\n", nearest ? "min" : "max",
+                                 (x + 0.5 - count / 2.0) / s_sceneWidth, (y + 0.5 - count / 2.0) / s_sceneHeight);
+    snprintf(source + used, sizeof source - (size_t)used, "    return z;\n}\n");
+    return CompileShader(nearest ? "fxlayer_floatz_near" : "fxlayer_floatz", source);
+}
+
+static int CreateFloatZ(Layer *layer, void **texture, void **surface)
+{
+    return CALL(CreateTextureFn, s_device, DEV_CreateTexture)(s_device, layer->width, layer->height, 1, USAGE_RENDERTARGET,
+                                                              114 /* R32F */, 0, texture, NULL) >= 0 &&
+           CALL(GetSurfaceFn, *texture, TEX_GetSurfaceLevel)(*texture, 0, surface) >= 0;
+}
+
 static int CopyFloatZ(void)
 {
     void *device = s_device;
     Layer *layer = s_layer;
     Viewport view = { 0, 0, layer->width, layer->height, 0.0f, 1.0f };
+    float u1 = (float)(view.Width << s_level) / (float)s_sceneWidth, v1 = (float)(view.Height << s_level) / (float)s_sceneHeight;
 
+    s_floatZNearReady = 0;
     if (!s_sceneFloatZ || layer->floatZFailed)
         return 0;
     if (!layer->floatZSurface) {
-        char source[512];
-        snprintf(source, sizeof source,
-                 "sampler map : register(s0);\n"
-                 "float4 main(float2 uv : TEXCOORD0) : COLOR0 { return tex2D(map, uv - float2(%.9g, %.9g)); }\n",
-                 0.25 / s_sceneWidth, 0.25 / s_sceneHeight);
-        if (CALL(CreateTextureFn, device, DEV_CreateTexture)(device, layer->width, layer->height, 1, USAGE_RENDERTARGET,
-                                                             114 /* R32F */, 0, &layer->floatZTexture, NULL) < 0 ||
-            CALL(GetSurfaceFn, layer->floatZTexture, TEX_GetSurfaceLevel)(layer->floatZTexture, 0, &layer->floatZSurface) < 0 ||
-            !(layer->floatZShader = CompileShader("fxlayer_floatz", source))) {
+        if (!CreateFloatZ(layer, &layer->floatZTexture, &layer->floatZSurface) ||
+            !CreateFloatZ(layer, &layer->floatZNearTexture, &layer->floatZNearSurface) ||
+            !(layer->floatZShader = FloatZShader(s_level, 0)) || !(layer->floatZNearShader = FloatZShader(s_level, 1))) {
             Release(&layer->floatZSurface);
             Release(&layer->floatZTexture);
+            Release(&layer->floatZNearSurface);
+            Release(&layer->floatZNearTexture);
             layer->floatZFailed = 1;
             return 0;
         }
@@ -1061,12 +1109,19 @@ static int CopyFloatZ(void)
     SetState(RS_ZENABLE, 0);
     SetState(RS_ALPHABLENDENABLE, 0);
     SetState(RS_COLORWRITEENABLE, 0xf);
-    CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, layer->floatZSurface);
     CALL(SetDepthFn, device, DEV_SetDepthStencilSurface)(device, NULL);
+    PassTexture(0, s_sceneFloatZ, 1);
+    CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, layer->floatZSurface);
     CALL(ViewportFn, device, DEV_SetViewport)(device, &view);
     CALL(SetObjectFn, device, DEV_SetPixelShader)(device, layer->floatZShader);
-    PassTexture(0, s_sceneFloatZ, 1);
-    PassDraw(0.0f, 0.0f, (float)view.Width, (float)view.Height, 0.0f, 0.0f, 1.0f, 1.0f);
+    PassDraw(0.0f, 0.0f, (float)view.Width, (float)view.Height, 0.0f, 0.0f, u1, v1);
+    if (s_nearFrame) {
+        CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, layer->floatZNearSurface);
+        CALL(ViewportFn, device, DEV_SetViewport)(device, &view);
+        CALL(SetObjectFn, device, DEV_SetPixelShader)(device, layer->floatZNearShader);
+        PassDraw(0.0f, 0.0f, (float)view.Width, (float)view.Height, 0.0f, 0.0f, u1, v1);
+        s_floatZNearReady = 1;
+    }
     CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, layer->colorSurface);
     return 1;
 }
