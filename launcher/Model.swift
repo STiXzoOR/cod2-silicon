@@ -725,6 +725,8 @@ struct MediaEntry: Identifiable {
             environment["SDL_VIDEO_MAC_FULLSCREEN_SPACES"] = settings.fullscreen == "spaces" ? "1" : "0"
             if !approximate { environment["COD2_MAC_SHADER_CACHE"] = home.appendingPathComponent("shaders").path }
             else { environment.removeValue(forKey: "COD2_MAC_SHADER_CACHE") }
+            // The loadout for this start is already chosen here, so the game's own Select Profile menu stays closed.
+            if configLaunch?.profileID != nil { environment["COD2_PROFILE_CHOSEN"] = "1" } else { environment.removeValue(forKey: "COD2_PROFILE_CHOSEN") }
             // CoD2x's own reports go to CoD2x only with the player's agreement (Settings › Privacy), and only from CoD2x.
             CrashReporting.applyConsent(to: &environment, engine: gameEngine, cod2xReports: settings.sendCoD2xReports)
             process.environment = environment

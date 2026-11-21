@@ -2,6 +2,9 @@
 #include "imports.h"
 #include <stdarg.h>
 #include <string.h>
+#if defined(COD2_X64)
+#include <stdlib.h>
+#endif
 
 extern const dvar_t *com_playerProfile;
 extern const dvar_t *ui_playerProfileAlreadyChosen;
@@ -252,6 +255,16 @@ void Com_InitPlayerProfiles(void)
     }
 
     Com_SetPlayerProfileAndExec(profileName);
+
+#if defined(COD2_X64)
+    /* A launcher that has already chosen the profile for this start says so. The
+     * game's Select Profile menu then closes as it does once a choice was made,
+     * instead of asking again whenever more than one profile exists. */
+    if (getenv("COD2_PROFILE_CHOSEN")) {
+        extern void Dvar_SetInt(const dvar_t *dvar, int value);
+        Dvar_SetInt(ui_playerProfileAlreadyChosen, 1);
+    }
+#endif
 }
 
 Bool Com_NewPlayerProfile(const char *profileName)
