@@ -418,7 +418,13 @@ struct SheetScaffold<Content: View, Note: View>: View {
             }
         }
         .padding(.top, 2)
-        .onAppear { if let first = actions.firstIndex(where: \.initialFocus) { focusedAction = first } }
+        .task {
+            // As Setup's bar does: the sheet must be mounted, and AppKit done placing its own first
+            // responder, before the button can take the focus.
+            guard let first = actions.firstIndex(where: \.initialFocus) else { return }
+            try? await Task.sleep(for: .milliseconds(250))
+            if !Task.isCancelled { focusedAction = first }
+        }
         .background {
             if let escape { Button("", action: escape.action).keyboardShortcut(.cancelAction).opacity(0).accessibilityHidden(true) }
         }
