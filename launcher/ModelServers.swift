@@ -82,11 +82,6 @@ enum ServerVersion {
     }
 }
 
-extension GameEngine {
-    /// The version a player picks: “CoD2x” or “Original 1.3”.
-    var versionName: String { self == .cod2x ? "CoD2x" : "Original 1.3" }
-}
-
 /// What Connect to Address accepts, and the join link Copy Join Link writes.
 enum ServerAddressInput {
     /// `host:port`, a host name with or without a port, or a `cod2x://` or `cod2://` link, pasted or typed.
@@ -517,14 +512,15 @@ enum ServerPasswords {
         try serverConnection.useProfile(id)
         objectWillChange.send()
     }
-    func readyCheck(for address: String) throws -> ConfigReadyReport? {
+    /// requireFresh false: the launch re-checking a fix the player confirmed (ConfigReadyCheck.evaluate).
+    func readyCheck(for address: String, requireFresh: Bool = true) throws -> ConfigReadyReport? {
         guard let readyChecker, let configStudio = readySession else { return nil }
         let normalized = try LaunchLink.canonicalAddress(address)
         let server = servers.first { (try? LaunchLink.canonicalAddress($0.address)) == normalized }
         let chosenID = serverConnection.address == normalized ? serverConnection.profileID : nil
         guard let profile = try chosenID.map(configStudio.readProfile) ?? configStudio.readActive() else { return nil }
         return readyChecker.evaluate(server: server, profile: profile, mode: launchEngine(for: server).catalogMode,
-            advancedChain: try configStudio.readAdvancedChain(profileID: profile.profile.id))
+            advancedChain: try configStudio.readAdvancedChain(profileID: profile.profile.id), requireFresh: requireFresh)
     }
     /// Another saved loadout that already suits this server (“Use “Scrim””), or nil: one the ready check
     /// would pass, needing no change of its own (values the server sets while you play don't count).
@@ -614,12 +610,13 @@ enum ServerPasswords {
                                     actionTitle: "Delete") { [weak self] in self?.hosting.delete(server) })
     }
     /// Quitting with servers running asks first: they can't keep running without the app.
-    func confirmQuitWithServers() {
+    /// gameAnswered: the player already chose Quit Launcher Only or Quit Both for a running game.
+    func confirmQuitWithServers(gameAnswered: Bool = false) {
         let count = hosting.running.count
         confirm(ConfirmationRequest(title: count == 1 ? "“\(hosting.running[0].name)” is still running" : "\(count) servers are still running",
                                     message: "Quitting CoD2 Unbound stops \(count == 1 ? "it" : "them"). Players on \(count == 1 ? "it" : "them") are disconnected.",
                                     actionTitle: count == 1 ? "Stop Server and Quit" : "Stop Servers and Quit") { [weak self] in
-            self?.hostingQuitConfirmed = true
+            self?.hostingQuitConfirmed = true; self?.quitConfirmed = gameAnswered
             NSApp.terminate(nil)
         })
     }

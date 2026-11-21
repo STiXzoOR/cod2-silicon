@@ -8,6 +8,10 @@ private struct FixtureFetcher: ConfigImportTextFetcher {
         return result
     }
 }
+private struct StatusFetcher: ConfigImportTextFetcher {
+    let status: Int
+    func fetch(_ request: ConfigImportFetchRequest) async throws -> ConfigImportTextResponse { throw ConfigImportError.httpStatus(status) }
+}
 private actor IndexGate: ConfigImportTextFetcher {
     let index: ConfigImportTextResponse
     let signature: ConfigImportTextResponse
@@ -109,8 +113,22 @@ private actor IndexGate: ConfigImportTextFetcher {
         await gate.release()
         await rejects(.rollback) { _ = try await oldTask.value }
         await rejects(.rollback) { _ = try await directory.load() }
+        // A refused fetch (a rate limit, a moved file) keeps the verified copy on screen; without one it is still an error.
+        let limited = try await ConfigDirectory(configuration: trust, cacheURL: cache, fetcher: StatusFetcher(status: 429)).load()
+        require(limited.snapshot?.origin == .cache && limited.refreshError != nil, "a rate-limited fetch hid the verified cached copy")
+        let missing = try await ConfigDirectory(configuration: trust, cacheURL: cache, fetcher: StatusFetcher(status: 404)).load()
+        require(missing.snapshot?.origin == .cache, "a 404 hid the verified cached copy")
+        do { _ = try await ConfigDirectory(configuration: trust, cacheURL: scratch.appendingPathComponent("none/index-cache.json"), fetcher: StatusFetcher(status: 429)).load()
+             fatalError("FAIL: a refused fetch without a cached copy reported success") }
+        catch ConfigImportError.httpStatus(429) {}
+        // A cached copy that can't be read or verified any more is removed, not a permanent failure, and the next answer replaces it.
         try Data("tampered cache".utf8).write(to: cache)
-        await rejects(.invalidCache) { _ = try await ConfigDirectory(configuration: trust, cacheURL: cache, fetcher: FixtureFetcher(responses: [:])).load() }
+        let healed = try await ConfigDirectory(configuration: trust, cacheURL: cache, fetcher: FixtureFetcher(responses: [:])).load()
+        require(healed.snapshot == nil && healed.unavailableReason != nil && !FileManager.default.fileExists(atPath: cache.path),
+                "an unreadable cache blocked Discover instead of being removed")
+        try Data("tampered cache".utf8).write(to: cache)
+        let refetched = try await ConfigDirectory(configuration: trust, cacheURL: cache, fetcher: emptyFetcher).load()
+        require(refetched.snapshot?.origin == .network && FileManager.default.fileExists(atPath: cache.path), "an unreadable cache blocked the network copy")
         print("PASS: Ed25519 exact-byte trust, tamper/wrong-key rejection, offline cache, identity/digest, safety and unavailable default")
     }
 }

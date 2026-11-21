@@ -12,7 +12,8 @@ came from. It does not claim that a player approved the listing, and it removes 
 when the player or the page asks, through an issue on that repository. Each `entries/<slug>/` holds
 `config.cfg` and `entry.json` (see `entry.schema.json`):
 
-- `config.cfg` is the published text after `clean` (built by `build-audit.sh` from `Clean.swift`):
+- `config.cfg` is the published text after `clean` (built by `build-audit.sh` from `Clean.swift` and
+  `launcher/ConfigClean.swift`, the cleaning Share Your Setup runs in the launcher too):
   the launcher's own import review reads it for both game versions, and every line it blocks, and
   every line that says who the player is, what they typed, a secret, a path or a setting of another
   game, is left out. The rest keeps its order and bytes.
@@ -22,6 +23,14 @@ when the player or the page asks, through an issue on that repository. Each `ent
   out. `facts` carries the three numbers a card shows, as the config writes them. `featured` marks an
   entry for the first shelf: the launcher counts nothing about what players import, so there is no
   popularity ranking. No real names, nationalities or birthdays, even when a page shows them.
+
+From 0.4.1 a player can also share a setup from the launcher. The project's website (repository
+cod2unbound/website, `src/lib/share`) opens a pull request labelled `shared` with an entry credited
+`self-published`, `publishedBy` `CoD2 Unbound`, platform `native` and the pull request as its
+`sourceURL`; no schema change, so released launchers still read the catalogue. CONTRIBUTING.md says
+what the maintainer does with one. `share_standin.py` serves the website's two endpoints on
+127.0.0.1 with scripted replies for the launcher's tests (`COD2_SHARE_URL` points the launcher at
+it); its first lines say how to start it.
 
 Schema validation can require a source record; it cannot prove that the page was right about whose
 config it is. Say `listed` or `uploaded` unless the player posted it themselves.

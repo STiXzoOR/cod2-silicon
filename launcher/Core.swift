@@ -122,11 +122,35 @@ struct LaunchLink: Sendable {
     }
 }
 
+/// The command line each engine takes. `main` (src/unix/linux_common.c) joins the arguments with spaces.
+/// CoD2x (`Com_Cod2xParseCommandLine`, src/PC/qcommon/common.c) refuses a line of 1,024 bytes or more with
+/// "Command line too long" and runs at most 32 commands; the original 1.3 (`Com_Init`, same file) runs at
+/// most 31 `+` commands and silently merges the rest into the last one. Its 4,096-byte buffer is kept
+/// under 3,900 bytes. Only `+` starts a command in what the launcher writes: values are quoted and can't
+/// hold one (`GameSettings.safeValue`).
 enum EngineCommandLine {
-    static func validate(_ arguments: [String]) throws -> [String] {
-        let text = arguments.joined(separator: " ")
-        guard text.utf8.count < 3900 else { throw LauncherError(message: "Launch arguments exceed the game's byte limit.") }
-        guard text.filter({ $0 == "+" }).count <= 31 else { throw LauncherError(message: "Too many startup commands. Reduce the number of advanced dvars before playing.") }
+    struct Limits: Equatable { let commands: Int; let bytes: Int }
+    static func limits(for engine: GameEngine) -> Limits {
+        engine == .cod2x ? Limits(commands: 32, bytes: 1023) : Limits(commands: 31, bytes: 3899)
+    }
+    /// What is too long for `engine`, in a sentence with the fix; nil when it fits. inEditor: shown under Extra
+    /// launch options itself, so the fix doesn't say where they are.
+    static func problem(_ arguments: [String], engine: GameEngine, inEditor: Bool = false) -> String? {
+        let text = arguments.joined(separator: " "), limits = limits(for: engine)
+        let commands = text.filter { $0 == "+" }.count, bytes = text.utf8.count
+        if commands > limits.commands {
+            let extra = commands - limits.commands
+            return "This start needs \(commands) startup commands and \(engine.versionName) takes \(limits.commands). Remove at least "
+                + (extra == 1 ? "one line" : "\(extra) lines") + (inEditor ? "." : " from Extra launch options in Settings › Advanced.")
+        }
+        if bytes > limits.bytes {
+            return "This start’s command line is \(bytes.formatted()) characters and \(engine.versionName) takes \(limits.bytes.formatted()). Shorten or remove lines"
+                + (inEditor ? "." : " in Extra launch options in Settings › Advanced.")
+        }
+        return nil
+    }
+    static func validate(_ arguments: [String], engine: GameEngine) throws -> [String] {
+        if let problem = problem(arguments, engine: engine) { throw LauncherError(message: problem) }
         return arguments
     }
 }
@@ -179,6 +203,8 @@ enum GameEngine: String, Codable, Sendable, CaseIterable {
     case cod2x, original
     var executableName: String { self == .cod2x ? "cod2_macos" : "cod2_macos_stock" }
     func executableName(_ renderer: GameRenderer) -> String { executableName + (renderer == .metal ? "_metal" : "") }
+    /// The version a player picks: “CoD2x” or “Original 1.3”.
+    var versionName: String { self == .cod2x ? "CoD2x" : "Original 1.3" }
     /// The engines a game app carries, by their executables.
     static func installed(in gameBundle: URL) -> Set<GameEngine> {
         Set(allCases.filter { FileManager.default.isExecutableFile(atPath: $0.executable(in: gameBundle).path) })
@@ -201,8 +227,10 @@ struct GameLaunchPlan {
     let playsIntroFilms: Bool
     /// loadout: the value the game's profile config gives a dvar; with it, what that config leaves
     /// unset is supplied from GameSettings.loadoutDefaults.
+    /// engine: the one that will start; its command line limits apply (EngineCommandLine). Only
+    /// `largestStartProblem` passes nil, to count the arguments itself.
     init(settings: GameSettings, dataPath: String, homePath: String, link: LaunchLink? = nil, demo: String? = nil, forwarded: [String] = [], configStudio: ConfigStudioLaunch? = nil, connection: ConfigConnectionLaunch? = nil,
-         loadout: ((String) -> String?)? = nil, metal: Bool = false) throws {
+         loadout: ((String) -> String?)? = nil, metal: Bool = false, engine: GameEngine? = .cod2x) throws {
         guard GameSettings.safeValue(dataPath), GameSettings.safeValue(homePath) else { throw LauncherError(message: "Game paths contain unsupported characters.") }
         // The engine plays its three intro films when com_introPlayed is false and then records them as
         // played. Only a plain launch to the game menu shows them: a server link, a demo or forwarded
@@ -228,7 +256,7 @@ struct GameLaunchPlan {
             }
         }
         if let demo {
-            guard demo.range(of: "^[A-Za-z0-9_.-]+$", options: .regularExpression) != nil else { throw LauncherError(message: "Rename this demo using letters, numbers, dots, underscores or hyphens before playback.") }
+            guard DemoName.playable(demo) else { throw LauncherError(message: DemoName.problem) }
             args += ["+demo", demo]
         }
         if connection != nil && (configStudio == nil || demo != nil) {
@@ -237,9 +265,42 @@ struct GameLaunchPlan {
         if connection?.values.isEmpty == false && configStudio?.connectionIsolated != true {
             throw LauncherError(message: "Temporary server settings require an isolated connection write owner.")
         }
-        arguments = try EngineCommandLine.validate(args + forwarded + (try connection?.arguments(for: link) ?? []))
+        let line = args + forwarded + (try connection?.arguments(for: link) ?? [])
+        arguments = try engine.map { try EngineCommandLine.validate(line, engine: $0) } ?? line
         // Links are delivered as Apple events after startup, never serialized into argv (both engines).
         self.link = link
+    }
+}
+
+/// The names the game can play a recording by: `+demo` takes one word, so only letters, numbers, dots,
+/// underscores and hyphens.
+enum DemoName {
+    static let problem = "Rename this demo using letters, numbers, dots, underscores or hyphens before playback."
+    static func playable(_ name: String) -> Bool { name.range(of: "^[A-Za-z0-9_.-]+$", options: .regularExpression) != nil }
+    /// A name the game can play, for a copy of a recording saved under any other: every other character
+    /// becomes an underscore (“round (1)” becomes “round__1_”).
+    static func playableName(_ name: String) -> String {
+        let scalars = name.unicodeScalars.map { scalar -> Character in
+            scalar.isASCII && (CharacterSet.alphanumerics.contains(scalar) || "_.-".unicodeScalars.contains(scalar)) ? Character(scalar) : "_"
+        }
+        let result = String(scalars)
+        return result.isEmpty || result.hasPrefix(".") ? "demo" + result : result
+    }
+}
+
+extension GameLaunchPlan {
+    /// Settings › Advanced, when options are saved: whether the largest plain start these settings can make fits
+    /// `engine`'s command line. That is a loadout's first game (it sets nothing yet, so every default is
+    /// supplied) with, once loadouts are in use, its advanced chain; nil when it fits, else what to shorten.
+    static func largestStartProblem(settings: GameSettings, dataPath: String, homePath: String, migrated: Bool,
+                                    engine: GameEngine, metal: Bool) -> String? {
+        let chain = migrated ? ["+exec", "cs_" + String(repeating: "0", count: 40) + ".cfg"] : []
+        do {
+            let plan = try GameLaunchPlan(settings: settings, dataPath: dataPath, homePath: homePath,
+                                          configStudio: migrated ? ConfigStudioLaunch(profileID: "loadout", chain: nil) : nil,
+                                          loadout: { _ in nil }, metal: metal, engine: nil)
+            return EngineCommandLine.problem(plan.arguments + chain, engine: engine, inEditor: true)
+        } catch { return error.localizedDescription }
     }
 }
 
@@ -320,6 +381,33 @@ enum PathDisplay {
     }
 }
 
+/// The game data folder the launcher starts with: the one found (the remembered folder when it is still
+/// there, else a usual place). A player who finished setup keeps the remembered one even when it isn't there
+/// now, because its drive isn't connected or it moved: Home then says so and offers Choose Folder…, rather
+/// than first-run setup starting over and offering to download the game again.
+enum GameDataFolder {
+    static func atStart(found: String?, remembered: String?, setupComplete: Bool) -> String {
+        if let found { return found }
+        guard setupComplete, let remembered = remembered?.trimmingCharacters(in: .whitespacesAndNewlines) else { return "" }
+        return remembered
+    }
+}
+
+/// How a game ended, as the launcher tells it. `code` is the exit status of a game this launcher started;
+/// nil for one it reconnected to (after Quit Launcher Only or a force-quit), whose status it can't see.
+enum GameExit {
+    /// unexpected: Home says the game closed unexpectedly; report: the file Show Game Log opens.
+    static func outcome(code: Int32?, sessionLog: () -> URL?, crashReport: () -> URL?) -> (unexpected: Bool, report: URL?) {
+        // 1 is Exit in CoD2x's machine identity dialog, a normal close.
+        if code == 0 || code == 1 { return (false, nil) }
+        if code != nil { return (true, sessionLog() ?? crashReport()) }
+        // Unknown status: only a crash or freeze report written during this game says something went wrong.
+        // The newest session log exists after every game, so it says nothing either way.
+        guard let report = crashReport() else { return (false, nil) }
+        return (true, report)
+    }
+}
+
 enum CrashReports {
     /// The newest report written since `since`.
     static func latest(in home: URL, since: Date) -> URL? {
@@ -386,10 +474,11 @@ enum AppUpdate {
     }
 
     enum Failure: LocalizedError, Equatable {
-        case gameRunning, notWritable, readOnly, download, mismatch, notThisApp, signature, developer, install
+        case gameRunning, serversRunning, notWritable, readOnly, download, mismatch, notThisApp, signature, developer, install
         var errorDescription: String? {
             switch self {
             case .gameRunning: "Quit the game before installing the update."
+            case .serversRunning: "Stop your servers in Servers › Hosting before installing the update. Restarting would disconnect everyone on them."
             case .notWritable: "CoD2 Unbound can’t replace itself in this folder, so the Releases page opened instead."
             case .readOnly: "CoD2 Unbound can’t replace itself where it’s running from, so the Releases page opened instead. Move the app to your Applications folder to update it here next time."
             case .download: "Couldn’t download the update. Check your connection and try again."
@@ -411,10 +500,12 @@ enum AppUpdate {
         static let restarting = "Restarting CoD2 Unbound…"
     }
 
-    /// Why the app at `app` can't replace itself now, if it can't: a game is running, it runs from a
-    /// read-only volume or where macOS moved it (App Translocation), or its folder isn't writable.
-    static func refusal(app: URL, gameRunning: Bool) -> Failure? {
+    /// Why the app at `app` can't replace itself now, if it can't: a game or a hosted server is running
+    /// (the restart would stop it), it runs from a read-only volume or where macOS moved it (App
+    /// Translocation), or its folder isn't writable.
+    static func refusal(app: URL, gameRunning: Bool, serversRunning: Bool = false) -> Failure? {
         if gameRunning { return .gameRunning }
+        if serversRunning { return .serversRunning }
         if app.resolvingSymlinksInPath().path.contains("/AppTranslocation/") { return .readOnly }
         if (try? app.resourceValues(forKeys: [.volumeIsReadOnlyKey]).volumeIsReadOnly) == true { return .readOnly }
         if access(app.deletingLastPathComponent().path, W_OK) != 0 || access(app.path, W_OK) != 0 { return .notWritable }
@@ -996,6 +1087,13 @@ struct GameSettings: Codable, Sendable, Equatable {
     /// the original. False only for a new player; settings saved before this key existed count as played.
     var introFilmsPlayed = false
     // MARK: - end ship-settings
+    /// Settings › Advanced › Reset Settings: `defaults` for everything the Settings window shows, keeping what it
+    /// doesn't: whether the intro films have played and whether the crash report question was answered.
+    func reset(to defaults: GameSettings) -> GameSettings {
+        var reset = defaults
+        reset.introFilmsPlayed = introFilmsPlayed; reset.crashReportsAsked = crashReportsAsked
+        return reset
+    }
     static let anisotropyLevels = [2, 4, 8, 16]
     /// The render scales Settings › Display offers, largest first. Anything else reads as full size.
     static let renderScales = [100, 85, 75, 67, 50]
@@ -1067,7 +1165,7 @@ struct GameSettings: Codable, Sendable, Equatable {
             guard let pair, name.range(of: "^[A-Za-z_][A-Za-z0-9_]{0,63}$", options: .regularExpression) != nil,
                   !["r_mode", "fs_basepath", "fs_homepath", "password", "cl_cdkey", "cdkey", "dpi", "r_renderer", "r_renderscale", "r_metalfx", "r_hdr", "cl_matchsummaries"].contains(name.lowercased()),
                   !name.lowercased().contains("password"), !name.lowercased().contains("codkey") else {
-                throw LauncherError(message: "Advanced options use one “dvar value” per line. Paths, credentials and upcoming renderer options are managed separately.")
+                throw LauncherError(message: "Advanced options use one “dvar value” per line. Paths, credentials and the renderer’s settings are managed separately.")
             }
             let value = pair.1
             guard Self.safeValue(value) else { throw LauncherError(message: "Dvar values cannot contain quotes, separators or control characters.") }

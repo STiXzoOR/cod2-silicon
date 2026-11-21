@@ -196,6 +196,8 @@ struct MediaEntry: Identifiable {
     var hideLauncherWindowOnAppear = false
     /// Why the last Launch failed, for the Game Couldn't Start sheet's fix.
     @Published var launchProblem: LaunchProblem?
+    /// The recording a failed launch was starting, so the sheet's Try Again plays it again.
+    var failedDemo: URL?
 
     // MARK: - ship-settings state (settings saving, CoD2x files, updates)
     @Published var settingsSaveError: String?
@@ -382,7 +384,10 @@ struct MediaEntry: Identifiable {
         followEngine()
         studio.checkup.matchSummariesEnabled = settings.matchSummariesEnabled
         if let data = try? Data(contentsOf: home.appendingPathComponent("launcher-library.json")), let value = try? JSONDecoder().decode(LauncherLibrary.self, from: data) { library = value; servers = value.cache }
-        dataPath = LauncherFindData(nil) ?? ""
+        let found = LauncherFindData(nil)
+        let setupComplete = FileManager.default.fileExists(atPath: home.appendingPathComponent(".launcher-setup-complete").path)
+        dataPath = GameDataFolder.atStart(found: found, remembered: try? String(contentsOf: home.appendingPathComponent("data-path.txt"), encoding: .utf8),
+                                          setupComplete: setupComplete)
         refreshSteamUnfinished()
         refreshCoD2xFiles()
         keyVerified = KeyStore.hasValidKey(at: preferences)
@@ -390,9 +395,14 @@ struct MediaEntry: Identifiable {
         shaderCount = approximate ? 0 : Self.shaderTotal
         confirmedDataPath = dataPath
         readPlayerName()
-        let setupComplete = FileManager.default.fileExists(atPath: home.appendingPathComponent(".launcher-setup-complete").path)
         // ship-shell: a finished setup isn't asked again for a skipped CD key or approximate shaders.
         onboard = dataPath.isEmpty || (!setupComplete && (!keyVerified || approximate))
+        // The remembered game folder isn't there (an external drive not connected): Home says so, and Launch
+        // offers Choose Folder… (LaunchProblem.dataMissing).
+        if found == nil, !dataPath.isEmpty {
+            dataMissing = true
+            notice = LaunchProblem.dataMissing(dataPath).message + " It was " + PathDisplay.short(dataPath) + "."
+        }
         // Show the detected folder before asking for a key, so it can be reviewed or changed.
         step = 0
     }
@@ -680,6 +690,9 @@ struct MediaEntry: Identifiable {
         if demo == nil, let link = pendingLink, !admit(link) { return }
         do {
             try rememberData()
+            // A folder that went missing (its drive was disconnected) gets the sheet with Choose Folder…, not a game
+            // that starts without its files.
+            guard LauncherFindData(dataPath) != nil else { throw LauncherError(message: LaunchProblem.dataMissing(dataPath).message) }
             let gameEngine = chosenEngine
             let renderer = gameEngine.renderer(settings.renderer, in: gameBundle)
             let executable = gameEngine.executable(in: gameBundle, renderer: renderer)
@@ -701,7 +714,7 @@ struct MediaEntry: Identifiable {
                 if let configStudio {
                     try configStudio.refresh()
                     if let profile = try connectionProfileID.map(configStudio.readProfile) ?? configStudio.readActive(),
-                       let report = try readyCheck(for: link.address) {
+                       let report = try readyCheck(for: link.address, requireFresh: false) {
                         connectionLaunch = try serverConnection.launch(for: link, profile: profile, report: report)
                         if connectionLaunch != nil {
                             connectionProfileID = profile.profile.id; connectionExpectedVersion = profile.version
@@ -716,7 +729,7 @@ struct MediaEntry: Identifiable {
             let loadout = ConfigDocument.launchLoadout(home: home, profileID: configLaunch?.profileID)
             let plan = try GameLaunchPlan(settings: settings, dataPath: dataPath, homePath: home.path, link: pendingLink,
                 demo: demo?.deletingPathExtension().lastPathComponent, forwarded: forwardedArguments, configStudio: configLaunch, connection: connectionLaunch,
-                loadout: { loadout?.effectiveSetting(named: $0) }, metal: renderer == .metal)
+                loadout: { loadout?.effectiveSetting(named: $0) }, metal: renderer == .metal, engine: gameEngine)
             let process = Process(); process.executableURL = executable; process.arguments = plan.arguments
             process.currentDirectoryURL = home
             var environment = ProcessInfo.processInfo.environment
@@ -761,7 +774,7 @@ struct MediaEntry: Identifiable {
             sessionLog?.finish(); sessionLog = nil
             // ship-shell: the Game Couldn't Start sheet says why and offers the fix (ModelShell.swift).
             do { try configStudio?.cancelLaunch() } catch { notice = error.localizedDescription }
-            launchFailed(error)
+            launchFailed(error, demo: demo)
         }
     }
     /// Gives the game keyboard and mouse focus. Since macOS 14 an app can only take focus when
@@ -810,15 +823,14 @@ struct MediaEntry: Identifiable {
         engine = nil; gameRunning = false
         restoreRegularPolicy()
         NSApp.windows.first?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
-        // 1 is Exit in CoD2x's machine identity dialog, a normal close.
         let closed = code == 0 || code == 1
-        if code != nil && !closed {
+        let started = gameStartedAt
+        let outcome = GameExit.outcome(code: code, sessionLog: { GameSessionLog.latest(home: home) },
+                                       crashReport: { CrashReports.latest(in: home, since: started) })
+        if outcome.unexpected {
+            crashReport = outcome.report
             notice = "The game closed unexpectedly. Your settings and loadouts are safe."
         }
-        if !closed {
-            crashReport = GameSessionLog.latest(home: home) ?? CrashReports.latest(in: home, since: gameStartedAt)
-        }
-        if code == nil && crashReport != nil { notice = "The game closed unexpectedly. Your settings and loadouts are safe." }
         if !closed { sendCrashReports(CrashReports.all(in: home, since: gameStartedAt)) }
         print("CoD2 Unbound: returned to launcher (game exit \(code.map(String.init) ?? "unavailable")).")
         fflush(stdout)

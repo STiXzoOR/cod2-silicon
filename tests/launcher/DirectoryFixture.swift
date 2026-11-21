@@ -61,7 +61,8 @@ enum DirectoryFixture {
     ]
 
     /// Signs a fresh index with an ephemeral key and serves it, and each config, from memory.
-    static func directory(cacheURL: URL, entries: [Player] = players) throws -> ConfigDirectory {
+    /// `shared`: entries a player sent from the app, credited as the share service writes them.
+    static func directory(cacheURL: URL, entries: [Player] = players, shared: Set<String> = []) throws -> ConfigDirectory {
         let key = Curve25519.Signing.PrivateKey()
         var responses: [URL: ConfigImportTextResponse] = [:]
         let index = ConfigDirectoryIndex(schemaVersion: 1, revision: 1, entries: entries.map { player in
@@ -70,9 +71,13 @@ enum DirectoryFixture {
             responses[config] = .init(data: data, finalURL: config, contentType: "text/plain")
             return ConfigDirectoryEntry(id: player.id, player: player.name, team: player.team, era: player.era, role: player.role,
                 feel: player.feel, story: "\(player.name) played \(player.role.lowercased()) for \(player.team ?? "no team") in these years. The setup is slow and quiet on purpose: a low sensitivity for holding long lines, and only the HUD a round needs. Sample review data, not a real player.",
-                styleTags: player.tags, favoriteMap: player.map, credit: player.name, sourceURL: base.appendingPathComponent("entries/\(player.id)"),
-                provenance: .init(publishedBy: "configs.example", retrievedAt: "2026-10-09", attribution: .listed,
-                                  changes: "Passwords, chat lines and the player’s name were left out."),
+                styleTags: player.tags, favoriteMap: player.map, credit: player.name,
+                sourceURL: shared.contains(player.id) ? URL(string: "https://github.com/cod2unbound/cod2-configs/pull/128")! : base.appendingPathComponent("entries/\(player.id)"),
+                provenance: shared.contains(player.id)
+                    ? .init(publishedBy: "CoD2 Unbound", retrievedAt: "2026-11-21", attribution: .selfPublished,
+                            changes: "The app left out 37 lines: the player’s name, chat lines and server addresses.")
+                    : .init(publishedBy: "configs.example", retrievedAt: "2026-10-09", attribution: .listed,
+                            changes: "Passwords, chat lines and the player’s name were left out."),
                 facts: .init(sensitivity: "2.5", frameCap: "250", resolution: "1024x768"), featured: ["player-1", "player-3", "player-4"].contains(player.id) ? true : nil,
                 configURL: config, sha256: ConfigDirectory.digest(data), byteCount: data.count, platform: player.platform)
         })

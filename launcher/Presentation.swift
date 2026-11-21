@@ -124,7 +124,7 @@ struct Dispatch: Codable, Equatable, Sendable {
     static let bundled = [
         Dispatch(stamp: "PREVIEW", title: "CoD2 Unbound 0.4.0", summary: "The game now draws with Metal, the graphics system macOS uses today. OpenGL stays as a choice in Settings › Display.",
                  link: "https://github.com/cod2unbound/cod2-unbound/releases"),
-        Dispatch(stamp: "AHEAD", title: "What’s next", summary: "The Metal renderer comes next. It isn’t in this release, and the original look stays until it matches.",
+        Dispatch(stamp: "AHEAD", title: "What’s next", summary: "CoD2 Unbound for Windows comes next, then Linux. These are plans, not promises.",
                  link: "https://github.com/cod2unbound/cod2-unbound/blob/main/docs/ROADMAP.md"),
     ]
 }
@@ -429,6 +429,7 @@ enum PrivacyContacts {
         ("Servers you host", "Only while one runs. Set to The Internet, it lists itself on the master servers. A CoD2x server asks the CoD2x project about new versions."),
         ("Crash reports", "Only with a switch above on, once for each crash or freeze."),
         ("Config links", "Only a link you paste into Configs to import from it."),
+        ("cod2unbound.com", "Only when you choose Share Setup: the cleaned config, the name you type and the app’s version. It posts them publicly on GitHub and keeps no address."),
     ]
 }
 

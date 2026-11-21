@@ -175,7 +175,7 @@ struct ConfigDirectory: Sendable {
         guard let configuration else {
             return .init(snapshot: nil, unavailableReason: "Player setups aren’t available in this build.", refreshError: nil)
         }
-        let cached = try withCacheLock { try readCache(configuration) }
+        let cached = try withCacheLock { try readCacheOrDiscard(configuration) }
         let responses: (ConfigImportTextResponse, ConfigImportTextResponse)
         do {
             let root = configuration.indexURL.deletingLastPathComponent()
@@ -187,8 +187,9 @@ struct ConfigDirectory: Sendable {
             try Task.checkCancellation()
             let offline = (error as? URLError).map { [.notConnectedToInternet, .networkConnectionLost, .timedOut,
                 .cannotFindHost, .cannotConnectToHost, .dnsLookupFailed].contains($0.code) } == true
+            // Any HTTP refusal (a rate limit, a moved file) leaves a verified copy usable: nothing it sent was trusted.
             let httpUnavailable: Bool
-            if case ConfigImportError.httpStatus(let status) = error { httpUnavailable = status >= 500 }
+            if case ConfigImportError.httpStatus(let status) = error { httpUnavailable = status >= 500 || cached != nil }
             else { httpUnavailable = false }
             guard offline || httpUnavailable else { throw error }
             return .init(snapshot: cached, unavailableReason: cached == nil ? "The directory is unavailable and no verified offline copy exists." : nil,
@@ -203,7 +204,7 @@ struct ConfigDirectory: Sendable {
         try withCacheLock {
             // A different loader may have published a newer verified cache
             // while this request was suspended. Check the current disk copy.
-            if let latest = try readCache(configuration) {
+            if let latest = try readCacheOrDiscard(configuration) {
                 guard index.revision >= latest.index.revision,
                       index.revision != latest.index.revision || result.bytes == latest.bytes else { throw ConfigDirectoryError.rollback }
             }
@@ -312,6 +313,17 @@ struct ConfigDirectory: Sendable {
         while flock(fd, LOCK_EX) != 0 { if errno != EINTR { throw ConfigDirectoryError.unsafeCache } }
         defer { flock(fd, LOCK_UN) }
         return try body()
+    }
+    /// A cached copy this launcher can't read or verify (damaged, or written under rules it no longer accepts) is
+    /// removed instead of blocking Discover: the next verified answer from the network replaces it. An unsafe
+    /// cache path still fails.
+    private func readCacheOrDiscard(_ configuration: ConfigDirectoryConfiguration) throws -> ConfigDirectorySnapshot? {
+        do { return try readCache(configuration) }
+        catch ConfigDirectoryError.invalidCache {
+            try checkCachePath()
+            try FileManager.default.removeItem(at: cacheURL)
+            return nil
+        }
     }
     private func readCache(_ configuration: ConfigDirectoryConfiguration) throws -> ConfigDirectorySnapshot? {
         try checkCachePath()

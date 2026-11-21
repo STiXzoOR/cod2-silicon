@@ -231,6 +231,12 @@ all of it before you post, and the app sends nothing itself.
   deleted when the download ends, stops or is cancelled.
 - **Configs** fetches the player setups catalogue from GitHub when its home page
   opens, and a setup's config when you look at it.
+- **Sharing a setup** sends nothing unless you choose **Share Setup** for one
+  of your loadouts. Then the cleaned config (with your name in the game, chat
+  lines, passwords, server addresses and file paths left out), the name you
+  typed and the app's version go to cod2unbound.com, which posts them as a
+  public request on GitHub and keeps no address. **Stop Sharing** in the
+  loadout's menu takes it back.
 - **A server you host** contacts nothing while it is set to My Network. Set to
   The Internet, it lists itself on the master servers. A CoD2x server asks the
   CoD2x project's update service about new versions while it runs, and players'
@@ -269,10 +275,9 @@ all of it before you post, and the app sends nothing itself.
 - The intro videos play once, the first time a new player launches to the
   game menu, as in the original; any key skips each part. `cinematic
   cod_intro` in the console plays the intro film again.
-- The native dedicated server is available from source; see the
-  [server guide](docs/server.md).
-- Frame-pacing hitches remain; active Game Mode and quiet-desktop display
-  restoration still need acceptance testing.
+- Whether macOS Game Mode turns on for the game has not been confirmed, and
+  restoring the display after it sleeps in exclusive full screen has not been
+  retested.
 - Some rendering and mod edge cases remain. A server restart during an HTTP
   download can stall it; reconnecting recovered in the tested case.
 - This engine inherits security-sensitive networking, file parsing and memory
@@ -326,23 +331,6 @@ new performance claims for every release. Verified development results include:
 - A ten-minute combat soak completed without a crash after fixing the first-shot
   stencil-clear fault. [Playable-app report](docs/macos-port/reports/WS18-ship.md)
 
-WS18 measured these two-minute live combat captures on a Mac mini with Apple
-M6, macOS 27.0.1 and original Mac shaders:
-
-| Render size | FPS cap | Average FPS | 1% low FPS |
-| --- | ---: | ---: | ---: |
-| 1920×1080 | 333 | 331.2 | 205.2 |
-| 1920×1080 | Uncapped | 798.6 | 354.1 |
-| 2560×1440 | 333 | 332.4 | 233.0 |
-| 2560×1440 | Uncapped | 663.5 | 326.8 |
-| 3840×2160 | 333 | 332.3 | 230.8 |
-| 3840×2160 | Uncapped | 417.1 | 256.9 |
-
-The 1440p and 4K runs rendered at those sizes on a 1080p physical display using
-desktop fullscreen. Other user applications were running. A 1% low is the
-reciprocal of the mean of the slowest 1% of frame intervals. These are
-measurements, not guarantees of steady frame pacing. Game Mode activation is
-unverified.
 See the [roadmap](docs/ROADMAP.md).
 
 ## Building for development

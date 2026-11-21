@@ -125,8 +125,18 @@ extension KeyStore {
             advancedError = "These options are too long. Remove some lines and try again."
             return
         }
+        // The whole start must fit the command line of the engine and renderer that will start (EngineCommandLine).
+        if let problem = advancedStartProblem(candidate) { advancedError = problem; return }
         advancedError = nil
         settings = candidate
+    }
+    /// Whether the largest plain start these settings can make fits the chosen engine's command line, with the
+    /// chosen renderer and render scale; else what to shorten. Launch checks the real start again.
+    func advancedStartProblem(_ candidate: GameSettings) -> String? {
+        let engine = chosenEngine
+        return GameLaunchPlan.largestStartProblem(settings: candidate, dataPath: dataPath, homePath: home.path,
+                                                  migrated: configStudio?.migrationCompleted == true, engine: engine,
+                                                  metal: engine.renderer(candidate.renderer, in: gameBundle) == .metal)
     }
     /// Lines that are valid but that the game takes from the loadout instead, once loadouts are in use.
     // MARK: - ship-integrate
@@ -231,7 +241,7 @@ extension KeyStore {
     static func displayModeDetail(_ mode: String) -> String {
         switch mode {
         case "borderless": "Borderless fills the screen and switches apps instantly."
-        case "spaces": "macOS full screen gives the game its own Space, which Game Mode needs."
+        case "spaces": "macOS full screen gives the game its own Space; switching apps slides between Spaces."
         case "windowed": "A window at the chosen size, beside your other apps."
         default: "Full Screen shows the chosen size pixel for pixel; switching apps takes a moment. Borderless stretches it to the desktop."
         }
@@ -521,7 +531,7 @@ extension KeyStore {
     }
     func resetSettings() {
         advancedDraft = nil; advancedError = nil
-        settings = defaultSettings
+        settings = settings.reset(to: defaultSettings)
         settingsFeedback = .init(pane: .advanced, text: "Settings are back to how they started.")
     }
 
@@ -599,12 +609,12 @@ extension KeyStore {
         }
     }
     static let automaticCheckKey = "CoD2UnboundLastAutomaticUpdateCheck"
-    /// Install and Relaunch: only on the player's click; refused while a game runs or where the app can't replace
-    /// itself (then the Releases page opens). Cancel stops it until the new app is about to take this one's place.
+    /// Install and Relaunch: only on the player's click; refused while a game or a hosted server runs or where the
+    /// app can't replace itself (then the Releases page opens). Cancel stops it until the new app is about to take this one's place.
     func installUpdate() {
         guard !snapshot, !installingUpdate, !checkingUpdates, let offer = updateOffer else { return }
         let app = Bundle.main.bundleURL, bundleID = Bundle.main.bundleIdentifier ?? ""
-        if let refusal = AppUpdate.refusal(app: app, gameRunning: gameRunning) { updateFailed(refusal); return }
+        if let refusal = AppUpdate.refusal(app: app, gameRunning: gameRunning, serversRunning: !hosting.running.isEmpty) { updateFailed(refusal); return }
         updateError = false; updateFailedStage = nil
         installingUpdate = true; updateMessage = AppUpdate.Message.downloading(offer.version)
         studio.announce(updateMessage)
@@ -622,7 +632,7 @@ extension KeyStore {
                     return unpacked
                 }.value
                 try Task.checkCancellation()
-                if let refusal = AppUpdate.refusal(app: app, gameRunning: gameRunning) { throw refusal }
+                if let refusal = AppUpdate.refusal(app: app, gameRunning: gameRunning, serversRunning: !hosting.running.isEmpty) { throw refusal }
                 updateMessage = AppUpdate.Message.installing(offer.version)
                 try AppUpdate.swap(app, with: candidate)
                 try? FileManager.default.removeItem(at: staged.folder)
@@ -651,10 +661,14 @@ extension KeyStore {
         helper.executableURL = URL(fileURLWithPath: "/bin/sh")
         helper.arguments = ["-c", "while /bin/kill -0 \"$1\" 2>/dev/null; do /bin/sleep 0.2; done; /usr/bin/open \"$2\"",
                             "cod2-unbound-update", String(getpid()), app.path]
+        let installed = "Version \(updateOffer?.version ?? "") is installed. Quit and open CoD2 Unbound to use it."
         do { try helper.run() } catch {
-            installingUpdate = false; updateMessage = "Version \(updateOffer?.version ?? "") is installed. Quit and open CoD2 Unbound to use it."; return
+            installingUpdate = false; updateMessage = installed; return
         }
         NSApp.terminate(nil)
+        // Still here: quitting was cancelled (a question about the game or servers was answered Cancel). The new
+        // version is in place and the helper opens it once this app quits, so the launcher goes on working.
+        installingUpdate = false; updateMessage = installed; studio.announce(updateMessage)
     }
     /// Try Again repeats what failed.
     func retryUpdate() { if updateFailedStage == .install, updateOffer != nil { installUpdate() } else { checkUpdates() } }
