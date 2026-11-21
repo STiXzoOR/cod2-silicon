@@ -1381,7 +1381,7 @@ extension Snapshots {
         "configs-share-offline": ["Problem: Couldn’t reach cod2unbound.com, so nothing was sent.", "Try Again", "Cancel"],
         "configs-share-limit": ["Problem: Three setups were shared from this network today", "Share Setup", "Cancel"],
         "configs-share-already": ["Problem: This exact setup is already in Player Setups", "Share Setup", "Cancel"],
-        "configs-share-nothing": ["Problem: Main still has the game’s own settings.", "Cancel"],
+        "configs-share-nothing": ["Main still has the game’s own settings.", "Cancel"],
         "configs-share-sent": ["Your setup was sent", "Request address: github.com/cod2unbound/cod2-configs/pull/128", "View Request", "Done"],
         "configs-share-stop-confirm": ["Stop sharing “Main”?", "Stop Sharing", "Cancel"],
         "configs-home-share": ["Share Your Setup", "Add a Config"],
