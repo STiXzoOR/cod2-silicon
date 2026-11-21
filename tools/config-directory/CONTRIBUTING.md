@@ -12,10 +12,13 @@ maintainer does the rest.
 
 ## What may be listed
 
-- A config that was published on the open web, with the page it came from.
-  Nothing from a private message, a paid download or a player's disk.
-- Credited to the name the page gives. Say `self-published` only when the
-  player posted it themselves; otherwise `listed` or `uploaded`.
+- A config that was published on the open web, with the page it came from,
+  or one its player shared from the app (see below). Nothing from a private
+  message or a paid download, and nothing from a player's disk that the
+  player did not send themselves.
+- Credited to the name the page gives, or for a shared setup the name the
+  player typed. Say `self-published` only when the player posted or shared it
+  themselves; otherwise `listed` or `uploaded`.
 - No real names, nationalities, birthdays or photos, even when the page
   shows them.
 
@@ -80,6 +83,55 @@ launcher's `ConfigCatalog.json`.
    The key is kept outside every repository. `index.pub` must not change: the
    launcher is built with it, so a different key means no released launcher
    accepts the catalogue.
+
+## A setup shared from the app
+
+From version 0.4.1 a player can share a setup from CoD2 Unbound. The app
+cleans the config with the same import review as `clean`, and the project's
+website opens a pull request labelled `shared`. It adds `entries/<slug>/`
+with two files, in two commits: the setup, then one that points
+`sourceURL` at the pull request.
+
+- `config.cfg` is exactly what the app sent. The website refuses anything but
+  settings and key binds, and the settings for hosting, the player's name,
+  passwords, chat, server addresses, `exec`, `wait` and `quit`, but it does
+  not run the review: generation does.
+- `entry.json` is credited to the name the player typed (`credit` and
+  `player`), `self-published`, `publishedBy` `CoD2 Unbound`, platform
+  `native`, retrieved the day it was sent, with a `changes` sentence made from
+  the lines the app left out. `era`, `feel`, `story` and `styleTags` are
+  written from the config alone, in the words the other entries use.
+- The pull request's body says which app version sent it, what was left out
+  and the config's SHA-256. Nothing about the sender.
+
+To list it:
+
+1. Read `config.cfg`. Do not edit it: the player's withdraw token is made
+   from its bytes, and a line that should not be there means the review needs
+   fixing. If it should not be listed, close the pull request with a short
+   reason and delete its branch.
+2. Edit `entry.json` on the pull request's branch: `era`, `feel`, `story`
+   and `styleTags` should read like the other entries. Keep `credit`,
+   `player`, `provenance` and `sourceURL`. A name that is a real name, an
+   insult or someone else's is a reason to close it, not to rename it.
+3. Generate with the next revision and check, as in steps 3 and 4 above,
+   then sign (step 5) and commit the generated files to the branch.
+4. Merge.
+
+At most 30 shared pull requests are open at once and 40 arrive in a day;
+past that the website answers that sharing is closed for the day.
+
+## When a player withdraws a shared setup
+
+Stop Sharing in the app reaches the website, which checks the player's token
+against the pull request's own `config.cfg`.
+
+- An open pull request is closed with a comment and its branch deleted.
+  Nothing to do.
+- A merged setup gets a pull request labelled `withdrawn` that deletes
+  `entries/<slug>/`. Treat it like a removal request: generate with the next
+  revision, check, sign, merge. Do not add the setup back from another source
+  under the same name.
 
 ## Correct a setup
 
