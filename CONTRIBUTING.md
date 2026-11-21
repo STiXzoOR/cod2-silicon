@@ -70,8 +70,13 @@ GitHub Actions are switched off for this repository at the moment, so no
 check runs on a pull request by itself. Run the merge gate below on your Mac
 and say in the pull request what you ran.
 
-The x86 byte-for-byte CI comparison is temporarily non-blocking because
-upstream `410342a` does not compile with GCC 14 on Linux; see
+The x86 byte-for-byte comparison (`tools/ci/compare-x86.sh`) is not a
+required check. It defines `__cdecl` and `__stdcall` away for both builds,
+but upstream `410342a` still fails to compile in seven files with GCC 14 on
+Linux, so it never links, and this tree's 32-bit objects still differ from it.
+To run it on a Mac, use Docker with `--platform linux/amd64`, an `ubuntu:24.04`
+image with the packages from the `x86-reference` job in
+`.github/workflows/ci.yml`, and `bash tools/ci/compare-x86.sh` inside it; see
 [the tracking issue](https://github.com/cod2unbound/cod2-unbound/issues/10).
 
 ## Native builds and merge gate
