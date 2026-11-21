@@ -33,6 +33,12 @@ enum AppSheet: Identifiable {
     /// Loadout › Rename… for the loadout Configs shows.
     case renameLoadout
 
+    // MARK: share-launcher (ConfigShareView.swift)
+    /// A loadout's Share with Other Players… and Player Setups' Share Your Setup….
+    case shareSetup(ConfigShareStart)
+    /// After the service took it: where the request is.
+    case shareSent(record: ConfigShareRecord, loadout: String)
+
     var id: String {
         switch self {
         case .connect: "connect"
@@ -48,6 +54,8 @@ enum AppSheet: Identifiable {
         case .crashReportsQuestion: "crash-reports-question"
         case .newLoadout: "new-loadout"
         case .renameLoadout: "rename-loadout"
+        case .shareSetup(let start): "share-setup-" + start.loadout
+        case .shareSent(let record, _): "share-sent-\(record.request)"
         }
     }
 }
@@ -71,6 +79,8 @@ struct AppSheetView: View {
         case .crashReportsQuestion: CrashReportsQuestionSheet(model: model)
         case .newLoadout: NewLoadoutSheet(model: model)
         case .renameLoadout: RenameLoadoutSheet(model: model)
+        case .shareSetup(let start): ShareSetupSheet(model: model, start: start)
+        case .shareSent(let record, let loadout): ShareSentSheet(model: model, record: record, loadout: loadout)
         }
     }
 }

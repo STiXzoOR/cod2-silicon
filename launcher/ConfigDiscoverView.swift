@@ -151,6 +151,8 @@ enum NativeMenu {
         var key = ""
         var modifiers: NSEvent.ModifierFlags = []
         var separatorBefore = false
+        /// Dimmed, never hidden, when it can't run now; the footnote says why.
+        var enabled = true
         var action: @MainActor () -> Void
     }
     @MainActor private final class Target: NSObject {
@@ -159,6 +161,7 @@ enum NativeMenu {
     }
     @MainActor static func popUp(_ items: [Item], below view: NSView, header: String? = nil, footnote: String? = nil) {
         let menu = NSMenu(), target = Target()
+        menu.autoenablesItems = false
         target.actions = items.map(\.action)
         if let header {
             if #available(macOS 14.0, *) { menu.addItem(.sectionHeader(title: header)) }
@@ -168,7 +171,7 @@ enum NativeMenu {
             if item.separatorBefore { menu.addItem(.separator()) }
             let row = NSMenuItem(title: item.title, action: #selector(Target.run(_:)), keyEquivalent: item.key)
             row.keyEquivalentModifierMask = item.modifiers
-            row.target = target; row.tag = index
+            row.target = target; row.tag = index; row.isEnabled = item.enabled
             if !item.symbol.isEmpty { row.image = NSImage(systemSymbolName: item.symbol, accessibilityDescription: nil) }
             menu.addItem(row)
         }
@@ -499,6 +502,10 @@ private struct PlayerProvenance: View {
     }
     /// The catalogue says where it found a setup, never that the player approved the listing.
     private var provenanceNote: String {
+        // A setup a player sent from the app says so, with the day it was sent (ShareSetup board).
+        if let shared = ConfigShareCredit.line(entry) {
+            return "\(shared). \(entry.provenance.changes) The signature shows this entry came from the catalogue unchanged; it doesn’t make a config safe, so you still review every line."
+        }
         let how: String
         switch entry.provenance.attribution {
         case .selfPublished: how = "The player published it there."

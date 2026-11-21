@@ -68,15 +68,18 @@ struct ConfigsShell: View {
         .background(WindowOriginReader(origin: $origin))
         .environment(\.configControlContext, session.current.map { ConfigControlContext(studio: studio, session: session, profileID: $0.profile.id) })
         .onAppear {
-            studio.refreshComparison(); studio.checkup.load()
+            studio.refreshComparison(); studio.checkup.load(); model.shareCenter.refresh(studio)
             // Choosing Configs in the sidebar for the first time opens Discover.
             if discover.landsOnHome { discover.landsOnHome = false; if discover.page == nil { discover.open(.home) } }
         }
         .onChange(of: studio.gameRunning) { _, running in if running { studio.binds.gameStarted() } }
         .onChange(of: session.current?.version) { _, _ in
-            studio.refreshComparison()
+            studio.refreshComparison(); model.shareCenter.refresh(studio)
             if studio.textMode && !studio.textEdited { studio.loadText() }
         }
+        // Share's menu items know whether each loadout has anything to share (ConfigShareModel.swift).
+        .onChange(of: studio.catalog != nil) { _, _ in model.shareCenter.refresh(studio) }
+        .onChange(of: session.profiles) { _, _ in model.shareCenter.refresh(studio) }
         // A loadout made, imported or chosen elsewhere is shown in place of Discover.
         .onChange(of: session.current?.profile.id) { _, _ in discover.page = nil }
         .configImportFlows(discover)
@@ -146,6 +149,7 @@ struct ConfigsShell: View {
                 Button("Duplicate “\(name)”") { leaveText { model.duplicateLoadout() } }.disabled(!model.canDuplicateLoadout)
                 Button("Rename “\(name)”…") { model.renameLoadout() }.disabled(!model.canRenameLoadout)
                 Button("Export for Windows…") { model.exportLoadout() }.disabled(!model.canExportLoadout)
+                ShareMenuItems(model: model, profile: current.profile)
                 Button("Show in Finder") { model.showLoadoutInFinder(current.profile.id) }
                 Divider()
                 Button("Delete “\(name)”…") { leaveText { model.requestDeleteLoadout() } }.disabled(!model.canDeleteLoadout)
@@ -262,6 +266,7 @@ private struct LoadoutColumn: View {
         Button("Duplicate") { act { model.duplicateLoadout(profile.id) } }.disabled(readOnly)
         Button("Rename…") { act { model.renameLoadout(profile.id) } }.disabled(readOnly)
         Button("Export…") { act { model.exportLoadout(profile.id) } }.disabled(studio.catalog == nil || !model.canNavigate)
+        ShareMenuItems(model: model, profile: profile)
         Button("Show in Finder") { model.showLoadoutInFinder(profile.id) }
         Divider()
         Button("Delete Loadout…") { act { model.requestDeleteLoadout(profile.id) } }.disabled(studio.deleteBlock(profile.id) != nil || !model.canNavigate)

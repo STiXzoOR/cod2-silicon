@@ -19,7 +19,12 @@ extension Snapshots {
                                 "configs-rename-sheet", "configs-checkup-match", "configs-checkup-freezes", "configs-checkup-freeze-legacy",
                                 // Discover · Player Setups (the front page, See All, a search) and Check a Config.
                                 "configs-home", "configs-home-end", "configs-home-all", "configs-home-search", "configs-home-nomatch",
-                                "configs-checker-empty", "configs-checker", "configs-checker-fixed", "configs-checker-clean"]
+                                "configs-checker-empty", "configs-checker", "configs-checker-fixed", "configs-checker-clean",
+                                // share-launcher: Share Your Setup's sheet in each state, See What’s Sent…, Sent, the Stop
+                                // Sharing alert, Player Setups' Share Your Setup… button, and a shared setup's credit.
+                                "configs-share-empty", "configs-share-sheet", "configs-share-sending", "configs-share-preview",
+                                "configs-share-offline", "configs-share-limit", "configs-share-already", "configs-share-nothing",
+                                "configs-share-sent", "configs-share-stop-confirm", "configs-home-share", "discover-player-shared"]
 }
 
 /// Synthetic loadouts for the Config Studio screens, written through the real store into a
@@ -206,7 +211,7 @@ extension Snapshots {
             // As drawn: Discover in the column, with two saved players.
             try await fixture()
             discover.setSaved("player-2", true); discover.setSaved("player-4", true)
-        case "discover-players", "configs-home", "configs-home-end": try await fixture()
+        case "discover-players", "configs-home", "configs-home-end", "configs-home-share": try await fixture()
         case "configs-home-all":
             // See All on the Classic era shelf.
             try await fixture()
@@ -233,8 +238,12 @@ extension Snapshots {
         case "discover-saved":
             try await fixture()
             discover.setSaved("player-2", true); discover.setSaved("player-4", true)
-        case "discover-player", "configs-expert-player":
-            try await fixture()
+        case "discover-player", "configs-expert-player", "discover-player-shared":
+            if screen == "discover-player-shared" {
+                // A setup a player sent from the app: credited as shared, with its day.
+                discover.use(try DirectoryFixture.directory(cacheURL: home.appendingPathComponent("directory/index.json"), shared: ["player-1"]))
+                await discover.reload()
+            } else { try await fixture() }
             discover.open(.player("player-1"))
             for _ in 0..<200 {
                 guard case .loading? = discover.detail?.phase else { break }
@@ -1365,6 +1374,18 @@ extension Snapshots {
         "configs-checkup-freezes": ["Your last match: Toujane, Search & Destroy"],
         "configs-checkup-freeze-legacy": ["Your last match: Toujane, Search & Destroy"],
         "configs-checkup-match": ["Your match on Carentan, Search & Destroy", "Show Last Match", "Movement: Steady"],
+        "configs-share-empty": ["Share “Main” with other players", "Name to show with the setup", "Share Setup", "Cancel", "See What’s Sent…"],
+        "configs-share-sheet": ["Share “Main” with other players", "Name to show with the setup", "What is sent", "What is left out", "Where it goes", "Share Setup"],
+        "configs-share-sending": ["Share “Main” with other players", "Sending…", "Cancel"],
+        "configs-share-preview": ["What is sent", "Lines to show", "The text that is sent", "Copy", "Done"],
+        "configs-share-offline": ["Problem: Couldn’t reach cod2unbound.com, so nothing was sent.", "Try Again", "Cancel"],
+        "configs-share-limit": ["Problem: Three setups were shared from this network today", "Share Setup", "Cancel"],
+        "configs-share-already": ["Problem: This exact setup is already in Player Setups", "Share Setup", "Cancel"],
+        "configs-share-nothing": ["Problem: Main still has the game’s own settings.", "Cancel"],
+        "configs-share-sent": ["Your setup was sent", "Request address: github.com/cod2unbound/cod2-configs/pull/128", "View Request", "Done"],
+        "configs-share-stop-confirm": ["Stop sharing “Main”?", "Stop Sharing", "Cancel"],
+        "configs-home-share": ["Share Your Setup", "Add a Config"],
+        "discover-player-shared": ["Compare", "Try This Setup"],
     ]
 
     /// Every Config Studio screen's accessibility tree in reading order, with unnamed controls as failures.

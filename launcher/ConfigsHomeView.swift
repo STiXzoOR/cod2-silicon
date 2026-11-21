@@ -21,7 +21,7 @@ struct ConfigsHomePage: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     if grid, discover.snapshot != nil { back }
-                    DiscoverHeader(title: title, subtitle: subtitle) { EmptyView() }
+                    DiscoverHeader(title: title, subtitle: subtitle) { if !grid { ShareYourSetupButton(model: model) } }
                     content(wide: proxy.size.width >= 700)
                 }
                 .padding(.top, grid && discover.snapshot != nil ? 76 : 82).padding(.horizontal, StudioMetrics.pageInset).padding(.bottom, 24)
